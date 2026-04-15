@@ -2,4 +2,4 @@
  * BidNoroff — Main Entry Point
  */
 
-console.log('🚀 BidNoroff app is running!');
+console.warn('🚀 BidNoroff app is running!');
