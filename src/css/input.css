@@ -1,0 +1,33 @@
+/* Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+/* Tailwind v4 */
+@import "tailwindcss";
+
+/* ============================================
+   Theme: Custom Colors (Stripe-inspired)
+   ============================================ */
+@theme {
+  /* Brand Colors */
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-500: #635bff;
+  --color-primary-600: #5851db;
+  --color-primary-700: #4c1d95;
+
+  /* Surface Colors */
+  --color-surface: #f6f9fc;
+  --color-border: #e3e8ef;
+
+  /* Text Colors */
+  --color-text-primary: #1a1f36;
+  --color-text-secondary: #697386;
+
+  /* Status Colors */
+  --color-success: #34d399;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Font */
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+}

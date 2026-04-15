@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tw:dev": "tailwindcss -i ./src/css/input.css -o ./src/css/tailwind.css --watch",
+    "tw:build": "tailwindcss -i ./src/css/input.css -o ./src/css/tailwind.css --minify"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.2.2",
+    "tailwindcss": "^4.2.2",
     "vite": "^8.0.4"
   }
 }
