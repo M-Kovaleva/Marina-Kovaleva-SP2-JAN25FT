@@ -1,6 +1,7 @@
 /**
  * Login View
  */
+import { initLoginHandler } from '../auth/loginHandler.js';
 export class LoginView {
   constructor(params) {
     this.params = params;
@@ -63,6 +64,6 @@ export class LoginView {
   }
 
   async init() {
-    // Form handler will be added later
+    initLoginHandler();
   }
 }

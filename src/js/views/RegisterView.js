@@ -1,6 +1,9 @@
 /**
  * Register View
  */
+
+import { initRegisterHandler } from '../auth/registerHandler.js';
+
 export class RegisterView {
   constructor(params) {
     this.params = params;
@@ -16,6 +19,12 @@ export class RegisterView {
           <!-- Error Message (hidden by default) -->
           <div id="register-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
             <p class="text-error text-sm font-medium"></p>
+          </div>
+          
+          <!-- Success Message (hidden by default) -->
+          <div id="register-success" class="hidden mb-6 p-4 bg-success/10 border border-success/20 rounded-lg text-center">
+            <p class="text-green-700 font-medium">✓ Account created successfully!</p>
+            <p class="text-green-700 font-medium">Redirecting to Home...</p>
           </div>
           
           <form id="register-form" class="space-y-5">
@@ -41,7 +50,6 @@ export class RegisterView {
                 id="email"
                 name="email"
                 required
-                pattern="^[a-zA-Z0-9._%+-]+@stud\\.noroff\\.no$"
                 placeholder="name@stud.noroff.no"
                 autocomplete="email"
                 class="input"
@@ -81,6 +89,6 @@ export class RegisterView {
   }
 
   async init() {
-    // Form handler will be added later
+    initRegisterHandler();
   }
 }

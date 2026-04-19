@@ -4,9 +4,14 @@
 
 import { router, navigateTo } from './router/router.js';
 import { initMobileMenu, closeMobileMenu } from './utils/mobile-menu.js';
+import { initNav } from './components/Nav.js';
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
+    
+  // Initialize navigation (auth state)
+  initNav();
+ 
   // Initialize mobile menu
   initMobileMenu();
 
