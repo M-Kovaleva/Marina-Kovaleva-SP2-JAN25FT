@@ -1,6 +1,8 @@
 /**
  * Home View — Listings feed
  */
+
+import { initListingsHandler } from '../handlers/listingsHandler.js';
 export class HomeView {
   constructor(params) {
     this.params = params;
@@ -8,72 +10,144 @@ export class HomeView {
 
   async render() {
     return `
-      <div class="page-container">
-        <!-- Header -->
-        <div class="mb-6 sm:mb-8">
-          <h1 class="page-title">Explore Listings</h1>
-          <p class="page-subtitle">Browse and bid on items from Noroff students</p>
+      <!-- Hero Section -->
+      <section class="bg-gradient-to-br from-primary-500 to-primary-700 text-white py-12 sm:py-16 lg:py-20">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+            Student Auction Platform
+          </h1>
+          <p class="text-primary-100 text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
+            Buy and sell with your fellow Noroff students. Start bidding or create your own listing today.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#listings" class="btn-secondary bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 text-base font-semibold">
+              Browse Listings
+            </a>
+            <a href="/listing/create" data-link class="btn-primary bg-primary-800 hover:bg-primary-900 border-primary-800 px-6 py-3 text-base font-semibold" id="hero-create-btn">
+              + Create Listing
+            </a>
+          </div>
         </div>
-        
+      </section>
+
+      <div class="page-container" id="listings">
         <!-- Search & Filter Bar -->
-        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div class="flex-1">
-            <div class="relative">
-              <input
-                type="search"
-                id="search-input"
-                placeholder="Search listings..."
-                class="input pl-10"
-              />
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
+        <div class="bg-white rounded-xl shadow-sm border border-border p-4 mb-6 sm:mb-8 -mt-6 relative z-10">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <!-- Search Input -->
+            <div class="flex-1">
+              <div class="relative">
+                <input
+                  type="search"
+                  id="search-input"
+                  placeholder="Search listings..."
+                  class="input pl-10 pr-10"
+                />
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <button id="clear-search" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary hidden" aria-label="Clear search">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="flex flex-col sm:flex-row gap-3">
+              <!-- Category Filter -->
+              <select class="input" id="category-filter">
+                <option value="">All Categories</option>
+                <option value="electronics">📱 Electronics</option>
+                <option value="books">📚 Books</option>
+                <option value="clothing">👕 Clothing</option>
+                <option value="furniture">🪑 Furniture</option>
+                <option value="sports">⚽ Sports</option>
+                <option value="other">📦 Other</option>
+              </select>
+              
+              <!-- Sort -->
+              <select class="input" id="sort-select">
+                <option value="created-desc">Newest First</option>
+                <option value="created-asc">Oldest First</option>
+                <option value="endsAt-asc">Ending Soon</option>
+                <option value="endsAt-desc">Ending Last</option>
+              </select>
+              
+              <!-- Active Only Toggle -->
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface rounded-lg border border-border whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  id="active-filter"
+                  checked
+                  class="w-4 h-4 accent-primary-500 rounded"
+                />
+                <span class="text-sm text-text-secondary">Active only</span>
+              </label>
             </div>
           </div>
-          
-          <div class="flex gap-3">
-            <select class="input w-full sm:w-auto" id="sort-select">
-              <option value="newest">Newest First</option>
-              <option value="ending">Ending Soon</option>
-              <option value="popular">Most Bids</option>
-            </select>
-            
-            <button class="btn-secondary px-3 sm:hidden" aria-label="Filter">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-              </svg>
+        </div>
+        
+        <!-- Search Results Info -->
+        <div id="search-info" class="hidden mb-4">
+          <div class="flex items-center justify-between">
+            <p class="text-text-secondary">
+              <span id="results-count">0</span> results for "<span id="search-query" class="font-medium text-text-primary"></span>"
+            </p>
+            <button id="clear-filters" class="text-primary-500 hover:text-primary-600 text-sm font-medium">
+              Clear all filters
             </button>
           </div>
         </div>
         
         <!-- Listings Grid -->
         <div id="listings-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <!-- Loading State -->
-          <div class="col-span-full">
-            <div class="card p-6 sm:p-8">
-              <div class="flex flex-col items-center justify-center py-8 sm:py-12">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
-                <p class="text-text-secondary text-sm sm:text-base">Loading listings...</p>
-              </div>
-            </div>
+          <!-- Cards will be inserted here by listingsHandler.js -->
+        </div>
+        
+        <!-- Empty State (hidden by default) -->
+        <div id="empty-state" class="hidden">
+          <div class="text-center py-12 sm:py-16">
+            <div class="text-5xl sm:text-6xl mb-4">🔍</div>
+            <h3 class="text-xl sm:text-2xl font-semibold text-text-primary mb-2">No listings found</h3>
+            <p class="text-text-secondary mb-6 max-w-md mx-auto">
+              Try adjusting your search or filters to find what you're looking for.
+            </p>
+            <button id="reset-filters" class="btn-primary">
+              Clear all filters
+            </button>
           </div>
         </div>
         
-        <!-- Pagination -->
-        <div class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
-          <button class="btn-secondary px-3 py-2 text-sm" disabled>
-            ← Previous
-          </button>
-          <span class="px-4 py-2 text-text-secondary text-sm">Page 1 of 1</span>
-          <button class="btn-secondary px-3 py-2 text-sm" disabled>
-            Next →
-          </button>
+        <!-- Error State (hidden by default) -->
+        <div id="error-state" class="hidden">
+          <div class="text-center py-12 sm:py-16">
+            <div class="text-5xl sm:text-6xl mb-4">😕</div>
+            <h3 class="text-xl sm:text-2xl font-semibold text-text-primary mb-2">Something went wrong</h3>
+            <p id="error-message" class="text-text-secondary mb-6 max-w-md mx-auto">
+              We couldn't load the listings. Please try again.
+            </p>
+            <button id="retry-btn" class="btn-primary">
+              Try again
+            </button>
+          </div>
         </div>
+        
+        <!-- Load More Container (for infinity scroll) -->
+        <div id="load-more-container" class="mt-4">
+          <!-- Loading/End message will be injected here -->
+        </div>
+        
+        <!-- Total Count -->
+        <p id="total-count" class="text-center text-text-secondary text-sm mt-4">
+          Showing <span id="showing-count">0</span> of <span id="total-listings">0</span> listings
+        </p>
       </div>
     `;
   }
 
   async init() {
-    // Load listings from API later
+    await initListingsHandler();
   }
 }
