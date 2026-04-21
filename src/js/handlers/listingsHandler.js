@@ -16,9 +16,6 @@ import {
 
 let currentPage = 1;
 let currentSearch = '';
-let currentTag = '';
-let currentSort = 'created';
-let currentSortOrder = 'desc';
 let activeOnly = true;
 let totalPages = 1;
 let totalCount = 0;
@@ -45,8 +42,6 @@ function getElements() {
     resultsCount: document.getElementById('results-count'),
     searchQuery: document.getElementById('search-query'),
     clearFilters: document.getElementById('clear-filters'),
-    categoryFilter: document.getElementById('category-filter'),
-    sortSelect: document.getElementById('sort-select'),
     activeFilter: document.getElementById('active-filter'),
     retryBtn: document.getElementById('retry-btn'),
     resetFilters: document.getElementById('reset-filters'),
@@ -170,6 +165,7 @@ function showListings(listings) {
  */
 function appendListings(listings) {
   const { grid } = getElements();
+  if (!grid) return;
   grid.insertAdjacentHTML('beforeend', createListingCards(listings));
 }
 
@@ -212,6 +208,9 @@ async function loadMore() {
       const response = await searchListings(currentSearch, buildQueryParams());
       data = response.data;
       meta = response.meta;
+      
+      // Client-side filter for active (backup if API doesn't filter search)
+      data = filterActiveListings(data);
     } else {
       const response = await getListings(buildQueryParams());
       data = response.data;
@@ -243,15 +242,29 @@ async function loadMore() {
  * Initialize infinity scroll with scroll event
  */
 function initInfinityScroll() {
-  // Use scroll event - more reliable than IntersectionObserver for dynamic content
+  // Remove existing listener first (prevent duplicates)
+  window.removeEventListener('scroll', handleScroll);
+  // Add new listener
   window.addEventListener('scroll', handleScroll);
   console.log('Infinity scroll initialized (scroll event)');
+}
+
+/**
+ * Cleanup infinity scroll (call when leaving page)
+ */
+export function cleanupListingsHandler() {
+  window.removeEventListener('scroll', handleScroll);
+  resetInfinityScroll();
 }
 
 /**
  * Handle scroll event for infinity scroll
  */
 function handleScroll() {
+  // Stop if not on home page (grid doesn't exist)
+  const grid = document.getElementById('listings-grid');
+  if (!grid) return;
+  
   if (isLoading || allListingsLoaded) return;
   
   const scrollPosition = window.innerHeight + window.scrollY;
@@ -280,10 +293,6 @@ function updateURL() {
   
   if (currentPage > 1) params.set('page', currentPage);
   if (currentSearch) params.set('q', currentSearch);
-  if (currentTag) params.set('tag', currentTag);
-  if (currentSort !== 'created' || currentSortOrder !== 'desc') {
-    params.set('sort', `${currentSort}-${currentSortOrder}`);
-  }
   if (!activeOnly) params.set('active', 'false');
   
   const queryString = params.toString();
@@ -300,31 +309,15 @@ function readURLParams() {
   
   currentPage = parseInt(params.get('page')) || 1;
   currentSearch = params.get('q') || '';
-  currentTag = params.get('tag') || '';
   activeOnly = params.get('active') !== 'false';
   
-  const sort = params.get('sort');
-  if (sort) {
-    const [sortField, sortOrder] = sort.split('-');
-    currentSort = sortField || 'created';
-    currentSortOrder = sortOrder || 'desc';
-  }
-  
   // Update UI to match URL params
-  const { searchInput, categoryFilter, sortSelect, activeFilter } = getElements();
+  const { searchInput, activeFilter } = getElements();
   
   if (searchInput && currentSearch) {
     searchInput.value = currentSearch;
     const clearSearch = document.getElementById('clear-search');
     if (clearSearch) clearSearch.classList.remove('hidden');
-  }
-  
-  if (categoryFilter && currentTag) {
-    categoryFilter.value = currentTag;
-  }
-  
-  if (sortSelect && sort) {
-    sortSelect.value = sort;
   }
   
   if (activeFilter) {
@@ -370,18 +363,13 @@ async function handleSearch(query) {
  * Clear search and filters
  */
 async function clearAllFilters() {
-  const { searchInput, categoryFilter, sortSelect, activeFilter } = getElements();
+  const { searchInput, activeFilter } = getElements();
 
   currentSearch = '';
-  currentTag = '';
-  currentSort = 'created';
-  currentSortOrder = 'desc';
   activeOnly = true;
   currentPage = 1;
 
   if (searchInput) searchInput.value = '';
-  if (categoryFilter) categoryFilter.value = '';
-  if (sortSelect) sortSelect.value = 'created-desc';
   if (activeFilter) activeFilter.checked = true;
 
   updateSearchInfo('', 0);
@@ -403,22 +391,27 @@ function buildQueryParams() {
     page: currentPage,
     _bids: true,
     _seller: true,
+    sort: 'created',
+    sortOrder: 'desc',
   };
 
   if (activeOnly) {
     params._active = true;
   }
 
-  if (currentTag) {
-    params._tag = currentTag;
-  }
-
-  if (currentSort) {
-    params.sort = currentSort;
-    params.sortOrder = currentSortOrder;
-  }
-
   return params;
+}
+
+/**
+ * Filter listings by active status (client-side backup)
+ * @param {Array} listings - Array of listing objects
+ * @returns {Array} Filtered listings
+ */
+function filterActiveListings(listings) {
+  if (!activeOnly) return listings;
+  
+  const now = new Date();
+  return listings.filter(listing => new Date(listing.endsAt) > now);
 }
 
 /**
@@ -429,7 +422,7 @@ async function loadListings() {
   resetInfinityScroll();
   
   showLoading();
-  console.log('Loading listings...', { page: currentPage, search: currentSearch });
+  console.log('Loading listings...', { page: currentPage, search: currentSearch, activeOnly });
 
   try {
     let data, meta;
@@ -439,6 +432,9 @@ async function loadListings() {
       const response = await searchListings(currentSearch, buildQueryParams());
       data = response.data;
       meta = response.meta;
+      
+      // Client-side filter for active (backup if API doesn't filter search)
+      data = filterActiveListings(data);
     } else {
       // Regular listings endpoint
       const response = await getListings(buildQueryParams());
@@ -487,11 +483,7 @@ function initEventListeners() {
     searchInput,
     clearSearch,
     clearFilters,
-    categoryFilter,
-    sortSelect,
     activeFilter,
-    prevBtn,
-    nextBtn,
     retryBtn,
     resetFilters,
   } = getElements();
@@ -529,28 +521,6 @@ function initEventListeners() {
   // Reset filters (in empty state)
   if (resetFilters) {
     resetFilters.addEventListener('click', clearAllFilters);
-  }
-
-  // Category filter
-  if (categoryFilter) {
-    categoryFilter.addEventListener('change', async () => {
-      currentTag = categoryFilter.value;
-      currentPage = 1;
-      updateURL();
-      await loadListings();
-    });
-  }
-
-  // Sort select
-  if (sortSelect) {
-    sortSelect.addEventListener('change', async () => {
-      const [sort, order] = sortSelect.value.split('-');
-      currentSort = sort;
-      currentSortOrder = order;
-      currentPage = 1;
-      updateURL();
-      await loadListings();
-    });
   }
 
   // Active only filter

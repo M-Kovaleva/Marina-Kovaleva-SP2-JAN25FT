@@ -46,35 +46,11 @@ export class HomeView {
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <button id="clear-search" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary hidden" aria-label="Clear search">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                </button>
               </div>
             </div>
             
             <!-- Filters -->
-            <div class="flex flex-col sm:flex-row gap-3">
-              <!-- Category Filter -->
-              <select class="input" id="category-filter">
-                <option value="">All Categories</option>
-                <option value="electronics">📱 Electronics</option>
-                <option value="books">📚 Books</option>
-                <option value="clothing">👕 Clothing</option>
-                <option value="furniture">🪑 Furniture</option>
-                <option value="sports">⚽ Sports</option>
-                <option value="other">📦 Other</option>
-              </select>
-              
-              <!-- Sort -->
-              <select class="input" id="sort-select">
-                <option value="created-desc">Newest First</option>
-                <option value="created-asc">Oldest First</option>
-                <option value="endsAt-asc">Ending Soon</option>
-                <option value="endsAt-desc">Ending Last</option>
-              </select>
-              
+            <div class="flex items-center gap-3">
               <!-- Active Only Toggle -->
               <label class="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface rounded-lg border border-border whitespace-nowrap">
                 <input
