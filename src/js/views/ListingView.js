@@ -4,19 +4,19 @@
  * #45 — Display listing details              ✅ done
  * #46 — Countdown timer                      ✅ done
  * #47a — Bid history component               ✅ done
- * #47b — Bid form component                  ✅ this commit
+ * #47b — Bid form component                  ✅ done
+ * #44 — Image gallery                        ✅ done
+ * Ticket A — Owner actions                   ✅ this commit
  *
- * Added in #47b:
- *  - Four mutually exclusive form states:
- *      ended / guest / own listing / bid form
- *  - Minimum bid validation (must exceed current highest)
- *  - Loading state on submit, inline error on failure
- *  - On success: refresh bid summary + history without page reload
- *  - Countdown → auto-switches to ended state when timer hits zero
+ * Added in Ticket A:
+ *  - Edit button (owner only) → /listing/:id/edit
+ *  - Delete button (owner only) → confirm dialog → delete → toast → /
+ *  - Buttons hidden for all other users
  */
 
-import { getListing, placeBid } from '../api/apiClient.js';
+import { getListing, placeBid, deleteListing } from '../api/apiClient.js';
 import { getUser, isLoggedIn, getUserCredits, updateUser } from '../auth/storage.js';
+import { navigateTo } from '../router/router.js';
 
 export class ListingView {
   constructor(params) {
@@ -58,6 +58,14 @@ export class ListingView {
           <a href="/" data-link class="btn-primary">Browse listings</a>
         </div>
 
+        <!-- Delete toast (hidden by default) -->
+        <div id="delete-toast"
+          class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50
+                 bg-text-primary text-white text-sm font-medium
+                 px-5 py-3 rounded-xl shadow-lg">
+          Listing deleted. Redirecting…
+        </div>
+
         <!-- Main content -->
         <div id="listing-content" class="hidden">
 
@@ -65,8 +73,6 @@ export class ListingView {
 
             <!-- Left: Image Gallery (#44) -->
             <div class="space-y-3">
-
-              <!-- Main image -->
               <div class="rounded-xl overflow-hidden aspect-square bg-surface">
                 <img
                   id="gallery-main"
@@ -75,27 +81,39 @@ export class ListingView {
                   class="w-full h-full object-cover transition-opacity duration-200 opacity-0"
                 />
               </div>
-
-              <!-- Thumbnails — hidden when 0 or 1 image -->
-              <div
-                id="gallery-thumbnails"
-                class="hidden grid-cols-5 gap-2">
-              </div>
-
+              <div id="gallery-thumbnails" class="hidden grid-cols-5 gap-2"></div>
             </div>
 
             <!-- Right: Details column -->
             <div class="space-y-5">
 
               <!-- Status badge + seller name (#43) -->
-              <div class="flex flex-wrap items-center gap-2">
-                <span id="listing-status-badge" class="badge-success">Active</span>
-                <span class="text-text-secondary text-sm">
-                  Listed by
-                  <a id="listing-seller-link" href="#" data-link
-                    class="text-primary-500 hover:underline font-medium">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span id="listing-status-badge" class="badge-success">Active</span>
+                  <span class="text-text-secondary text-sm">
+                    Listed by
+                    <a id="listing-seller-link" href="#" data-link
+                      class="text-primary-500 hover:underline font-medium">
+                    </a>
+                  </span>
+                </div>
+
+                <!-- Owner actions (hidden by default, shown only to seller) -->
+                <div id="owner-actions" class="hidden flex items-center gap-2">
+                  <a
+                    id="edit-listing-btn"
+                    href="#"
+                    data-link
+                    class="btn-secondary text-xs px-3 py-1.5">
+                    Edit
                   </a>
-                </span>
+                  <button
+                    id="delete-listing-btn"
+                    class="btn-danger text-xs px-3 py-1.5">
+                    Delete
+                  </button>
+                </div>
               </div>
 
               <!-- Title (#43) -->
@@ -166,27 +184,19 @@ export class ListingView {
                     </div>
                   </div>
 
-                  <!-- ── #47b: Four bid form states ── -->
-
-                  <!-- State A: Auction ended -->
+                  <!-- Four bid form states (#47b) -->
                   <div id="state-ended" class="hidden text-center py-2">
                     <p class="text-red-700 text-sm font-medium">This auction has ended.</p>
                   </div>
-
-                  <!-- State B: Guest -->
                   <div id="state-guest" class="hidden space-y-3 text-center py-2">
                     <p class="text-text-secondary text-sm">Sign in to place a bid</p>
                     <a href="/login" data-link class="btn-primary block">Sign in to bid</a>
                   </div>
-
-                  <!-- State C: Own listing -->
                   <div id="state-own" class="hidden text-center py-2">
                     <p class="text-text-secondary text-sm">
                       You cannot bid on your own listing.
                     </p>
                   </div>
-
-                  <!-- State D: Bid form -->
                   <form id="bid-form" class="hidden space-y-3">
                     <div>
                       <label for="bid-amount" class="label">Your bid (credits)</label>
@@ -200,12 +210,9 @@ export class ListingView {
                       />
                       <p id="bid-hint" class="hint"></p>
                     </div>
-
-                    <!-- Inline error -->
                     <div id="bid-error" class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
                       <p class="text-error text-sm font-medium"></p>
                     </div>
-
                     <button type="submit" id="bid-submit" class="btn-primary w-full py-3">
                       Place Bid
                     </button>
@@ -242,11 +249,12 @@ export class ListingView {
 
       this._showContent();
       this._renderBasicInfo(listing);
-      this._renderGallery(listing.media); // #44
+      this._renderGallery(listing.media);
+      this._renderOwnerActions(listing);  // Ticket A
       this._renderDetails(listing);
       this._renderBidSummary(listing);
       this._startCountdown(listing.endsAt);
-      this._renderBidForm(listing);         // #47b
+      this._renderBidForm(listing);
       this._renderBidHistory(listing.bids);
     } catch (err) {
       console.error('ListingView: failed to load listing', err);
@@ -255,21 +263,86 @@ export class ListingView {
   }
 
   // ─────────────────────────────────────────────
-  // #44 — Image Gallery
+  // Ticket A — Owner actions
+  // ─────────────────────────────────────────────
+
+  // ─────────────────────────────────────────────
+  // Ticket A — Owner actions (Edit + Delete)
   // ─────────────────────────────────────────────
 
   /**
-   * Render main image + thumbnail strip.
-   *
-   * Cases:
-   *   0 images → placeholder SVG in main slot, no thumbnails
-   *   1 image  → main image only, no thumbnails
-   *   2+ images → main image + scrollable thumbnail row
-   *               clicking a thumbnail swaps main image (fade transition)
-   *               active thumbnail has primary border
-   *
-   * @param {Array<{url:string, alt:string}>} media
+   * Show Edit + Delete buttons only to the listing owner.
+   * Other users and guests never see these controls.
+   * @param {Object} listing
    */
+  _renderOwnerActions(listing) {
+    const currentUser = getUser();
+    if (!currentUser || listing.seller?.name !== currentUser.name) return;
+
+    // Reveal the actions bar
+    const actionsBar = document.getElementById('owner-actions');
+    actionsBar.classList.remove('hidden');
+
+    // Edit → navigate to edit page
+    const editBtn = document.getElementById('edit-listing-btn');
+    editBtn.href = `/listing/${listing.id}/edit`;
+
+    // Delete → confirm → API → success toast → home
+    document.getElementById('delete-listing-btn').addEventListener('click', () =>
+      this._handleDelete(listing.id, listing.title)
+    );
+  }
+
+  /**
+   * Confirm and delete the listing.
+   * Shows a brief success message before navigating home.
+   * @param {string} id
+   * @param {string} title
+   */
+  async _handleDelete(id, title) {
+    const confirmed = window.confirm(
+      `Delete "${title}"?\n\nThis cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    const deleteBtn = document.getElementById('delete-listing-btn');
+    deleteBtn.disabled    = true;
+    deleteBtn.textContent = 'Deleting…';
+
+    try {
+      await deleteListing(id);
+      this._showSuccessToast('Listing deleted successfully.');
+      setTimeout(() => navigateTo('/'), 1500);
+    } catch (err) {
+      window.alert(err.message || 'Could not delete listing. Please try again.');
+      deleteBtn.disabled    = false;
+      deleteBtn.textContent = 'Delete';
+    }
+  }
+
+  /**
+   * Show a brief success notification at the top of the page.
+   * Auto-dismisses after 3s.
+   * @param {string} message
+   */
+  _showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.className =
+      'fixed top-4 left-1/2 -translate-x-1/2 z-50 ' +
+      'px-6 py-3 bg-success text-white rounded-xl shadow-lg ' +
+      'text-sm font-medium transition-opacity duration-500';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 500);
+    }, 2500);
+  }
+
+  // ─────────────────────────────────────────────
+  // #44 — Image Gallery
+  // ─────────────────────────────────────────────
+
   _renderGallery(media) {
     const mainImg      = document.getElementById('gallery-main');
     const thumbsWrap   = document.getElementById('gallery-thumbnails');
@@ -281,7 +354,6 @@ export class ListingView {
       "16-16 10 10 22-24' fill='none' stroke='%23e3e8ef' stroke-width='6' " +
       "stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 
-    // ── No images ──
     if (!media?.length) {
       mainImg.src = PLACEHOLDER;
       mainImg.alt = 'No image available';
@@ -289,7 +361,6 @@ export class ListingView {
       return;
     }
 
-    // ── Set main image with fade-in ──
     const loadMain = (url, alt) => {
       mainImg.classList.replace('opacity-100', 'opacity-0');
       mainImg.onload  = () => mainImg.classList.replace('opacity-0', 'opacity-100');
@@ -303,7 +374,6 @@ export class ListingView {
 
     loadMain(media[0].url, media[0].alt);
 
-    // ── Thumbnails (only for 2+ images) ──
     if (media.length < 2) return;
 
     thumbsWrap.classList.remove('hidden');
@@ -328,14 +398,11 @@ export class ListingView {
       )
       .join('');
 
-    // Click handler — swap main image + update active border
     thumbsWrap.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-index]');
       if (!btn) return;
-
-      const idx  = parseInt(btn.dataset.index, 10);
+      const idx = parseInt(btn.dataset.index, 10);
       loadMain(media[idx].url, media[idx].alt);
-
       thumbsWrap.querySelectorAll('[data-index]').forEach((b) => {
         b.classList.replace('border-primary-500', 'border-transparent');
         b.classList.add('hover:border-primary-300');
@@ -428,7 +495,6 @@ export class ListingView {
   _renderBidSummary(listing) {
     const bids    = listing.bids ?? [];
     const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
-
     document.getElementById('listing-current-bid').textContent =
       `${highest.toLocaleString()} credits`;
     document.getElementById('listing-bid-count').textContent =
@@ -451,13 +517,11 @@ export class ListingView {
 
       if (diff <= 0) {
         countdownEl.textContent = 'Auction ended';
-        countdownEl.className   =
-          'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
+        countdownEl.className   = 'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
         statusBadge.textContent = 'Ended';
         statusBadge.className   = 'badge-error';
         clearInterval(this._countdownInterval);
         this._countdownInterval = null;
-        // Switch bid form to ended state live
         this._showState('state-ended');
         return;
       }
@@ -472,16 +536,14 @@ export class ListingView {
           `${String(hours).padStart(2, '0')}:` +
           `${String(minutes).padStart(2, '0')}:` +
           `${String(seconds).padStart(2, '0')}`;
-        countdownEl.className =
-          'text-xl sm:text-2xl font-semibold tabular-nums text-amber-700';
+        countdownEl.className = 'text-xl sm:text-2xl font-semibold tabular-nums text-amber-700';
         return;
       }
 
       countdownEl.textContent =
         `${days}d ${hours}h ${String(minutes).padStart(2, '0')}m ` +
         `${String(seconds).padStart(2, '0')}s`;
-      countdownEl.className =
-        'text-xl sm:text-2xl font-semibold tabular-nums text-green-700';
+      countdownEl.className = 'text-xl sm:text-2xl font-semibold tabular-nums text-green-700';
     };
 
     tick();
@@ -499,39 +561,23 @@ export class ListingView {
   // #47b — Bid form
   // ─────────────────────────────────────────────
 
-  /**
-   * Decide which of four states to show — exactly one at a time.
-   * Order matters: ended → guest → own → form.
-   * @param {Object} listing
-   */
   _renderBidForm(listing) {
-    // State A: ended
     if (new Date(listing.endsAt) <= new Date()) {
       this._showState('state-ended');
       return;
     }
-
-    // State B: guest
     if (!isLoggedIn()) {
       this._showState('state-guest');
       return;
     }
-
-    // State C: own listing
     if (listing.seller?.name === getUser()?.name) {
       this._showState('state-own');
       return;
     }
-
-    // State D: bid form
     this._showState('bid-form');
     this._setupBidForm(listing);
   }
 
-  /**
-   * Set min value, hint text, and attach submit handler.
-   * @param {Object} listing
-   */
   _setupBidForm(listing) {
     const bids        = listing.bids ?? [];
     const highest     = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
@@ -551,21 +597,6 @@ export class ListingView {
     );
   }
 
-  /**
-   * Handle form submission.
-   *
-   * Success flow:
-   *   1. Show loading on button
-   *   2. Call placeBid API
-   *   3. After 1s: re-fetch listing, refresh summary + history + form hint
-   *
-   * Error flow:
-   *   Show inline error, re-enable button.
-   *
-   * @param {Event}  e
-   * @param {string} listingId
-   * @param {number} minBid     - minimum valid amount at time of setup
-   */
   async _handleBidSubmit(e, listingId, minBid, userCredits) {
     e.preventDefault();
 
@@ -573,30 +604,23 @@ export class ListingView {
     const submitBtn = document.getElementById('bid-submit');
     const amount    = Number(input.value);
 
-    // Client-side validation
     if (!amount || amount < minBid) {
       this._showBidError(`Bid must be at least ${minBid} credits.`);
       return;
     }
     if (amount > userCredits) {
-      this._showBidError(
-        `You only have ${userCredits.toLocaleString()} credits available.`
-      );
+      this._showBidError(`You only have ${userCredits.toLocaleString()} credits available.`);
       return;
     }
 
-    // Loading state
     submitBtn.disabled    = true;
     submitBtn.textContent = 'Placing bid…';
     this._hideBidError();
 
     try {
       await placeBid(listingId, amount);
-
-      // Success feedback
       submitBtn.textContent = '✓ Bid placed!';
 
-      // Re-fetch and refresh after short delay
       setTimeout(async () => {
         const response = await getListing(listingId, true, true);
         const updated  = response.data;
@@ -605,7 +629,6 @@ export class ListingView {
         this._renderBidHistory(updated.bids);
         this._refreshBidHint(updated.bids, userCredits - amount);
 
-        // Deduct bid from local user credits and update nav badge
         const newCredits = userCredits - amount;
         updateUser({ credits: newCredits });
         this._updateCreditsDisplay(newCredits);
@@ -621,41 +644,23 @@ export class ListingView {
     }
   }
 
-  /**
-   * Update min value and hint text after a successful bid.
-   * @param {Array} bids - updated bids array from API
-   */
-  /**
-   * Update min value, max value, and hint text after a successful bid.
-   * @param {Array}  bids        - updated bids from API
-   * @param {number} newCredits  - user's remaining credits after deduction
-   */
   _refreshBidHint(bids, newCredits) {
     const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
     const newMin  = highest + 1;
-
-    const input       = document.getElementById('bid-amount');
+    const input   = document.getElementById('bid-amount');
     input.min         = newMin;
     input.max         = newCredits;
     input.placeholder = `Min: ${newMin}`;
-
     document.getElementById('bid-hint').textContent =
       `Minimum: ${newMin} cr · Your balance: ${newCredits.toLocaleString()} cr`;
   }
 
-  /**
-   * Update the credits badge in the navbar (desktop + mobile).
-   * Reads the same element IDs used by Nav.js.
-   * @param {number} credits
-   */
   _updateCreditsDisplay(credits) {
     const formatted = credits.toLocaleString();
-
     const desktopAmount = document.getElementById('credits-amount');
     const mobileAmount  = document.getElementById('credits-amount-mobile');
     const desktopBadge  = document.getElementById('credits-badge');
     const mobileBadge   = document.getElementById('credits-badge-mobile');
-
     if (desktopAmount) desktopAmount.textContent = formatted;
     if (mobileAmount)  mobileAmount.textContent  = formatted;
     if (desktopBadge)  desktopBadge.style.display = 'flex';
@@ -684,46 +689,35 @@ export class ListingView {
       .map((bid, i) => {
         const isHighest = i === 0;
         const isOwn     = currentUser?.name && bid.bidder?.name === currentUser.name;
-
         const avatarHtml = bid.bidder?.avatar?.url
-          ? `<img
-               src="${this._escHtml(bid.bidder.avatar.url)}"
+          ? `<img src="${this._escHtml(bid.bidder.avatar.url)}"
                alt="${this._escHtml(bid.bidder.name ?? '')}"
-               class="w-full h-full object-cover"
-             />`
+               class="w-full h-full object-cover"/>`
           : '';
 
         return `
           <div class="flex items-center gap-4 px-5 py-4
                       ${isHighest ? 'bg-primary-50' : ''}
                       ${isOwn && !isHighest ? 'bg-warning/5' : ''}">
-
             <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-primary-100">
               ${avatarHtml}
             </div>
-
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <a href="/profile/${this._escHtml(bid.bidder?.name ?? '')}"
                    data-link
-                   class="font-semibold text-sm text-text-primary
-                          hover:text-primary-500 transition-colors truncate">
+                   class="font-semibold text-sm text-text-primary hover:text-primary-500 transition-colors truncate">
                   @${this._escHtml(bid.bidder?.name ?? 'Unknown')}
                 </a>
                 ${isHighest ? '<span class="badge-success">Highest bid</span>' : ''}
                 ${isOwn     ? '<span class="badge-warning">You</span>'         : ''}
               </div>
-              <p class="text-xs text-text-secondary mt-0.5">
-                ${this._timeAgo(bid.created)}
-              </p>
+              <p class="text-xs text-text-secondary mt-0.5">${this._timeAgo(bid.created)}</p>
             </div>
-
-            <p class="font-bold text-sm flex-shrink-0
-                      ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
+            <p class="font-bold text-sm flex-shrink-0 ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
               ${bid.amount.toLocaleString()}
               <span class="font-normal text-text-secondary text-xs">credits</span>
             </p>
-
           </div>`;
       })
       .join('');
@@ -743,7 +737,6 @@ export class ListingView {
     document.getElementById('listing-error').classList.remove('hidden');
   }
 
-  /** Show one bid-form state, hide the other three */
   _showState(id) {
     ['state-ended', 'state-guest', 'state-own', 'bid-form'].forEach((s) =>
       document.getElementById(s)?.classList.add('hidden')
@@ -773,7 +766,6 @@ export class ListingView {
     const minutes = Math.floor(diff / 60_000);
     const hours   = Math.floor(diff / 3_600_000);
     const days    = Math.floor(diff / 86_400_000);
-
     if (minutes < 1)  return 'Just now';
     if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
     if (hours   < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
