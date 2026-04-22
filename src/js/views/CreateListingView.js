@@ -1,6 +1,11 @@
 /**
  * Create/Edit Listing View
  */
+
+import { isLoggedIn } from '../auth/storage.js';
+import { navigateTo } from '../router/router.js';
+import { createListing } from '../api/apiClient.js';
+
 export class CreateListingView {
   constructor(params) {
     this.params = params;
@@ -110,7 +115,7 @@ export class CreateListingView {
               
               <!-- Submit Button -->
               <div class="pt-4">
-                <button type="submit" class="btn-primary w-full py-3">
+                <button type="submit" id="submit-btn" class="btn-primary w-full py-3">
                   ${this.isEditMode ? 'Update Listing' : 'Create Listing'}
                 </button>
               </div>
@@ -122,6 +127,12 @@ export class CreateListingView {
   }
 
   async init() {
+    // ── Protected route: guests cannot access this page ──
+    if (!isLoggedIn()) {
+      navigateTo('/login');
+      return; // stop — do not wire up any handlers
+    }
+
     // Set minimum date to now
     const endsAtInput = document.getElementById('endsAt');
     if (endsAtInput) {
@@ -131,7 +142,7 @@ export class CreateListingView {
     }
 
     // Add media input functionality
-    const addMediaBtn = document.getElementById('add-media-btn');
+    const addMediaBtn    = document.getElementById('add-media-btn');
     const mediaContainer = document.getElementById('media-container');
     
     if (addMediaBtn && mediaContainer) {
@@ -152,13 +163,94 @@ export class CreateListingView {
             </button>
           `;
           mediaContainer.appendChild(newInput);
-          
-          // Add remove functionality
           newInput.querySelector('button').addEventListener('click', () => {
             newInput.remove();
           });
         }
       });
     }
+
+    // Form submit
+    const form = document.getElementById('listing-form');
+    if (form) {
+      form.addEventListener('submit', (e) => this._handleSubmit(e));
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // Form submit handler
+  // ─────────────────────────────────────────────
+
+  async _handleSubmit(e) {
+    e.preventDefault();
+    this._hideError();
+
+    const title       = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const endsAtRaw   = document.getElementById('endsAt').value;
+    const tagsRaw     = document.getElementById('tags').value;
+
+    // Validation
+    if (!title) {
+      this._showError('Title is required.');
+      document.getElementById('title').focus();
+      return;
+    }
+
+    if (!endsAtRaw) {
+      this._showError('End date is required.');
+      document.getElementById('endsAt').focus();
+      return;
+    }
+
+    const endsAt = new Date(endsAtRaw);
+    if (endsAt <= new Date()) {
+      this._showError('End date must be in the future.');
+      document.getElementById('endsAt').focus();
+      return;
+    }
+
+    // Build payload
+    const payload = { title, endsAt: endsAt.toISOString() };
+
+    if (description) payload.description = description;
+
+    const tags = tagsRaw.split(',').map((t) => t.trim()).filter(Boolean);
+    if (tags.length) payload.tags = tags;
+
+    const mediaInputs = document.querySelectorAll('input[name="media[]"]');
+    const media = Array.from(mediaInputs)
+      .map((input) => input.value.trim())
+      .filter(Boolean)
+      .map((url) => ({ url, alt: '' }));
+    if (media.length) payload.media = media;
+
+    this._setLoading(true);
+
+    try {
+      const response = await createListing(payload);
+      navigateTo(`/listing/${response.data.id}`);
+    } catch (err) {
+      this._showError(err.message || 'Could not create listing. Please try again.');
+      this._setLoading(false);
+    }
+  }
+
+  _setLoading(isLoading) {
+    const btn    = document.getElementById('submit-btn');
+    const inputs = document.querySelectorAll('#listing-form input, #listing-form textarea');
+    btn.disabled    = isLoading;
+    btn.textContent = isLoading ? 'Creating…' : 'Create Listing';
+    inputs.forEach((el) => (el.disabled = isLoading));
+  }
+
+  _showError(message) {
+    const el = document.getElementById('listing-error');
+    el.classList.remove('hidden');
+    el.querySelector('p').textContent = message;
+  }
+
+  _hideError() {
+    document.getElementById('listing-error')?.classList.add('hidden');
   }
 }

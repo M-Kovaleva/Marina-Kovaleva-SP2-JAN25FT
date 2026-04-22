@@ -3,6 +3,8 @@
  */
 
 import { initListingsHandler } from '../handlers/listingsHandler.js';
+import { isLoggedIn } from '../auth/storage.js';
+
 export class HomeView {
   constructor(params) {
     this.params = params;
@@ -23,7 +25,9 @@ export class HomeView {
             <a href="#listings" class="btn-secondary bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 text-base font-semibold">
               Browse Listings
             </a>
-            <a href="/listing/create" data-link class="btn-primary bg-primary-800 hover:bg-primary-900 border-primary-800 px-6 py-3 text-base font-semibold" id="hero-create-btn">
+            <a href="/listing/create" data-link
+              id="hero-create-btn"
+              class="btn-primary bg-primary-800 hover:bg-primary-900 border-primary-800 px-6 py-3 text-base font-semibold">
               + Create Listing
             </a>
           </div>
@@ -79,10 +83,9 @@ export class HomeView {
         
         <!-- Listings Grid -->
         <div id="listings-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <!-- Cards will be inserted here by listingsHandler.js -->
         </div>
         
-        <!-- Empty State (hidden by default) -->
+        <!-- Empty State -->
         <div id="empty-state" class="hidden">
           <div class="text-center py-12 sm:py-16">
             <div class="text-5xl sm:text-6xl mb-4">🔍</div>
@@ -90,13 +93,11 @@ export class HomeView {
             <p class="text-text-secondary mb-6 max-w-md mx-auto">
               Try adjusting your search or filters to find what you're looking for.
             </p>
-            <button id="reset-filters" class="btn-primary">
-              Clear all filters
-            </button>
+            <button id="reset-filters" class="btn-primary">Clear all filters</button>
           </div>
         </div>
         
-        <!-- Error State (hidden by default) -->
+        <!-- Error State -->
         <div id="error-state" class="hidden">
           <div class="text-center py-12 sm:py-16">
             <div class="text-5xl sm:text-6xl mb-4">😕</div>
@@ -104,16 +105,12 @@ export class HomeView {
             <p id="error-message" class="text-text-secondary mb-6 max-w-md mx-auto">
               We couldn't load the listings. Please try again.
             </p>
-            <button id="retry-btn" class="btn-primary">
-              Try again
-            </button>
+            <button id="retry-btn" class="btn-primary">Try again</button>
           </div>
         </div>
         
-        <!-- Load More Container (for infinity scroll) -->
-        <div id="load-more-container" class="mt-4">
-          <!-- Loading/End message will be injected here -->
-        </div>
+        <!-- Load More Container -->
+        <div id="load-more-container" class="mt-4"></div>
         
         <!-- Total Count -->
         <p id="total-count" class="text-center text-text-secondary text-sm mt-4">
@@ -124,6 +121,12 @@ export class HomeView {
   }
 
   async init() {
+    // Guest: hero button redirects to login; logged-in: goes to create
+    const heroBtn = document.getElementById('hero-create-btn');
+    if (heroBtn && !isLoggedIn()) {
+      heroBtn.href = '/login';
+    }
+
     await initListingsHandler();
   }
 }
