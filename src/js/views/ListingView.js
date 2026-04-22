@@ -63,12 +63,25 @@ export class ListingView {
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-            <!-- Left: Image placeholder (Gallery in #44) -->
-            <div>
-              <div id="gallery-placeholder"
-                class="bg-surface rounded-xl aspect-square flex items-center justify-center">
-                <span class="text-text-secondary text-sm">Loading image...</span>
+            <!-- Left: Image Gallery (#44) -->
+            <div class="space-y-3">
+
+              <!-- Main image -->
+              <div class="rounded-xl overflow-hidden aspect-square bg-surface">
+                <img
+                  id="gallery-main"
+                  src=""
+                  alt=""
+                  class="w-full h-full object-cover transition-opacity duration-200 opacity-0"
+                />
               </div>
+
+              <!-- Thumbnails — hidden when 0 or 1 image -->
+              <div
+                id="gallery-thumbnails"
+                class="hidden grid-cols-5 gap-2">
+              </div>
+
             </div>
 
             <!-- Right: Details column -->
@@ -174,7 +187,7 @@ export class ListingView {
                   </div>
 
                   <!-- State D: Bid form -->
-                  <form id="bid-form" class="hidden space-y-3" novalidate>
+                  <form id="bid-form" class="hidden space-y-3">
                     <div>
                       <label for="bid-amount" class="label">Your bid (credits)</label>
                       <input
@@ -229,6 +242,7 @@ export class ListingView {
 
       this._showContent();
       this._renderBasicInfo(listing);
+      this._renderGallery(listing.media); // #44
       this._renderDetails(listing);
       this._renderBidSummary(listing);
       this._startCountdown(listing.endsAt);
@@ -238,6 +252,97 @@ export class ListingView {
       console.error('ListingView: failed to load listing', err);
       this._showError();
     }
+  }
+
+  // ─────────────────────────────────────────────
+  // #44 — Image Gallery
+  // ─────────────────────────────────────────────
+
+  /**
+   * Render main image + thumbnail strip.
+   *
+   * Cases:
+   *   0 images → placeholder SVG in main slot, no thumbnails
+   *   1 image  → main image only, no thumbnails
+   *   2+ images → main image + scrollable thumbnail row
+   *               clicking a thumbnail swaps main image (fade transition)
+   *               active thumbnail has primary border
+   *
+   * @param {Array<{url:string, alt:string}>} media
+   */
+  _renderGallery(media) {
+    const mainImg      = document.getElementById('gallery-main');
+    const thumbsWrap   = document.getElementById('gallery-thumbnails');
+    const PLACEHOLDER  =
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' " +
+      "viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f6f9fc'/%3E" +
+      "%3Cpath d='M80 60h40a8 8 0 0 1 8 8v64a8 8 0 0 1-8 8H80a8 8 0 0 1-8-8V68a8 " +
+      "8 0 0 1 8-8zm20 12a16 16 0 1 0 0 32 16 16 0 0 0 0-32zm-28 52 " +
+      "16-16 10 10 22-24' fill='none' stroke='%23e3e8ef' stroke-width='6' " +
+      "stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+
+    // ── No images ──
+    if (!media?.length) {
+      mainImg.src = PLACEHOLDER;
+      mainImg.alt = 'No image available';
+      mainImg.classList.replace('opacity-0', 'opacity-100');
+      return;
+    }
+
+    // ── Set main image with fade-in ──
+    const loadMain = (url, alt) => {
+      mainImg.classList.replace('opacity-100', 'opacity-0');
+      mainImg.onload  = () => mainImg.classList.replace('opacity-0', 'opacity-100');
+      mainImg.onerror = () => {
+        mainImg.src = PLACEHOLDER;
+        mainImg.classList.replace('opacity-0', 'opacity-100');
+      };
+      mainImg.alt = alt || 'Listing image';
+      mainImg.src = url;
+    };
+
+    loadMain(media[0].url, media[0].alt);
+
+    // ── Thumbnails (only for 2+ images) ──
+    if (media.length < 2) return;
+
+    thumbsWrap.classList.remove('hidden');
+    thumbsWrap.style.display = 'grid';
+
+    thumbsWrap.innerHTML = media
+      .map(
+        (item, i) => `
+        <button
+          data-index="${i}"
+          class="aspect-square rounded-lg overflow-hidden border-2 transition-all duration-150 focus:outline-none
+                 ${i === 0 ? 'border-primary-500' : 'border-transparent hover:border-primary-300'}"
+          aria-label="View image ${i + 1}"
+        >
+          <img
+            src="${this._escHtml(item.url)}"
+            alt="${this._escHtml(item.alt || '')}"
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </button>`
+      )
+      .join('');
+
+    // Click handler — swap main image + update active border
+    thumbsWrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-index]');
+      if (!btn) return;
+
+      const idx  = parseInt(btn.dataset.index, 10);
+      loadMain(media[idx].url, media[idx].alt);
+
+      thumbsWrap.querySelectorAll('[data-index]').forEach((b) => {
+        b.classList.replace('border-primary-500', 'border-transparent');
+        b.classList.add('hover:border-primary-300');
+      });
+      btn.classList.replace('border-transparent', 'border-primary-500');
+      btn.classList.remove('hover:border-primary-300');
+    });
   }
 
   // ─────────────────────────────────────────────
