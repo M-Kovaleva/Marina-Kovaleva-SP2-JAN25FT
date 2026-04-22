@@ -2,21 +2,26 @@
  * Single Listing View
  * #43 — Build Single Listing page layout     ✅ done
  * #45 — Display listing details              ✅ done
- * #46 — Countdown timer                      ✅ this commit
+ * #46 — Countdown timer                      ✅ done
+ * #47a — Bid history component               ✅ this commit
  *
- * Added in #46:
- *  - Bid card with current bid info + live countdown
- *  - Three visual states: Active / Ending soon (<24h) / Ended
- *  - Interval cleanup via destroy() called by router on navigation
+ * Added in #47a:
+ *  - Bid history list sorted highest → lowest
+ *  - Per bid: avatar, bidder name link, amount, time ago
+ *  - Highest bid highlighted (bg-primary-50 + badge)
+ *  - Current user's bids highlighted differently
+ *  - Scrollable when > 6 bids
+ *  - Empty state: "No bids yet. Be the first!"
  */
 
 import { getListing } from '../api/apiClient.js';
+import { getUser } from '../auth/storage.js';
 
 export class ListingView {
   constructor(params) {
     this.params = params;
     this.listingId = params.id;
-    this._countdownInterval = null; // #46: store ref for cleanup
+    this._countdownInterval = null;
   }
 
   // ─────────────────────────────────────────────
@@ -119,14 +124,12 @@ export class ListingView {
                 </div>
               </div>
 
-              <!-- ── #46: Bid card with countdown ── -->
+              <!-- Bid card (#46 countdown + #47b form placeholder) -->
               <div class="card">
                 <div class="card-body space-y-5">
 
-                  <!-- Current bid + countdown row -->
+                  <!-- Current bid + countdown (#46) -->
                   <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-
-                    <!-- Current bid -->
                     <div>
                       <p class="text-xs text-text-secondary mb-1">Current bid</p>
                       <p id="listing-current-bid"
@@ -138,8 +141,6 @@ export class ListingView {
                         0 bids
                       </p>
                     </div>
-
-                    <!-- Countdown -->
                     <div class="sm:text-right">
                       <p class="text-xs text-text-secondary mb-1">Ends in</p>
                       <p id="countdown"
@@ -149,11 +150,10 @@ export class ListingView {
                         class="text-xs text-text-secondary mt-1">
                       </p>
                     </div>
-
                   </div>
 
-                  <!-- Bid form placeholder (implemented in #47) -->
-                  <p class="text-text-secondary text-sm">Bid form — coming in #47</p>
+                  <!-- Bid form placeholder (implemented in #47b) -->
+                  <p class="text-text-secondary text-sm">Bid form — coming in #47b</p>
 
                 </div>
               </div>
@@ -161,12 +161,13 @@ export class ListingView {
             </div>
           </div>
 
-          <!-- Bid history placeholder (implemented in #47) -->
+          <!-- ── #47a: Bid History ── -->
           <section class="mt-10 sm:mt-14">
             <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
-            <div class="card">
-              <div id="bid-history" class="p-8 text-center">
-                <p class="text-text-secondary">Bid history — coming in #47</p>
+            <div class="card overflow-hidden">
+              <!-- Scrollable when > 6 bids (max-h ≈ 6 × 72px row) -->
+              <div id="bid-history" class="divide-y divide-border max-h-[432px] overflow-y-auto">
+                <!-- Populated by _renderBidHistory() -->
               </div>
             </div>
           </section>
@@ -183,13 +184,14 @@ export class ListingView {
   async init() {
     try {
       const response = await getListing(this.listingId, true, true);
-      const listing = response.data;
+      const listing  = response.data;
 
       this._showContent();
-      this._renderBasicInfo(listing);  // #43
-      this._renderDetails(listing);    // #45
-      this._renderBidSummary(listing); // #46: current bid + bid count
-      this._startCountdown(listing.endsAt); // #46: live timer
+      this._renderBasicInfo(listing);       // #43
+      this._renderDetails(listing);         // #45
+      this._renderBidSummary(listing);      // #46
+      this._startCountdown(listing.endsAt); // #46
+      this._renderBidHistory(listing.bids); // #47a
     } catch (err) {
       console.error('ListingView: failed to load listing', err);
       this._showError();
@@ -208,13 +210,13 @@ export class ListingView {
     const sellerLink = document.getElementById('listing-seller-link');
     if (seller) {
       sellerLink.textContent = `@${seller.name}`;
-      sellerLink.href = `/profile/${seller.name}`;
+      sellerLink.href        = `/profile/${seller.name}`;
     }
 
     const isActive = new Date(endsAt) > new Date();
-    const badge = document.getElementById('listing-status-badge');
+    const badge    = document.getElementById('listing-status-badge');
     badge.textContent = isActive ? 'Active' : 'Ended';
-    badge.className = isActive ? 'badge-success' : 'badge-error';
+    badge.className   = isActive ? 'badge-success' : 'badge-error';
   }
 
   // ─────────────────────────────────────────────
@@ -257,34 +259,28 @@ export class ListingView {
 
     const avatarUrl = seller.avatar?.url?.trim();
     if (avatarUrl) {
-      const img = document.createElement('img');
-      img.src = avatarUrl;
-      img.alt = seller.name;
+      const img     = document.createElement('img');
+      img.src       = avatarUrl;
+      img.alt       = seller.name;
       img.className = 'w-full h-full object-cover';
       document.getElementById('seller-avatar').appendChild(img);
     }
 
-    const profileLink = document.getElementById('seller-profile-link');
+    const profileLink       = document.getElementById('seller-profile-link');
     profileLink.textContent = `@${seller.name}`;
-    profileLink.href = `/profile/${seller.name}`;
+    profileLink.href        = `/profile/${seller.name}`;
 
     document.getElementById('listing-created-date').textContent =
       this._formatDate(created);
   }
 
   // ─────────────────────────────────────────────
-  // #46 — Bid summary + Countdown timer
+  // #46 — Bid summary + Countdown
   // ─────────────────────────────────────────────
 
-  /**
-   * Populate current highest bid and total bid count.
-   * @param {Object} listing
-   */
   _renderBidSummary(listing) {
-    const bids = listing.bids ?? [];
-    const highest = bids.length
-      ? Math.max(...bids.map((b) => b.amount))
-      : 0;
+    const bids    = listing.bids ?? [];
+    const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
 
     document.getElementById('listing-current-bid').textContent =
       `${highest.toLocaleString()} credits`;
@@ -292,43 +288,28 @@ export class ListingView {
       `${bids.length} ${bids.length === 1 ? 'bid' : 'bids'}`;
   }
 
-  /**
-   * Start a live countdown that ticks every second.
-   *
-   * Visual states:
-   *   > 24 h  →  "2d 14h 30m"          text-text-primary  (normal)
-   *   < 24 h  →  "HH:MM:SS"            text-warning       (ending soon)
-   *   ended   →  "Auction ended"        text-error         (stopped)
-   *
-   * Call destroy() to clear the interval when navigating away.
-   * @param {string} endsAt - ISO date string from API
-   */
   _startCountdown(endsAt) {
-    const countdownEl  = document.getElementById('countdown');
-    const endsDateEl   = document.getElementById('listing-ends-date');
-    const statusBadge  = document.getElementById('listing-status-badge');
-    const endDate      = new Date(endsAt);
+    const countdownEl = document.getElementById('countdown');
+    const endsDateEl  = document.getElementById('listing-ends-date');
+    const statusBadge = document.getElementById('listing-status-badge');
+    const endDate     = new Date(endsAt);
 
-    // Show the absolute end date/time once
     endsDateEl.textContent = endDate.toLocaleString('en-GB', {
-      day:    'numeric',
-      month:  'short',
-      year:   'numeric',
-      hour:   '2-digit',
-      minute: '2-digit',
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
 
     const tick = () => {
       const diff = endDate - Date.now();
 
-      // ── Ended ──
       if (diff <= 0) {
-        countdownEl.textContent  = 'Auction ended';
-        countdownEl.className    = 'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
-        statusBadge.textContent  = 'Ended';
-        statusBadge.className    = 'badge-error';
+        countdownEl.textContent = 'Auction ended';
+        countdownEl.className   =
+          'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
+        statusBadge.textContent = 'Ended';
+        statusBadge.className   = 'badge-error';
         clearInterval(this._countdownInterval);
-        this._countdownInterval  = null;
+        this._countdownInterval = null;
         return;
       }
 
@@ -337,7 +318,6 @@ export class ListingView {
       const minutes = Math.floor((diff % 3_600_000)  / 60_000);
       const seconds = Math.floor((diff % 60_000)     / 1_000);
 
-      // ── Ending soon: < 24 h ──
       if (diff < 86_400_000) {
         countdownEl.textContent =
           `${String(hours).padStart(2, '0')}:` +
@@ -348,26 +328,113 @@ export class ListingView {
         return;
       }
 
-      // ── Active: > 24 h ──
       countdownEl.textContent =
-        `${days}d ${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+        `${days}d ${hours}h ${String(minutes).padStart(2, '0')}m ` +
+        `${String(seconds).padStart(2, '0')}s`;
       countdownEl.className =
         'text-xl sm:text-2xl font-semibold tabular-nums text-green-700';
     };
 
-    tick(); // run immediately so there's no 1s blank
+    tick();
     this._countdownInterval = setInterval(tick, 1000);
   }
 
-  /**
-   * Clear the countdown interval.
-   * Must be called by the router when navigating away from this view.
-   */
   destroy() {
     if (this._countdownInterval) {
       clearInterval(this._countdownInterval);
       this._countdownInterval = null;
     }
+  }
+
+  // ─────────────────────────────────────────────
+  // #47a — Bid History
+  // ─────────────────────────────────────────────
+
+  /**
+   * Render all bids sorted highest → lowest.
+   *
+   * Highlights:
+   *   - First item (highest bid): bg-primary-50 row + "Highest bid" badge
+   *   - Current user's bids: "You" badge in amber
+   *
+   * Shows avatar if bidder has one, no fallback (same rule as seller card).
+   * Container has max-h + overflow-y-auto so it scrolls when many bids.
+   *
+   * @param {Array} bids - from listing.bids (?_bids=true)
+   */
+  _renderBidHistory(bids) {
+    const container   = document.getElementById('bid-history');
+    const currentUser = getUser();
+
+    // ── Empty state ──
+    if (!bids?.length) {
+      container.innerHTML = `
+        <div class="p-8 text-center">
+          <p class="text-text-secondary">No bids yet. Be the first!</p>
+        </div>`;
+      return;
+    }
+
+    // ── Sort highest → lowest ──
+    const sorted = [...bids].sort((a, b) => b.amount - a.amount);
+
+    container.innerHTML = sorted
+      .map((bid, i) => {
+        const isHighest = i === 0;
+        const isOwn     =
+          currentUser?.name && bid.bidder?.name === currentUser.name;
+
+        // Avatar: show only when bidder has a URL (same rule as seller card)
+        const avatarHtml = bid.bidder?.avatar?.url
+          ? `<img
+               src="${this._escHtml(bid.bidder.avatar.url)}"
+               alt="${this._escHtml(bid.bidder.name ?? '')}"
+               class="w-full h-full object-cover"
+             />`
+          : '';
+
+        return `
+          <div class="flex items-center gap-4 px-5 py-4
+                      ${isHighest ? 'bg-primary-50' : ''}
+                      ${isOwn && !isHighest ? 'bg-warning/5' : ''}">
+
+            <!-- Avatar circle -->
+            <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0
+                        bg-primary-100">
+              ${avatarHtml}
+            </div>
+
+            <!-- Bidder info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <a href="/profile/${this._escHtml(bid.bidder?.name ?? '')}"
+                   data-link
+                   class="font-semibold text-sm text-text-primary
+                          hover:text-primary-500 transition-colors truncate">
+                  @${this._escHtml(bid.bidder?.name ?? 'Unknown')}
+                </a>
+                ${isHighest
+                  ? '<span class="badge-success">Highest bid</span>'
+                  : ''}
+                ${isOwn
+                  ? '<span class="badge-warning">You</span>'
+                  : ''}
+              </div>
+              <p class="text-xs text-text-secondary mt-0.5">
+                ${this._timeAgo(bid.created)}
+              </p>
+            </div>
+
+            <!-- Amount -->
+            <p class="font-bold text-sm flex-shrink-0
+                      ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
+              ${bid.amount.toLocaleString()}
+              <span class="font-normal text-text-secondary text-xs">credits</span>
+            </p>
+
+          </div>`;
+      })
+      .join('');
   }
 
   // ─────────────────────────────────────────────
@@ -389,6 +456,23 @@ export class ListingView {
     return new Date(dateStr).toLocaleDateString('en-GB', {
       day: 'numeric', month: 'short', year: 'numeric',
     });
+  }
+
+  /**
+   * Format ISO date as relative time: "5 minutes ago", "2 days ago"
+   * @param {string} dateStr
+   * @returns {string}
+   */
+  _timeAgo(dateStr) {
+    const diff    = Date.now() - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60_000);
+    const hours   = Math.floor(diff / 3_600_000);
+    const days    = Math.floor(diff / 86_400_000);
+
+    if (minutes < 1)  return 'Just now';
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    if (hours   < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
   }
 
   _escHtml(str) {
