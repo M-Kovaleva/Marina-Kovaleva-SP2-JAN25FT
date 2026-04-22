@@ -3,23 +3,24 @@
  * #43 — Build Single Listing page layout     ✅ done
  * #45 — Display listing details              ✅ done
  * #46 — Countdown timer                      ✅ done
- * #47a — Bid history component               ✅ this commit
+ * #47a — Bid history component               ✅ done
+ * #47b — Bid form component                  ✅ this commit
  *
- * Added in #47a:
- *  - Bid history list sorted highest → lowest
- *  - Per bid: avatar, bidder name link, amount, time ago
- *  - Highest bid highlighted (bg-primary-50 + badge)
- *  - Current user's bids highlighted differently
- *  - Scrollable when > 6 bids
- *  - Empty state: "No bids yet. Be the first!"
+ * Added in #47b:
+ *  - Four mutually exclusive form states:
+ *      ended / guest / own listing / bid form
+ *  - Minimum bid validation (must exceed current highest)
+ *  - Loading state on submit, inline error on failure
+ *  - On success: refresh bid summary + history without page reload
+ *  - Countdown → auto-switches to ended state when timer hits zero
  */
 
-import { getListing } from '../api/apiClient.js';
-import { getUser } from '../auth/storage.js';
+import { getListing, placeBid } from '../api/apiClient.js';
+import { getUser, isLoggedIn, getUserCredits, updateUser } from '../auth/storage.js';
 
 export class ListingView {
   constructor(params) {
-    this.params = params;
+    this.params    = params;
     this.listingId = params.id;
     this._countdownInterval = null;
   }
@@ -124,7 +125,7 @@ export class ListingView {
                 </div>
               </div>
 
-              <!-- Bid card (#46 countdown + #47b form placeholder) -->
+              <!-- Bid card -->
               <div class="card">
                 <div class="card-body space-y-5">
 
@@ -152,8 +153,50 @@ export class ListingView {
                     </div>
                   </div>
 
-                  <!-- Bid form placeholder (implemented in #47b) -->
-                  <p class="text-text-secondary text-sm">Bid form — coming in #47b</p>
+                  <!-- ── #47b: Four bid form states ── -->
+
+                  <!-- State A: Auction ended -->
+                  <div id="state-ended" class="hidden text-center py-2">
+                    <p class="text-red-700 text-sm font-medium">This auction has ended.</p>
+                  </div>
+
+                  <!-- State B: Guest -->
+                  <div id="state-guest" class="hidden space-y-3 text-center py-2">
+                    <p class="text-text-secondary text-sm">Sign in to place a bid</p>
+                    <a href="/login" data-link class="btn-primary block">Sign in to bid</a>
+                  </div>
+
+                  <!-- State C: Own listing -->
+                  <div id="state-own" class="hidden text-center py-2">
+                    <p class="text-text-secondary text-sm">
+                      You cannot bid on your own listing.
+                    </p>
+                  </div>
+
+                  <!-- State D: Bid form -->
+                  <form id="bid-form" class="hidden space-y-3" novalidate>
+                    <div>
+                      <label for="bid-amount" class="label">Your bid (credits)</label>
+                      <input
+                        type="number"
+                        id="bid-amount"
+                        name="amount"
+                        min="1"
+                        class="input"
+                        required
+                      />
+                      <p id="bid-hint" class="hint"></p>
+                    </div>
+
+                    <!-- Inline error -->
+                    <div id="bid-error" class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
+                      <p class="text-error text-sm font-medium"></p>
+                    </div>
+
+                    <button type="submit" id="bid-submit" class="btn-primary w-full py-3">
+                      Place Bid
+                    </button>
+                  </form>
 
                 </div>
               </div>
@@ -161,13 +204,11 @@ export class ListingView {
             </div>
           </div>
 
-          <!-- ── #47a: Bid History ── -->
+          <!-- Bid History (#47a) -->
           <section class="mt-10 sm:mt-14">
             <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
             <div class="card overflow-hidden">
-              <!-- Scrollable when > 6 bids (max-h ≈ 6 × 72px row) -->
               <div id="bid-history" class="divide-y divide-border max-h-[432px] overflow-y-auto">
-                <!-- Populated by _renderBidHistory() -->
               </div>
             </div>
           </section>
@@ -187,11 +228,12 @@ export class ListingView {
       const listing  = response.data;
 
       this._showContent();
-      this._renderBasicInfo(listing);       // #43
-      this._renderDetails(listing);         // #45
-      this._renderBidSummary(listing);      // #46
-      this._startCountdown(listing.endsAt); // #46
-      this._renderBidHistory(listing.bids); // #47a
+      this._renderBasicInfo(listing);
+      this._renderDetails(listing);
+      this._renderBidSummary(listing);
+      this._startCountdown(listing.endsAt);
+      this._renderBidForm(listing);         // #47b
+      this._renderBidHistory(listing.bids);
     } catch (err) {
       console.error('ListingView: failed to load listing', err);
       this._showError();
@@ -310,6 +352,8 @@ export class ListingView {
         statusBadge.className   = 'badge-error';
         clearInterval(this._countdownInterval);
         this._countdownInterval = null;
+        // Switch bid form to ended state live
+        this._showState('state-ended');
         return;
       }
 
@@ -347,26 +391,180 @@ export class ListingView {
   }
 
   // ─────────────────────────────────────────────
-  // #47a — Bid History
+  // #47b — Bid form
   // ─────────────────────────────────────────────
 
   /**
-   * Render all bids sorted highest → lowest.
-   *
-   * Highlights:
-   *   - First item (highest bid): bg-primary-50 row + "Highest bid" badge
-   *   - Current user's bids: "You" badge in amber
-   *
-   * Shows avatar if bidder has one, no fallback (same rule as seller card).
-   * Container has max-h + overflow-y-auto so it scrolls when many bids.
-   *
-   * @param {Array} bids - from listing.bids (?_bids=true)
+   * Decide which of four states to show — exactly one at a time.
+   * Order matters: ended → guest → own → form.
+   * @param {Object} listing
    */
+  _renderBidForm(listing) {
+    // State A: ended
+    if (new Date(listing.endsAt) <= new Date()) {
+      this._showState('state-ended');
+      return;
+    }
+
+    // State B: guest
+    if (!isLoggedIn()) {
+      this._showState('state-guest');
+      return;
+    }
+
+    // State C: own listing
+    if (listing.seller?.name === getUser()?.name) {
+      this._showState('state-own');
+      return;
+    }
+
+    // State D: bid form
+    this._showState('bid-form');
+    this._setupBidForm(listing);
+  }
+
+  /**
+   * Set min value, hint text, and attach submit handler.
+   * @param {Object} listing
+   */
+  _setupBidForm(listing) {
+    const bids        = listing.bids ?? [];
+    const highest     = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
+    const minBid      = highest + 1;
+    const userCredits = getUserCredits() ?? 0;
+
+    const input       = document.getElementById('bid-amount');
+    input.min         = minBid;
+    input.max         = userCredits;
+    input.placeholder = `Min: ${minBid}`;
+
+    document.getElementById('bid-hint').textContent =
+      `Minimum: ${minBid} cr · Your balance: ${userCredits.toLocaleString()} cr`;
+
+    document.getElementById('bid-form').addEventListener('submit', (e) =>
+      this._handleBidSubmit(e, listing.id, minBid, userCredits)
+    );
+  }
+
+  /**
+   * Handle form submission.
+   *
+   * Success flow:
+   *   1. Show loading on button
+   *   2. Call placeBid API
+   *   3. After 1s: re-fetch listing, refresh summary + history + form hint
+   *
+   * Error flow:
+   *   Show inline error, re-enable button.
+   *
+   * @param {Event}  e
+   * @param {string} listingId
+   * @param {number} minBid     - minimum valid amount at time of setup
+   */
+  async _handleBidSubmit(e, listingId, minBid, userCredits) {
+    e.preventDefault();
+
+    const input     = document.getElementById('bid-amount');
+    const submitBtn = document.getElementById('bid-submit');
+    const amount    = Number(input.value);
+
+    // Client-side validation
+    if (!amount || amount < minBid) {
+      this._showBidError(`Bid must be at least ${minBid} credits.`);
+      return;
+    }
+    if (amount > userCredits) {
+      this._showBidError(
+        `You only have ${userCredits.toLocaleString()} credits available.`
+      );
+      return;
+    }
+
+    // Loading state
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Placing bid…';
+    this._hideBidError();
+
+    try {
+      await placeBid(listingId, amount);
+
+      // Success feedback
+      submitBtn.textContent = '✓ Bid placed!';
+
+      // Re-fetch and refresh after short delay
+      setTimeout(async () => {
+        const response = await getListing(listingId, true, true);
+        const updated  = response.data;
+
+        this._renderBidSummary(updated);
+        this._renderBidHistory(updated.bids);
+        this._refreshBidHint(updated.bids, userCredits - amount);
+
+        // Deduct bid from local user credits and update nav badge
+        const newCredits = userCredits - amount;
+        updateUser({ credits: newCredits });
+        this._updateCreditsDisplay(newCredits);
+
+        input.value           = '';
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Place Bid';
+      }, 1000);
+    } catch (err) {
+      this._showBidError(err.message || 'Could not place bid. Try again.');
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Place Bid';
+    }
+  }
+
+  /**
+   * Update min value and hint text after a successful bid.
+   * @param {Array} bids - updated bids array from API
+   */
+  /**
+   * Update min value, max value, and hint text after a successful bid.
+   * @param {Array}  bids        - updated bids from API
+   * @param {number} newCredits  - user's remaining credits after deduction
+   */
+  _refreshBidHint(bids, newCredits) {
+    const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
+    const newMin  = highest + 1;
+
+    const input       = document.getElementById('bid-amount');
+    input.min         = newMin;
+    input.max         = newCredits;
+    input.placeholder = `Min: ${newMin}`;
+
+    document.getElementById('bid-hint').textContent =
+      `Minimum: ${newMin} cr · Your balance: ${newCredits.toLocaleString()} cr`;
+  }
+
+  /**
+   * Update the credits badge in the navbar (desktop + mobile).
+   * Reads the same element IDs used by Nav.js.
+   * @param {number} credits
+   */
+  _updateCreditsDisplay(credits) {
+    const formatted = credits.toLocaleString();
+
+    const desktopAmount = document.getElementById('credits-amount');
+    const mobileAmount  = document.getElementById('credits-amount-mobile');
+    const desktopBadge  = document.getElementById('credits-badge');
+    const mobileBadge   = document.getElementById('credits-badge-mobile');
+
+    if (desktopAmount) desktopAmount.textContent = formatted;
+    if (mobileAmount)  mobileAmount.textContent  = formatted;
+    if (desktopBadge)  desktopBadge.style.display = 'flex';
+    if (mobileBadge)   mobileBadge.style.display  = 'flex';
+  }
+
+  // ─────────────────────────────────────────────
+  // #47a — Bid history
+  // ─────────────────────────────────────────────
+
   _renderBidHistory(bids) {
     const container   = document.getElementById('bid-history');
     const currentUser = getUser();
 
-    // ── Empty state ──
     if (!bids?.length) {
       container.innerHTML = `
         <div class="p-8 text-center">
@@ -375,16 +573,13 @@ export class ListingView {
       return;
     }
 
-    // ── Sort highest → lowest ──
     const sorted = [...bids].sort((a, b) => b.amount - a.amount);
 
     container.innerHTML = sorted
       .map((bid, i) => {
         const isHighest = i === 0;
-        const isOwn     =
-          currentUser?.name && bid.bidder?.name === currentUser.name;
+        const isOwn     = currentUser?.name && bid.bidder?.name === currentUser.name;
 
-        // Avatar: show only when bidder has a URL (same rule as seller card)
         const avatarHtml = bid.bidder?.avatar?.url
           ? `<img
                src="${this._escHtml(bid.bidder.avatar.url)}"
@@ -398,13 +593,10 @@ export class ListingView {
                       ${isHighest ? 'bg-primary-50' : ''}
                       ${isOwn && !isHighest ? 'bg-warning/5' : ''}">
 
-            <!-- Avatar circle -->
-            <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0
-                        bg-primary-100">
+            <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-primary-100">
               ${avatarHtml}
             </div>
 
-            <!-- Bidder info -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <a href="/profile/${this._escHtml(bid.bidder?.name ?? '')}"
@@ -413,19 +605,14 @@ export class ListingView {
                           hover:text-primary-500 transition-colors truncate">
                   @${this._escHtml(bid.bidder?.name ?? 'Unknown')}
                 </a>
-                ${isHighest
-                  ? '<span class="badge-success">Highest bid</span>'
-                  : ''}
-                ${isOwn
-                  ? '<span class="badge-warning">You</span>'
-                  : ''}
+                ${isHighest ? '<span class="badge-success">Highest bid</span>' : ''}
+                ${isOwn     ? '<span class="badge-warning">You</span>'         : ''}
               </div>
               <p class="text-xs text-text-secondary mt-0.5">
                 ${this._timeAgo(bid.created)}
               </p>
             </div>
 
-            <!-- Amount -->
             <p class="font-bold text-sm flex-shrink-0
                       ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
               ${bid.amount.toLocaleString()}
@@ -451,6 +638,24 @@ export class ListingView {
     document.getElementById('listing-error').classList.remove('hidden');
   }
 
+  /** Show one bid-form state, hide the other three */
+  _showState(id) {
+    ['state-ended', 'state-guest', 'state-own', 'bid-form'].forEach((s) =>
+      document.getElementById(s)?.classList.add('hidden')
+    );
+    document.getElementById(id)?.classList.remove('hidden');
+  }
+
+  _showBidError(message) {
+    const el = document.getElementById('bid-error');
+    el.classList.remove('hidden');
+    el.querySelector('p').textContent = message;
+  }
+
+  _hideBidError() {
+    document.getElementById('bid-error')?.classList.add('hidden');
+  }
+
   _formatDate(dateStr) {
     if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -458,11 +663,6 @@ export class ListingView {
     });
   }
 
-  /**
-   * Format ISO date as relative time: "5 minutes ago", "2 days ago"
-   * @param {string} dateStr
-   * @returns {string}
-   */
   _timeAgo(dateStr) {
     const diff    = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.floor(diff / 60_000);
