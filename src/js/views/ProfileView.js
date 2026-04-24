@@ -2,7 +2,8 @@
  * Profile View
  * #P1 — Profile header         ✅ done
  * #P2 — Listings tab        ✅ done
- * #P4 — Wins tab               ✅ this commit
+ * #P4 — Wins tab               ✅ done
+ * #P3 — Bids tab               ✅ this commit
  *
  * Added in #P2:
  * - Tabs: Listings / Bids / Wins
@@ -13,7 +14,7 @@
  * - Tabs for Bids and Wins are placeholders (implemented in #P3–#P4)
  */
 
-import { getProfile, getProfileListings, getProfileWins } from '../api/apiClient.js';
+import { getProfile, getProfileListings, getProfileWins, getProfileBids } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
 import { isLoggedIn, getUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
@@ -173,8 +174,20 @@ export class ProfileView {
 
           <!-- Bids panel (hidden by default) -->
           <div id="tab-bids" class="hidden">
-            <div class="text-center py-16">
-              <p class="text-text-secondary text-sm">Bids — coming in #P3</p>
+            <!-- Loading -->
+            <div id="profile-bids-loading" class="flex justify-center py-12">
+              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            </div>
+            <!-- Bids list populated by JS -->
+            <div id="profile-bids-list" class="hidden space-y-3"></div>
+            <!-- Empty state -->
+            <div id="profile-bids-empty" class="hidden text-center py-16">
+              <div class="text-5xl mb-4">🎯</div>
+              <h3 class="text-lg font-semibold text-text-primary mb-2">No bids placed yet</h3>
+              <p class="text-text-secondary text-sm">
+                Browse listings and place your first bid
+              </p>
+              <a href="/" data-link class="btn-primary mt-6 inline-block">Browse listings</a>
             </div>
           </div>
 
@@ -420,6 +433,10 @@ export class ProfileView {
           this._loadWins();
           this._winsLoaded = true;
         }
+        if (target === 'bids' && !this._bidsLoaded) {
+          this._loadBids();
+          this._bidsLoaded = true;
+        }
       });
     });
   }
@@ -451,6 +468,91 @@ export class ProfileView {
       gridEl.innerHTML = createListingCards(listings);
       gridEl.classList.remove('hidden');
       gridEl.style.display = 'grid';
+    } catch {
+      loadingEl.classList.add('hidden');
+      emptyEl.classList.remove('hidden');
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // #P3 — Bids tab
+  // ─────────────────────────────────────────────
+
+  /**
+   * Fetch and render Bids.
+   * Called lazily on first click of Bids tab.
+   *
+   * Per bid display:
+   *   - Listing thumbnail (first media image or placeholder)
+   *   - Listing title → links to /listing/:id
+   *   - Bid amount
+   *   - Listing end date (formatted)
+   *   - Status badge: Active / Ended
+   */
+  async _loadBids() {
+    const loadingEl = document.getElementById('profile-bids-loading');
+    const listEl    = document.getElementById('profile-bids-list');
+    const emptyEl   = document.getElementById('profile-bids-empty');
+
+    try {
+      const response = await getProfileBids(this.profileName, { _listings: true });
+      const bids     = response.data ?? [];
+
+      loadingEl.classList.add('hidden');
+
+      if (!bids.length) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      // Sort by bid amount descending
+      const sorted = [...bids].sort((a, b) => b.amount - a.amount);
+
+      listEl.innerHTML = sorted.map((bid) => {
+        const listing   = bid.listing;
+        const imageUrl  = listing?.media?.[0]?.url ?? '';
+        const title     = listing?.title ?? 'Unknown listing';
+        const listingId = listing?.id ?? '';
+        const isActive  = listing?.endsAt
+          ? new Date(listing.endsAt) > new Date()
+          : false;
+
+        return `
+          <a href="/listing/${this._escHtml(listingId)}" data-link
+            class="flex items-center gap-4 p-4 card hover:shadow-md transition-shadow">
+
+            <!-- Thumbnail -->
+            <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+              ${imageUrl
+                ? `<img src="${this._escHtml(imageUrl)}" alt="${this._escHtml(title)}"
+                       class="w-full h-full object-cover"/>`
+                : '<div class="w-full h-full bg-primary-100"></div>'
+              }
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-text-primary truncate text-sm">${this._escHtml(title)}</p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                Ends ${listing?.endsAt ? this._formatDate(listing.endsAt) : '—'}
+              </p>
+            </div>
+
+            <!-- Bid amount + status -->
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-primary-500 text-sm">
+                ${bid.amount.toLocaleString()}
+                <span class="text-xs font-normal text-text-secondary">cr</span>
+              </p>
+              <span class="${isActive ? 'badge-success' : 'badge-error'} text-xs mt-1 inline-block">
+                ${isActive ? 'Active' : 'Ended'}
+              </span>
+            </div>
+
+          </a>`;
+      }).join('');
+
+      listEl.classList.remove('hidden');
     } catch {
       loadingEl.classList.add('hidden');
       emptyEl.classList.remove('hidden');
