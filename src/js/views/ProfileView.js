@@ -3,7 +3,8 @@
  * #P1 — Profile header         ✅ done
  * #P2 — Listings tab        ✅ done
  * #P4 — Wins tab               ✅ done
- * #P3 — Bids tab               ✅ this commit
+ * #P3 — Bids tab               ✅ done
+ * #P5 — Edit Profile            ✅ this commit
  *
  * Added in #P2:
  * - Tabs: Listings / Bids / Wins
@@ -14,9 +15,9 @@
  * - Tabs for Bids and Wins are placeholders (implemented in #P3–#P4)
  */
 
-import { getProfile, getProfileListings, getProfileWins, getProfileBids } from '../api/apiClient.js';
+import { getProfile, getProfileListings, getProfileWins, getProfileBids, updateProfile } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
-import { isLoggedIn, getUser } from '../auth/storage.js';
+import { isLoggedIn, getUser, updateUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
 
 export class ProfileView {
@@ -85,7 +86,7 @@ export class ProfileView {
                 </div>
 
                 <!-- Edit button (desktop) — own profile only, injected by JS -->
-                <div id="edit-btn-desktop" class="hidden sm:block sm:ml-auto sm:mb-2"></div>
+                <div id="edit-btn-desktop" class="sm:ml-auto sm:mb-2"></div>
 
               </div>
 
@@ -210,6 +211,80 @@ export class ProfileView {
               </p>
             </div>
           </div>
+
+        <!-- ── #P5: Edit Profile Modal ── -->
+        <div id="edit-profile-modal"
+          class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+          <!-- Backdrop -->
+          <div id="edit-profile-backdrop"
+            class="absolute inset-0 bg-black/50"></div>
+
+          <!-- Modal card -->
+          <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
+
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>
+              <button id="edit-profile-close"
+                class="text-text-secondary hover:text-text-primary transition-colors"
+                aria-label="Close">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Inline error -->
+            <div id="edit-profile-error"
+              class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
+              <p class="text-error text-sm font-medium"></p>
+            </div>
+
+            <form id="edit-profile-form" class="space-y-4">
+
+              <!-- Bio -->
+              <div>
+                <label for="edit-bio" class="label">Bio</label>
+                <textarea
+                  id="edit-bio"
+                  rows="3"
+                  maxlength="160"
+                  placeholder="Tell others about yourself..."
+                  class="input resize-none">
+                </textarea>
+                <p class="hint">Maximum 160 characters</p>
+              </div>
+
+              <!-- Avatar URL -->
+              <div>
+                <label for="edit-avatar" class="label">Avatar URL</label>
+                <input
+                  type="url"
+                  id="edit-avatar"
+                  placeholder="https://example.com/avatar.jpg"
+                  class="input"
+                />
+              </div>
+
+              <!-- Banner URL -->
+              <div>
+                <label for="edit-banner" class="label">Banner URL</label>
+                <input
+                  type="url"
+                  id="edit-banner"
+                  placeholder="https://example.com/banner.jpg"
+                  class="input"
+                />
+              </div>
+
+              <button type="submit" id="edit-profile-submit"
+                class="btn-primary w-full py-3">
+                Save Changes
+              </button>
+
+            </form>
+          </div>
+        </div>
 
         </div><!-- /#profile-content -->
       </div>
@@ -356,10 +431,16 @@ export class ProfileView {
         Edit Profile
       </button>`;
 
-    // Desktop slot
+    // Desktop slot — shown via media query in style, not Tailwind class
     const desktopSlot = document.getElementById('edit-btn-desktop');
     desktopSlot.innerHTML = btnHtml;
-    desktopSlot.classList.remove('hidden');
+    // Use matchMedia so button only shows on sm+ (≥640px), not on mobile
+    const showDesktopBtn = () => {
+      desktopSlot.style.display = window.matchMedia('(min-width: 640px)').matches
+        ? 'block' : 'none';
+    };
+    showDesktopBtn();
+    window.addEventListener('resize', showDesktopBtn);
 
     // Mobile slot — different button ID to avoid duplicate
     const mobileBtnHtml = `
@@ -373,11 +454,8 @@ export class ProfileView {
     mobileSlot.classList.remove('hidden');
     mobileSlot.classList.add('sm:hidden');
 
-    // Placeholder handler — will be replaced in #P5
-    const handleEdit = () => {
-      // TODO #P5: open edit profile form
-      alert('Edit Profile — coming in #P5');
-    };
+    // #P5: open edit modal
+    const handleEdit = () => this._openEditModal();
 
     document.getElementById('edit-profile-btn')
       ?.addEventListener('click', handleEdit);
@@ -594,6 +672,180 @@ export class ProfileView {
       loadingEl.classList.add('hidden');
       emptyEl.classList.remove('hidden');
     }
+  }
+
+  // ─────────────────────────────────────────────
+  // #P5 — Edit Profile
+  // ─────────────────────────────────────────────
+
+  /**
+   * Open the edit modal and prefill current values from localStorage.
+   */
+  _openEditModal() {
+    const user = getUser();
+    const modal = document.getElementById('edit-profile-modal');
+
+    // Prefill current values
+    document.getElementById('edit-bio').value    = user?.bio    ?? '';
+    document.getElementById('edit-avatar').value = user?.avatar?.url ?? '';
+    document.getElementById('edit-banner').value = user?.banner?.url ?? '';
+    document.getElementById('edit-profile-error').classList.add('hidden');
+
+    modal.classList.remove('hidden');
+
+    // Close on backdrop click
+    document.getElementById('edit-profile-backdrop')
+      .addEventListener('click', () => this._closeEditModal(), { once: true });
+
+    // Close on X button
+    document.getElementById('edit-profile-close')
+      .addEventListener('click', () => this._closeEditModal(), { once: true });
+
+    // Submit
+    document.getElementById('edit-profile-form')
+      .addEventListener('submit', (e) => this._handleEditSubmit(e), { once: true });
+  }
+
+  /** Close the edit modal */
+  _closeEditModal() {
+    document.getElementById('edit-profile-modal').classList.add('hidden');
+  }
+
+  /**
+   * Validate, submit and update profile.
+   * On success: update header UI + sync localStorage + show toast.
+   * @param {Event} e
+   */
+  async _handleEditSubmit(e) {
+    e.preventDefault();
+
+    const bio       = document.getElementById('edit-bio').value.trim();
+    const avatarUrl = document.getElementById('edit-avatar').value.trim();
+    const bannerUrl = document.getElementById('edit-banner').value.trim();
+    const submitBtn = document.getElementById('edit-profile-submit');
+    const errorEl   = document.getElementById('edit-profile-error');
+
+    errorEl.classList.add('hidden');
+
+    // URL validation
+    for (const [label, url] of [['Avatar', avatarUrl], ['Banner', bannerUrl]]) {
+      if (url) {
+        try { new URL(url); } catch {
+          errorEl.classList.remove('hidden');
+          errorEl.querySelector('p').textContent =
+            `${label} URL is not valid. Must start with https://`;
+          return;
+        }
+      }
+    }
+
+    // Build payload — only include non-empty fields
+    const payload = {};
+    if (bio)       payload.bio    = bio;
+    if (avatarUrl) payload.avatar = { url: avatarUrl, alt: '' };
+    if (bannerUrl) payload.banner = { url: bannerUrl, alt: '' };
+
+    if (!Object.keys(payload).length) {
+      this._closeEditModal();
+      return;
+    }
+
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Saving…';
+
+    try {
+      const response = await updateProfile(this.profileName, payload);
+      const updated  = response.data;
+
+      // Sync localStorage
+      updateUser({
+        bio:    updated.bio,
+        avatar: updated.avatar,
+        banner: updated.banner,
+      });
+
+      // Update header UI without page reload
+      this._updateHeaderUI(updated);
+
+      // Reset button before closing so next open shows correct state
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Save Changes';
+
+      this._closeEditModal();
+      this._showSuccessToast('Profile updated successfully.');
+    } catch (err) {
+      errorEl.classList.remove('hidden');
+      errorEl.querySelector('p').textContent =
+        err.message || 'Could not update profile. Please try again.';
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Save Changes';
+    }
+  }
+
+  /**
+   * Update the visible header after a successful edit
+   * without re-fetching from the API.
+   * @param {Object} updated - profile data from PUT response
+   */
+  _updateHeaderUI(updated) {
+    // Bio
+    const bioEl = document.getElementById('profile-bio');
+    if (updated.bio?.trim()) {
+      bioEl.textContent = updated.bio;
+      bioEl.classList.remove('hidden');
+    } else {
+      bioEl.classList.add('hidden');
+    }
+
+    // Avatar
+    const avatarContainer = document.getElementById('profile-avatar');
+    avatarContainer.innerHTML = '';
+    if (updated.avatar?.url) {
+      const img = document.createElement('img');
+      img.src       = updated.avatar.url;
+      img.alt       = updated.avatar.alt || '';
+      img.className = 'w-full h-full object-cover';
+      img.onerror   = () => img.remove();
+      avatarContainer.appendChild(img);
+    }
+
+    // Banner
+    const bannerEl = document.getElementById('profile-banner');
+    if (updated.banner?.url) {
+      bannerEl.innerHTML = '';
+      bannerEl.classList.remove(
+        'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
+      );
+      const img = document.createElement('img');
+      img.src       = updated.banner.url;
+      img.alt       = updated.banner.alt || '';
+      img.className = 'w-full h-full object-cover';
+      img.onerror   = () => {
+        img.remove();
+        bannerEl.classList.add(
+          'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
+        );
+      };
+      bannerEl.appendChild(img);
+    }
+  }
+
+  /**
+   * Show a brief success toast, auto-dismisses after 2.5s.
+   * @param {string} message
+   */
+  _showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.className =
+      'fixed top-4 left-1/2 -translate-x-1/2 z-50 ' +
+      'px-6 py-3 bg-green-600 text-white rounded-xl shadow-lg ' +
+      'text-sm font-medium transition-opacity duration-500';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 500);
+    }, 2500);
   }
 
   // ─────────────────────────────────────────────
