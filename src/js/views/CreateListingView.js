@@ -36,11 +36,6 @@ export class CreateListingView {
               ${this.isEditMode ? 'Update your listing details' : 'Add a new item for auction'}
             </p>
             
-            <!-- Error Message (hidden by default) -->
-            <div id="listing-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
-              <p class="text-error text-sm font-medium"></p>
-            </div>
-            
             <form id="listing-form" class="space-y-5 sm:space-y-6">
               <!-- Title -->
               <div>
@@ -129,6 +124,10 @@ export class CreateListingView {
               
               <!-- Submit Button -->
               <div class="pt-4">
+                <!-- Error Message — shown above submit button -->
+                <div id="listing-error" class="hidden mb-4 p-4 bg-error/10 border border-error/20 rounded-lg">
+                  <p class="text-error text-sm font-medium"></p>
+                </div>
                 <button type="submit" id="submit-btn" class="btn-primary w-full py-3">
                   ${this.isEditMode ? 'Update Listing' : 'Create Listing'}
                 </button>
