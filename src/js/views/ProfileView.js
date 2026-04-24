@@ -1,18 +1,19 @@
 /**
  * Profile View
  * #P1 — Profile header         ✅ done
- * #P2 — My Listings tab        ✅ this commit
+ * #P2 — Listings tab        ✅ done
+ * #P4 — Wins tab               ✅ this commit
  *
  * Added in #P2:
- * - Tabs: My Listings / My Bids / Wins
- * - My Listings tab active by default
+ * - Tabs: Listings / Bids / Wins
+ * - Listings tab active by default
  * - Fetch GET /auction/profiles/:name/listings
  * - Render using createListingCards()
  * - Empty state with Create Listing button
  * - Tabs for Bids and Wins are placeholders (implemented in #P3–#P4)
  */
 
-import { getProfile, getProfileListings } from '../api/apiClient.js';
+import { getProfile, getProfileListings, getProfileWins } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
 import { isLoggedIn, getUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
@@ -130,14 +131,14 @@ export class ProfileView {
                 data-tab="listings"
                 class="tab-btn tab-active pb-3 px-4 text-sm sm:text-base font-medium
                        whitespace-nowrap border-b-2 border-primary-500 text-primary-500">
-                My Listings
+                Listings
               </button>
               <button
                 data-tab="bids"
                 class="tab-btn pb-3 px-4 text-sm sm:text-base font-medium
                        whitespace-nowrap border-b-2 border-transparent
                        text-text-secondary hover:text-text-primary transition-colors">
-                My Bids
+                Bids
               </button>
               <button
                 data-tab="wins"
@@ -179,8 +180,21 @@ export class ProfileView {
 
           <!-- Wins panel (hidden by default) -->
           <div id="tab-wins" class="hidden">
-            <div class="text-center py-16">
-              <p class="text-text-secondary text-sm">Wins — coming in #P4</p>
+            <!-- Loading -->
+            <div id="profile-wins-loading" class="flex justify-center py-12">
+              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            </div>
+            <!-- Grid populated by JS -->
+            <div id="profile-wins-grid"
+              class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            </div>
+            <!-- Empty state -->
+            <div id="profile-wins-empty" class="hidden text-center py-16">
+              <div class="text-5xl mb-4">🏆</div>
+              <h3 class="text-lg font-semibold text-text-primary mb-2">No wins yet</h3>
+              <p class="text-text-secondary text-sm">
+                Place bids on active listings to win auctions
+              </p>
             </div>
           </div>
 
@@ -215,8 +229,8 @@ export class ProfileView {
 
       this._showContent();
       this._renderHeader(profile);
-      this._initTabs();       // #P2: wire up tab switching
-      this._loadListings();   // #P2: load first tab content
+      this._initTabs(profile.name); // #P2: wire up tab switching (owner-aware)
+      this._loadListings();         // #P2: load first tab content
     } catch {
       this._showError();
     }
@@ -359,14 +373,26 @@ export class ProfileView {
   }
 
   // ─────────────────────────────────────────────
-  // #P2 — My Listings tab
+  // #P2 — Listings tab
   // ─────────────────────────────────────────────
 
   /**
    * Wire up tab button clicks.
-   * Switches active tab styling and shows/hides panels.
+   * Hides Bids and Wins tabs for non-owners (they can only see Listings).
+   * @param {string} profileName
    */
-  _initTabs() {
+  _initTabs(profileName) {
+    const currentUser = getUser();
+    const isOwner     = currentUser?.name === profileName;
+
+    // Non-owners: hide Bids and Wins tabs entirely
+    if (!isOwner) {
+      document.querySelector('[data-tab="bids"]')?.closest('button')
+        ?.classList.add('hidden');
+      document.querySelector('[data-tab="wins"]')?.closest('button')
+        ?.classList.add('hidden');
+    }
+
     const tabs = document.querySelectorAll('.tab-btn');
 
     tabs.forEach((btn) => {
@@ -388,12 +414,18 @@ export class ProfileView {
             'hidden', panel !== target
           );
         });
+
+        // Lazy-load tab content on first click
+        if (target === 'wins' && !this._winsLoaded) {
+          this._loadWins();
+          this._winsLoaded = true;
+        }
       });
     });
   }
 
   /**
-   * Fetch and render My Listings.
+   * Fetch and render Listings.
    * Uses createListingCards() for consistent card appearance.
    */
   async _loadListings() {
@@ -417,6 +449,43 @@ export class ProfileView {
       }
 
       gridEl.innerHTML = createListingCards(listings);
+      gridEl.classList.remove('hidden');
+      gridEl.style.display = 'grid';
+    } catch {
+      loadingEl.classList.add('hidden');
+      emptyEl.classList.remove('hidden');
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // #P4 — Wins tab
+  // ─────────────────────────────────────────────
+
+  /**
+   * Fetch and render Wins.
+   * Called lazily on first click of Wins tab.
+   */
+  async _loadWins() {
+    const loadingEl = document.getElementById('profile-wins-loading');
+    const gridEl    = document.getElementById('profile-wins-grid');
+    const emptyEl   = document.getElementById('profile-wins-empty');
+
+    try {
+      const response = await getProfileWins(this.profileName, {
+        _bids:    true,
+        sort:     'created',
+        sortOrder: 'desc',
+      });
+      const wins = response.data ?? [];
+
+      loadingEl.classList.add('hidden');
+
+      if (!wins.length) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      gridEl.innerHTML = createListingCards(wins);
       gridEl.classList.remove('hidden');
       gridEl.style.display = 'grid';
     } catch {
