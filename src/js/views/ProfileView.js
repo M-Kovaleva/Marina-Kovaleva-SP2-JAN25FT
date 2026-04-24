@@ -1,17 +1,19 @@
 /**
  * Profile View
- * #P1 — Profile header     ✅ this commit
+ * #P1 — Profile header         ✅ done
+ * #P2 — My Listings tab        ✅ this commit
  *
- * - Protected route: redirect to /login if not authenticated
- * - Fetch GET /auction/profiles/:name?_listings=true&_wins=true (via _count)
- * - Banner: image or gradient fallback
- * - Avatar: image or placeholder circle
- * - Name, bio (hidden when empty)
- * - Stats: Credits / Listings count / Wins count
- * - Edit Profile button — own profile only (tabs in #P2–#P4)
+ * Added in #P2:
+ * - Tabs: My Listings / My Bids / Wins
+ * - My Listings tab active by default
+ * - Fetch GET /auction/profiles/:name/listings
+ * - Render using createListingCards()
+ * - Empty state with Create Listing button
+ * - Tabs for Bids and Wins are placeholders (implemented in #P3–#P4)
  */
 
-import { getProfile } from '../api/apiClient.js';
+import { getProfile, getProfileListings } from '../api/apiClient.js';
+import { createListingCards } from '../components/ListingCard.js';
 import { isLoggedIn, getUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
 
@@ -91,6 +93,7 @@ export class ProfileView {
                 <div id="stat-credits" class="hidden text-center sm:text-left">
                   <p id="profile-credits"
                     class="text-xl sm:text-2xl font-bold text-primary-500">
+                    —
                   </p>
                   <p class="text-xs sm:text-sm text-text-secondary">Credits</p>
                 </div>
@@ -118,10 +121,66 @@ export class ProfileView {
             </div>
           </div>
 
-          <!-- Tabs placeholder (implemented in #P2–#P4) -->
-          <div class="card">
-            <div class="card-body text-center text-text-secondary text-sm py-12">
-              Listings, Bids and Wins tabs — coming in #P2–#P4
+          <!-- ── #P2: Tabs + Content ── -->
+
+          <!-- Tab navigation -->
+          <div class="border-b border-border mb-6">
+            <nav class="flex gap-1 overflow-x-auto">
+              <button
+                data-tab="listings"
+                class="tab-btn tab-active pb-3 px-4 text-sm sm:text-base font-medium
+                       whitespace-nowrap border-b-2 border-primary-500 text-primary-500">
+                My Listings
+              </button>
+              <button
+                data-tab="bids"
+                class="tab-btn pb-3 px-4 text-sm sm:text-base font-medium
+                       whitespace-nowrap border-b-2 border-transparent
+                       text-text-secondary hover:text-text-primary transition-colors">
+                My Bids
+              </button>
+              <button
+                data-tab="wins"
+                class="tab-btn pb-3 px-4 text-sm sm:text-base font-medium
+                       whitespace-nowrap border-b-2 border-transparent
+                       text-text-secondary hover:text-text-primary transition-colors">
+                Wins
+              </button>
+            </nav>
+          </div>
+
+          <!-- Tab content panels -->
+
+          <!-- Listings panel (default visible) -->
+          <div id="tab-listings">
+            <!-- Loading -->
+            <div id="profile-listings-loading" class="flex justify-center py-12">
+              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            </div>
+            <!-- Grid populated by JS -->
+            <div id="profile-listings-grid"
+              class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            </div>
+            <!-- Empty state -->
+            <div id="profile-listings-empty" class="hidden text-center py-16">
+              <div class="text-5xl mb-4">📦</div>
+              <h3 class="text-lg font-semibold text-text-primary mb-2">No listings yet</h3>
+              <p class="text-text-secondary mb-6 text-sm">Create your first listing to start selling</p>
+              <a href="/listing/create" data-link class="btn-primary">+ Create Listing</a>
+            </div>
+          </div>
+
+          <!-- Bids panel (hidden by default) -->
+          <div id="tab-bids" class="hidden">
+            <div class="text-center py-16">
+              <p class="text-text-secondary text-sm">Bids — coming in #P3</p>
+            </div>
+          </div>
+
+          <!-- Wins panel (hidden by default) -->
+          <div id="tab-wins" class="hidden">
+            <div class="text-center py-16">
+              <p class="text-text-secondary text-sm">Wins — coming in #P4</p>
             </div>
           </div>
 
@@ -156,6 +215,8 @@ export class ProfileView {
 
       this._showContent();
       this._renderHeader(profile);
+      this._initTabs();       // #P2: wire up tab switching
+      this._loadListings();   // #P2: load first tab content
     } catch {
       this._showError();
     }
@@ -295,6 +356,73 @@ export class ProfileView {
       ?.addEventListener('click', handleEdit);
     document.getElementById('edit-profile-btn-mobile')
       ?.addEventListener('click', handleEdit);
+  }
+
+  // ─────────────────────────────────────────────
+  // #P2 — My Listings tab
+  // ─────────────────────────────────────────────
+
+  /**
+   * Wire up tab button clicks.
+   * Switches active tab styling and shows/hides panels.
+   */
+  _initTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+
+    tabs.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+
+        // Update button styles
+        tabs.forEach((b) => {
+          const isActive = b.dataset.tab === target;
+          b.classList.toggle('border-primary-500', isActive);
+          b.classList.toggle('text-primary-500', isActive);
+          b.classList.toggle('border-transparent', !isActive);
+          b.classList.toggle('text-text-secondary', !isActive);
+        });
+
+        // Show/hide panels
+        ['listings', 'bids', 'wins'].forEach((panel) => {
+          document.getElementById(`tab-${panel}`)?.classList.toggle(
+            'hidden', panel !== target
+          );
+        });
+      });
+    });
+  }
+
+  /**
+   * Fetch and render My Listings.
+   * Uses createListingCards() for consistent card appearance.
+   */
+  async _loadListings() {
+    const loadingEl = document.getElementById('profile-listings-loading');
+    const gridEl    = document.getElementById('profile-listings-grid');
+    const emptyEl   = document.getElementById('profile-listings-empty');
+
+    try {
+      const response = await getProfileListings(this.profileName, {
+        _bids:   true,
+        sort:    'created',
+        sortOrder: 'desc',
+      });
+      const listings = response.data ?? [];
+
+      loadingEl.classList.add('hidden');
+
+      if (!listings.length) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      gridEl.innerHTML = createListingCards(listings);
+      gridEl.classList.remove('hidden');
+      gridEl.style.display = 'grid';
+    } catch {
+      loadingEl.classList.add('hidden');
+      emptyEl.classList.remove('hidden');
+    }
   }
 
   // ─────────────────────────────────────────────

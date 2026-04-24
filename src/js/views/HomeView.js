@@ -2,7 +2,7 @@
  * Home View — Listings feed
  */
 
-import { initListingsHandler } from '../handlers/listingsHandler.js';
+import { initListingsHandler, cleanupListingsHandler } from '../handlers/listingsHandler.js';
 import { isLoggedIn } from '../auth/storage.js';
 
 export class HomeView {
@@ -128,5 +128,15 @@ export class HomeView {
     }
 
     await initListingsHandler();
+  }
+
+  /**
+   * Called by router before navigating away.
+   * Removes the scroll event listener from listingsHandler
+   * so it doesn't fire on other pages that happen to have
+   * an element with id="listings-grid".
+   */
+  destroy() {
+    cleanupListingsHandler();
   }
 }
