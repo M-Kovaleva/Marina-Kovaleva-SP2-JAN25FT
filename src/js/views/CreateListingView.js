@@ -1,12 +1,7 @@
 /**
  * Create/Edit Listing View
  * #48 — Create Listing form + API     ✅ done
- * Ticket B — Edit mode                ✅ this commit
- *
- * Added in Ticket B:
- *  - isEditMode: fetch listing → prefill all form fields
- *  - Submit calls updateListing() instead of createListing()
- *  - On success: redirect back to /listing/:id
+ * Ticket B — Edit mode                ✅ done
  */
 
 import { isLoggedIn } from '../auth/storage.js';
@@ -69,10 +64,11 @@ export class CreateListingView {
                   id="description"
                   name="description"
                   rows="4"
+                  maxlength="280"
                   placeholder="Describe your item in detail..."
                   class="input resize-none"
                 ></textarea>
-                <p class="hint">Help buyers understand what you're selling</p>
+                <p class="hint">Maximum 280 characters</p>
               </div>
               
               <!-- End Date -->
@@ -148,7 +144,7 @@ export class CreateListingView {
     // ── Protected route: guests cannot access this page ──
     if (!isLoggedIn()) {
       navigateTo('/login');
-      return; // stop — do not wire up any handlers
+      return;
     }
 
     // Edit mode: load existing data and prefill form
@@ -168,10 +164,8 @@ export class CreateListingView {
       }
     }
 
-    // Add media input functionality (also called after prefill rebuilds DOM)
     this._initAddMediaBtn();
 
-    // Form submit
     const form = document.getElementById('listing-form');
     if (form) {
       form.addEventListener('submit', (e) => this._handleSubmit(e));
@@ -256,19 +250,12 @@ export class CreateListingView {
   // Ticket B — Prefill form in edit mode
   // ─────────────────────────────────────────────
 
-  /**
-   * Fetch the existing listing and populate all form fields.
-   * Called only when isEditMode === true.
-   */
   async _prefillForm() {
     try {
       const response = await getListing(this.listingId, false, false);
       const listing  = response.data;
 
-      // Title
       document.getElementById('title').value = listing.title ?? '';
-
-      // Description
       document.getElementById('description').value = listing.description ?? '';
 
       // End date — shown as read-only text (cannot be changed via API)
@@ -282,21 +269,17 @@ export class CreateListingView {
         }
       }
 
-      // Tags — join array back to comma-separated string
       if (listing.tags?.length) {
         document.getElementById('tags').value = listing.tags.join(', ');
       }
 
-      // Media — create an input row per existing image URL
       if (listing.media?.length) {
         const container = document.getElementById('media-container');
-        // Clear the default empty row first
         container.innerHTML = '';
 
         listing.media.forEach((item, i) => {
           const row = document.createElement('div');
           row.className = 'flex gap-2';
-
           const isFirst = i === 0;
           row.innerHTML = `
             <input
@@ -314,14 +297,11 @@ export class CreateListingView {
                    aria-label="Remove image">×</button>`
             }
           `;
-
           container.appendChild(row);
-
           if (!isFirst) {
             row.querySelector('button').addEventListener('click', () => row.remove());
           }
         });
-
       }
     } catch (err) {
       this._showError('Could not load listing data. Please try again.');
@@ -329,10 +309,6 @@ export class CreateListingView {
     // Note: _initAddMediaBtn() is called in init() after _prefillForm() completes
   }
 
-  /**
-   * Attach click handler to the "+" add media button.
-   * Extracted so it can be called both from init() and after prefill rebuilds the DOM.
-   */
   _initAddMediaBtn() {
     const addMediaBtn    = document.getElementById('add-media-btn');
     const mediaContainer = document.getElementById('media-container');
