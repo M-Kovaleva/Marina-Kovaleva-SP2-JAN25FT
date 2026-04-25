@@ -78,13 +78,18 @@ export function updateUser(updates) {
 // ============================================
 
 /**
- * Save auth data after login
+ * Save auth data after login.
+ * Strips accessToken from user object so it's not duplicated
+ * (token lives in TOKEN_KEY, user in USER_KEY).
+ *
  * @param {string} token - Access token
- * @param {Object} user - User object
+ * @param {Object} user  - User object from login/register response
  */
 export function saveAuth(token, user) {
   setToken(token);
-  setUser(user);
+  // remove accessToken if still present in the user payload
+  const { accessToken, ...cleanUser } = user;
+  setUser(cleanUser);
 }
 
 /**
