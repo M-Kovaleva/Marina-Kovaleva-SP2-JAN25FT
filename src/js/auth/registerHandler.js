@@ -5,6 +5,7 @@
 
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
+import { syncUserFromProfile } from './userSync.js';
 import {
   validateRegisterForm,
   showInputError,
@@ -51,25 +52,29 @@ export function initRegisterHandler() {
     setFormLoading(form, true);
 
     try {
-      // Register user
+      // 1. Create the account
       await register(data);
 
-      // Auto-login after registration
+      // 2. Auto-login to get access token
       const loginResponse = await login({
         email: data.email,
         password: data.password,
       });
-
-      // Save auth data
       saveAuth(loginResponse.data.accessToken, loginResponse.data);
 
-      // Update navbar
+      // 3. Sync full profile (login response lacks credits — Noroff API quirk)
+      try {
+        await syncUserFromProfile(loginResponse.data.name);
+      } catch (syncErr) {
+        // Non-fatal: account created, user logged in, credits sync later.
+        console.warn('Profile sync failed after register:', syncErr.message);
+      }
+
+      // 4. Update navbar with fresh data
       updateNavAuth();
 
-      // Show success message and hide form
+      // 5. Show success and redirect
       showSuccess(form, successContainer);
-
-      // Redirect to home after delay
       setTimeout(() => {
         navigateTo('/');
       }, 1500);
