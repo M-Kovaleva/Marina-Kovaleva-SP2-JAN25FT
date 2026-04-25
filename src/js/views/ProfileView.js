@@ -19,6 +19,7 @@ import { getProfile, getProfileListings, getProfileWins, getProfileBids, updateP
 import { createListingCards } from '../components/ListingCard.js';
 import { isLoggedIn, getUser, updateUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
+import { escHtml, formatDate } from '../utils/format.js';
 
 export class ProfileView {
   constructor(params) {
@@ -596,13 +597,13 @@ export class ProfileView {
           : false;
 
         return `
-          <a href="/listing/${this._escHtml(listingId)}" data-link
+          <a href="/listing/${escHtml(listingId)}" data-link
             class="flex items-center gap-4 p-4 card hover:shadow-md transition-shadow">
 
             <!-- Thumbnail -->
             <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">
               ${imageUrl
-                ? `<img src="${this._escHtml(imageUrl)}" alt="${this._escHtml(title)}"
+                ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(title)}"
                        class="w-full h-full object-cover"/>`
                 : '<div class="w-full h-full bg-primary-100"></div>'
               }
@@ -610,9 +611,9 @@ export class ProfileView {
 
             <!-- Info -->
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary truncate text-sm">${this._escHtml(title)}</p>
+              <p class="font-semibold text-text-primary truncate text-sm">${escHtml(title)}</p>
               <p class="text-xs text-text-secondary mt-0.5">
-                Ends ${listing?.endsAt ? this._formatDate(listing.endsAt) : '—'}
+                Ends ${listing?.endsAt ? formatDate(listing.endsAt) : '—'}
               </p>
             </div>
 
@@ -630,7 +631,7 @@ export class ProfileView {
           </a>`;
       }).join('');
 
-      listEl.classList.remove('hidden');
+       listEl.classList.remove('hidden');
     } catch {
       loadingEl.classList.add('hidden');
       emptyEl.classList.remove('hidden');
