@@ -288,9 +288,6 @@
   .bottom-2 {
     bottom: calc(var(--spacing) * 2);
   }
-  .bottom-6 {
-    bottom: calc(var(--spacing) * 6);
-  }
   .left-1\/2 {
     left: calc(1 / 2 * 100%);
   }
@@ -762,9 +759,6 @@
   }
   .bg-surface {
     background-color: var(--color-surface);
-  }
-  .bg-text-primary {
-    background-color: var(--color-text-primary);
   }
   .bg-warning\/5 {
     background-color: color-mix(in srgb, #f59e0b 5%, transparent);
