@@ -18,6 +18,7 @@
 import { getListing, placeBid, deleteListing } from '../api/apiClient.js';
 import { getUser, isLoggedIn, getUserCredits, updateUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
+import { showSuccessToast } from '../utils/toast.js';
 
 export class ListingView {
   constructor(params) {
@@ -789,7 +790,7 @@ export class ListingView {
 
     try {
       await deleteListing(listingId);
-      // Redirect home after successful delete
+      showSuccessToast('Listing deleted.');
       navigateTo('/');
     } catch (err) {
       btn.disabled    = false;

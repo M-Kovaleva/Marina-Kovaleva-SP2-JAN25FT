@@ -21,6 +21,7 @@ import { isLoggedIn, getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 import { escHtml, formatDate } from '../utils/format.js';
+import { showSuccessToast } from '../utils/toast.js';
 
 export class ProfileView {
   constructor(params) {
@@ -785,7 +786,7 @@ export class ProfileView {
       submitBtn.textContent = 'Save Changes';
 
       this._closeEditModal();
-      this._showSuccessToast('Profile updated successfully.');
+      showSuccessToast('Profile updated successfully.');
     } catch (err) {
       errorEl.classList.remove('hidden');
       errorEl.querySelector('p').textContent =
@@ -843,23 +844,6 @@ export class ProfileView {
     }
   }
 
-  /**
-   * Show a brief success toast, auto-dismisses after 2.5s.
-   * @param {string} message
-   */
-  _showSuccessToast(message) {
-    const toast = document.createElement('div');
-    toast.className =
-      'fixed top-4 left-1/2 -translate-x-1/2 z-50 ' +
-      'px-6 py-3 bg-green-600 text-white rounded-xl shadow-lg ' +
-      'text-sm font-medium transition-opacity duration-500';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 500);
-    }, 2500);
-  }
 
   // ─────────────────────────────────────────────
   // Helpers
