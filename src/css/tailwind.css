@@ -399,6 +399,9 @@
   .hidden {
     display: none;
   }
+  .inline {
+    display: inline;
+  }
   .inline-block {
     display: inline-block;
   }
@@ -556,6 +559,9 @@
   }
   .items-end {
     align-items: flex-end;
+  }
+  .items-start {
+    align-items: flex-start;
   }
   .justify-between {
     justify-content: space-between;
@@ -742,9 +748,6 @@
   .bg-primary-800 {
     background-color: var(--color-primary-800);
   }
-  .bg-success {
-    background-color: var(--color-success);
-  }
   .bg-success\/10 {
     background-color: color-mix(in srgb, #34d399 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -827,9 +830,6 @@
   }
   .py-1 {
     padding-block: calc(var(--spacing) * 1);
-  }
-  .py-1\.5 {
-    padding-block: calc(var(--spacing) * 1.5);
   }
   .py-2 {
     padding-block: calc(var(--spacing) * 2);

@@ -15,8 +15,9 @@
  *  - Countdown → auto-switches to ended state when timer hits zero
  */
 
-import { getListing, placeBid } from '../api/apiClient.js';
+import { getListing, placeBid, deleteListing } from '../api/apiClient.js';
 import { getUser, isLoggedIn, getUserCredits, updateUser } from '../auth/storage.js';
+import { navigateTo } from '../router/router.js';
 
 export class ListingView {
   constructor(params) {
@@ -98,10 +99,24 @@ export class ListingView {
                 </span>
               </div>
 
-              <!-- Title (#43) -->
-              <h1 id="listing-title"
-                class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight">
-              </h1>
+              <!-- Title + owner actions (#43) -->
+              <div class="flex items-start justify-between gap-3">
+                <h1 id="listing-title"
+                  class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight">
+                </h1>
+
+                <!-- Owner-only actions, shown via JS in _renderOwnerActions -->
+                <div id="owner-actions" class="hidden flex-shrink-0 flex gap-2">
+                  <a id="edit-listing-btn" href="#" data-link
+                    class="btn-secondary text-sm">
+                    Edit
+                  </a>
+                  <button id="delete-listing-btn" type="button"
+                    class="btn-danger text-sm">
+                    Delete
+                  </button>
+                </div>
+              </div>
 
               <!-- Description (#45) -->
               <div id="listing-description-block">
@@ -248,6 +263,7 @@ export class ListingView {
       this._startCountdown(listing.endsAt);
       this._renderBidForm(listing);         // #47b
       this._renderBidHistory(listing.bids);
+      this._renderOwnerActions(listing);
     } catch (err) {
       console.error('ListingView: failed to load listing', err);
       this._showError();
@@ -728,7 +744,59 @@ export class ListingView {
       })
       .join('');
   }
+ // ─────────────────────────────────────────────
+  // Owner actions — Edit / Delete
+  // ─────────────────────────────────────────────
 
+  /**
+   * Show Edit/Delete buttons only when current user is the listing's seller.
+   * Wires up navigation (Edit) and confirm-delete flow (Delete).
+   *
+   * @param {Object} listing - listing with seller info
+   */
+  _renderOwnerActions(listing) {
+    const currentUser = getUser();
+    const isOwner = currentUser?.name && listing.seller?.name === currentUser.name;
+
+    if (!isOwner) return;
+
+    // Reveal the actions block
+    const actions = document.getElementById('owner-actions');
+    actions.classList.remove('hidden');
+    actions.style.display = 'flex';
+
+    // Edit: link to /listing/:id/edit (router handles via data-link)
+    document.getElementById('edit-listing-btn').href = `/listing/${listing.id}/edit`;
+
+    // Delete: confirm + API call + redirect home
+    document.getElementById('delete-listing-btn')
+      .addEventListener('click', () => this._handleDelete(listing.id));
+  }
+
+  /**
+   * Confirm and delete the listing.
+   * @param {string} listingId
+   */
+  async _handleDelete(listingId) {
+    const confirmed = window.confirm(
+      'Delete this listing? This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    const btn = document.getElementById('delete-listing-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Deleting…';
+
+    try {
+      await deleteListing(listingId);
+      // Redirect home after successful delete
+      navigateTo('/');
+    } catch (err) {
+      btn.disabled    = false;
+      btn.textContent = 'Delete';
+      alert(`Could not delete listing: ${err.message}`);
+    }
+  }
   // ─────────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────────
