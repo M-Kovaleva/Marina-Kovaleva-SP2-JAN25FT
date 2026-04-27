@@ -18,6 +18,7 @@
 import { getProfile, getProfileListings, getProfileWins, getProfileBids, updateProfile } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
 import { isLoggedIn, getUser, updateUser } from '../auth/storage.js';
+import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 import { escHtml, formatDate } from '../utils/format.js';
 
@@ -394,19 +395,28 @@ export class ProfileView {
     }
   }
 
-  /**
+    /**
    * Stats: Credits (own profile only), Listings count, Wins count.
+   *
+   * For own profile: also mirror server credits to localStorage and
+   * refresh the navbar badge. Server is the source of truth — this
+   * keeps storage in sync if credits changed elsewhere (e.g. a bid
+   * placed in another tab).
+   *
    * @param {Object} profile
    */
   _renderStats(profile) {
-    const currentUser = getUser();
+    const currentUser  = getUser();
     const isOwnProfile = currentUser?.name === profile.name;
 
-    // Credits — own profile only
     if (isOwnProfile) {
       document.getElementById('stat-credits').classList.remove('hidden');
       document.getElementById('profile-credits').textContent =
         (profile.credits ?? 0).toLocaleString();
+
+      // Sync server credits → localStorage → navbar badge
+      updateUser({ credits: profile.credits });
+      updateNavAuth();
     }
 
     // Listings and Wins counts from _count
@@ -758,12 +768,14 @@ export class ProfileView {
       const response = await updateProfile(this.profileName, payload);
       const updated  = response.data;
 
-      // Sync localStorage
+       // Sync localStorage + refresh navbar
+      // (in case avatar is shown in nav now or in the future)
       updateUser({
         bio:    updated.bio,
         avatar: updated.avatar,
         banner: updated.banner,
       });
+      updateNavAuth();
 
       // Update header UI without page reload
       this._updateHeaderUI(updated);
