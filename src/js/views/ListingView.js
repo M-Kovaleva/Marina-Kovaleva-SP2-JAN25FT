@@ -16,7 +16,9 @@
  */
 
 import { getListing, placeBid, deleteListing } from '../api/apiClient.js';
-import { getUser, isLoggedIn, getUserCredits, updateUser } from '../auth/storage.js';
+import { getUser, isLoggedIn, getUserCredits } from '../auth/storage.js';
+import { syncUserFromProfile } from '../auth/userSync.js';
+import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
 
@@ -545,29 +547,22 @@ export class ListingView {
     this._setupBidForm(listing);
   }
 
-  /**
-   * Set min value, hint text, and attach submit handler.
+   /**
+   * Initial form setup: render hint and attach submit handler.
+   *
+   * Note: minBid and userCredits are NOT captured into the handler closure.
+   * The handler reads fresh values on every submit, so a second consecutive
+   * bid uses the up-to-date balance after the first bid was processed.
+   *
    * @param {Object} listing
    */
   _setupBidForm(listing) {
-    const bids        = listing.bids ?? [];
-    const highest     = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
-    const minBid      = highest + 1;
-    const userCredits = getUserCredits() ?? 0;
-
-    const input       = document.getElementById('bid-amount');
-    input.min         = minBid;
-    input.max         = userCredits;
-    input.placeholder = `Min: ${minBid}`;
-
-    document.getElementById('bid-hint').textContent =
-      `Minimum: ${minBid} cr · Your balance: ${userCredits.toLocaleString()} cr`;
+    this._refreshBidHint(listing.bids ?? [], getUserCredits() ?? 0);
 
     document.getElementById('bid-form').addEventListener('submit', (e) =>
-      this._handleBidSubmit(e, listing.id, minBid, userCredits)
+      this._handleBidSubmit(e, listing.id)
     );
   }
-
   /**
    * Handle form submission.
    *
@@ -583,16 +578,33 @@ export class ListingView {
    * @param {string} listingId
    * @param {number} minBid     - minimum valid amount at time of setup
    */
-  async _handleBidSubmit(e, listingId, minBid, userCredits) {
+    /**
+   * Handle bid form submission.
+   *
+   * Flow:
+   *   1. Read FRESH minBid + balance (no stale closure values)
+   *   2. Client-side validate
+   *   3. POST bid to API
+   *   4. On success: in parallel — re-fetch listing, sync user from server
+   *   5. Update UI from real server data (no manual arithmetic)
+   *
+   * @param {Event}  e
+   * @param {string} listingId
+   */
+  async _handleBidSubmit(e, listingId) {
     e.preventDefault();
 
     const input     = document.getElementById('bid-amount');
     const submitBtn = document.getElementById('bid-submit');
     const amount    = Number(input.value);
 
+    // Read fresh values — never trust closure
+    const minBid      = Number(input.min) || 1;
+    const userCredits = getUserCredits() ?? 0;
+
     // Client-side validation
-    if (!amount || amount < minBid) {
-      this._showBidError(`Bid must be at least ${minBid} credits.`);
+    if (!Number.isInteger(amount) || amount < minBid) {
+      this._showBidError(`Bid must be a whole number, at least ${minBid} credits.`);
       return;
     }
     if (amount > userCredits) {
@@ -602,35 +614,33 @@ export class ListingView {
       return;
     }
 
-    // Loading state
     submitBtn.disabled    = true;
     submitBtn.textContent = 'Placing bid…';
     this._hideBidError();
 
     try {
+      // 1. Send bid
       await placeBid(listingId, amount);
 
-      // Success feedback
-      submitBtn.textContent = '✓ Bid placed!';
+      // 2. Refresh listing + user profile in parallel — server is source of truth
+      const [listingRes, profile] = await Promise.all([
+        getListing(listingId, true, true),
+        syncUserFromProfile(getUser().name),
+      ]);
+      const updated    = listingRes.data;
+      const newCredits = profile.credits ?? 0;
 
-      // Re-fetch and refresh after short delay
-      setTimeout(async () => {
-        const response = await getListing(listingId, true, true);
-        const updated  = response.data;
+      // 3. Update UI from real server data
+      this._renderBidSummary(updated);
+      this._renderBidHistory(updated.bids);
+      this._refreshBidHint(updated.bids, newCredits);
+      updateNavAuth();
 
-        this._renderBidSummary(updated);
-        this._renderBidHistory(updated.bids);
-        this._refreshBidHint(updated.bids, userCredits - amount);
-
-        // Deduct bid from local user credits and update nav badge
-        const newCredits = userCredits - amount;
-        updateUser({ credits: newCredits });
-        this._updateCreditsDisplay(newCredits);
-
-        input.value           = '';
-        submitBtn.disabled    = false;
-        submitBtn.textContent = 'Place Bid';
-      }, 1000);
+      // 4. Reset form + feedback
+      input.value           = '';
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Place Bid';
+      showSuccessToast('Bid placed!');
     } catch (err) {
       this._showBidError(err.message || 'Could not place bid. Try again.');
       submitBtn.disabled    = false;
@@ -660,24 +670,7 @@ export class ListingView {
       `Minimum: ${newMin} cr · Your balance: ${newCredits.toLocaleString()} cr`;
   }
 
-  /**
-   * Update the credits badge in the navbar (desktop + mobile).
-   * Reads the same element IDs used by Nav.js.
-   * @param {number} credits
-   */
-  _updateCreditsDisplay(credits) {
-    const formatted = credits.toLocaleString();
 
-    const desktopAmount = document.getElementById('credits-amount');
-    const mobileAmount  = document.getElementById('credits-amount-mobile');
-    const desktopBadge  = document.getElementById('credits-badge');
-    const mobileBadge   = document.getElementById('credits-badge-mobile');
-
-    if (desktopAmount) desktopAmount.textContent = formatted;
-    if (mobileAmount)  mobileAmount.textContent  = formatted;
-    if (desktopBadge)  desktopBadge.style.display = 'flex';
-    if (mobileBadge)   mobileBadge.style.display  = 'flex';
-  }
 
   // ─────────────────────────────────────────────
   // #47a — Bid history
