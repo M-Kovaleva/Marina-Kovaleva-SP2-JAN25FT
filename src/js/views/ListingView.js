@@ -1,20 +1,18 @@
 /**
  * Single Listing View
- * #43 — Build Single Listing page layout     ✅ done
- * #45 — Display listing details              ✅ done
- * #46 — Countdown timer                      ✅ done
- * #47a — Bid history component               ✅ done
- * #47b — Bid form component                  ✅ this commit
  *
- * Added in #47b:
- *  - Four mutually exclusive form states:
- *      ended / guest / own listing / bid form
- *  - Minimum bid validation (must exceed current highest)
- *  - Loading state on submit, inline error on failure
- *  - On success: refresh bid summary + history without page reload
- *  - Countdown → auto-switches to ended state when timer hits zero
+ * Displays a single listing with:
+ *  - Image gallery (main + thumbnails)
+ *  - Title, description, tags, seller card
+ *  - Live countdown timer until auction end
+ *  - Current highest bid + bid history
+ *  - Bid form with five mutually exclusive states:
+ *      ended → guest → own listing → already winning → form
+ *  - Owner-only Edit/Delete actions (active auctions only)
+ *
+ * Server is the single source of truth for credits — after each bid,
+ * we sync the user profile from the API rather than guessing locally.
  */
-
 import { getListing, placeBid, deleteListing } from '../api/apiClient.js';
 import { getUser, isLoggedIn, getUserCredits } from '../auth/storage.js';
 import { syncUserFromProfile } from '../auth/userSync.js';
@@ -184,7 +182,7 @@ export class ListingView {
                     </div>
                   </div>
 
-                  <!-- ── #47b: Four bid form states ── -->
+                  <!-- ── Bid form states (mutually exclusive) ── -->
 
                   <!-- State A: Auction ended -->
                   <div id="state-ended" class="hidden text-center py-2">
@@ -201,6 +199,16 @@ export class ListingView {
                   <div id="state-own" class="hidden text-center py-2">
                     <p class="text-text-secondary text-sm">
                       You cannot bid on your own listing.
+                    </p>
+                  </div>
+
+                  <!-- State E: User already has the highest bid -->
+                  <div id="state-winning" class="hidden text-center py-2">
+                    <p class="text-green-700 text-sm font-medium mb-1">
+                      🏆 You're winning!
+                    </p>
+                    <p class="text-text-secondary text-xs">
+                      You can place a new bid once someone outbids you.
                     </p>
                   </div>
 
@@ -527,8 +535,8 @@ export class ListingView {
   // ─────────────────────────────────────────────
 
   /**
-   * Decide which of four states to show — exactly one at a time.
-   * Order matters: ended → guest → own → form.
+   * Decide which of five states to show — exactly one at a time.
+   * Order matters: ended → guest → own → already winning → form.
    * @param {Object} listing
    */
   _renderBidForm(listing) {
@@ -550,16 +558,42 @@ export class ListingView {
       return;
     }
 
+    // State E: user already holds the highest bid — disallow self-outbidding
+    if (this._isUserWinning(listing.bids)) {
+      this._showState('state-winning');
+      return;
+    }
+
     // State D: bid form
     this._showState('bid-form');
     this._setupBidForm(listing);
   }
 
-   /**
+  /**
+   * Check whether the current user is the highest bidder on this listing.
+   * Returns false for empty bid history (no winner yet).
+   *
+   * @param {Array} bids
+   * @returns {boolean}
+   */
+  _isUserWinning(bids) {
+    if (!bids?.length) return false;
+
+    const me = getUser()?.name;
+    if (!me) return false;
+
+    const highest = bids.reduce(
+      (max, b) => (b.amount > max.amount ? b : max),
+      bids[0]
+    );
+    return highest.bidder?.name === me;
+  }
+
+  /**
    * Initial form setup: render hint and attach submit handler.
    *
    * Note: minBid and userCredits are NOT captured into the handler closure.
-   * The handler reads fresh values on every submit, so a second consecutive
+   * The handler reads fresh values on every submit so a second consecutive
    * bid uses the up-to-date balance after the first bid was processed.
    *
    * @param {Object} listing
@@ -570,47 +604,33 @@ export class ListingView {
     document.getElementById('bid-form').addEventListener('submit', (e) =>
       this._handleBidSubmit(e, listing.id)
     );
+  
   }
+
   /**
-   * Handle form submission.
-   *
-   * Success flow:
-   *   1. Show loading on button
-   *   2. Call placeBid API
-   *   3. After 1s: re-fetch listing, refresh summary + history + form hint
-   *
-   * Error flow:
-   *   Show inline error, re-enable button.
-   *
-   * @param {Event}  e
-   * @param {string} listingId
-   * @param {number} minBid     - minimum valid amount at time of setup
-   */
-    /**
    * Handle bid form submission.
    *
    * Flow:
    *   1. Read FRESH minBid + balance (no stale closure values)
    *   2. Client-side validate
    *   3. POST bid to API
-   *   4. On success: in parallel — re-fetch listing, sync user from server
-   *   5. Update UI from real server data (no manual arithmetic)
+   *   4. Refresh listing + sync user from server in parallel
+   *   5. Re-evaluate bid form state — user may now be winning
    *
    * @param {Event}  e
    * @param {string} listingId
    */
-  async _handleBidSubmit(e, listingId) {
+  async _handleBidSubmit(e, listingId) { 
     e.preventDefault();
 
     const input     = document.getElementById('bid-amount');
     const submitBtn = document.getElementById('bid-submit');
     const amount    = Number(input.value);
 
-    // Read fresh values — never trust closure
+    // Read fresh values — never trust closure from setup time
     const minBid      = Number(input.min) || 1;
     const userCredits = getUserCredits() ?? 0;
 
-    // Client-side validation
     if (!Number.isInteger(amount) || amount < minBid) {
       this._showBidError(`Bid must be a whole number, at least ${minBid} credits.`);
       return;
@@ -630,24 +650,25 @@ export class ListingView {
       // 1. Send bid
       await placeBid(listingId, amount);
 
-      // 2. Refresh listing + user profile in parallel — server is source of truth
-      const [listingRes, profile] = await Promise.all([
+      // 2. Server is source of truth — refresh listing + user in parallel
+      const [listingRes] = await Promise.all([
         getListing(listingId, true, true),
         syncUserFromProfile(getUser().name),
       ]);
-      const updated    = listingRes.data;
-      const newCredits = profile.credits ?? 0;
+      const updated = listingRes.data;
 
       // 3. Update UI from real server data
       this._renderBidSummary(updated);
       this._renderBidHistory(updated.bids);
-      this._refreshBidHint(updated.bids, newCredits);
       updateNavAuth();
 
-      // 4. Reset form + feedback
-      input.value           = '';
+      // 4. Re-evaluate which state to show.
+      //    User just bid → likely "winning" state now.
+      input.value = '';
       submitBtn.disabled    = false;
       submitBtn.textContent = 'Place Bid';
+      this._renderBidForm(updated);
+
       showSuccessToast('Bid placed!');
     } catch (err) {
       this._showBidError(err.message || 'Could not place bid. Try again.');
@@ -655,11 +676,6 @@ export class ListingView {
       submitBtn.textContent = 'Place Bid';
     }
   }
-
-  /**
-   * Update min value and hint text after a successful bid.
-   * @param {Array} bids - updated bids array from API
-   */
   /**
    * Update min value, max value, and hint text after a successful bid.
    * @param {Array}  bids        - updated bids from API
@@ -817,11 +833,10 @@ export class ListingView {
     document.getElementById('listing-error').classList.remove('hidden');
   }
 
-  /** Show one bid-form state, hide the other three */
+  /** Show one bid-form state, hide all the others */
   _showState(id) {
-    ['state-ended', 'state-guest', 'state-own', 'bid-form'].forEach((s) =>
-      document.getElementById(s)?.classList.add('hidden')
-    );
+    ['state-ended', 'state-guest', 'state-own', 'state-winning', 'bid-form']
+      .forEach((s) => document.getElementById(s)?.classList.add('hidden'));
     document.getElementById(id)?.classList.remove('hidden');
   }
 
