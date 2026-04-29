@@ -478,6 +478,14 @@ export class ListingView {
         this._countdownInterval = null;
         // Switch bid form to ended state live
         this._showState('state-ended');
+        // Hide owner actions — listing becomes immutable when ended.
+        // Must clear inline style.display set by _renderOwnerActions,
+        // otherwise it overrides the Tailwind .hidden class.
+        const actions = document.getElementById('owner-actions');
+        if (actions) {
+          actions.classList.add('hidden');
+          actions.style.display = '';
+        }
         return;
       }
 
@@ -743,26 +751,30 @@ export class ListingView {
   // ─────────────────────────────────────────────
 
   /**
-   * Show Edit/Delete buttons only when current user is the listing's seller.
-   * Wires up navigation (Edit) and confirm-delete flow (Delete).
+   * Show Edit/Delete buttons only when:
+   *   - current user is the listing's seller, AND
+   *   - the auction has not ended yet
    *
-   * @param {Object} listing - listing with seller info
+   * Once an auction ends a winner has effectively been chosen, so the
+   * listing becomes immutable in the UI. The Noroff API will likely
+   * reject changes too, but hiding the buttons gives clearer UX than
+   * letting the user click and see an error.
+   *
+   * @param {Object} listing - listing with seller and endsAt
    */
   _renderOwnerActions(listing) {
     const currentUser = getUser();
     const isOwner = currentUser?.name && listing.seller?.name === currentUser.name;
+    const isActive = new Date(listing.endsAt) > new Date();
 
-    if (!isOwner) return;
+    // Owners of ended auctions don't see the buttons at all
+    if (!isOwner || !isActive) return;
 
-    // Reveal the actions block
     const actions = document.getElementById('owner-actions');
     actions.classList.remove('hidden');
     actions.style.display = 'flex';
 
-    // Edit: link to /listing/:id/edit (router handles via data-link)
     document.getElementById('edit-listing-btn').href = `/listing/${listing.id}/edit`;
-
-    // Delete: confirm + API call + redirect home
     document.getElementById('delete-listing-btn')
       .addEventListener('click', () => this._handleDelete(listing.id));
   }
