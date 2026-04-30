@@ -4,7 +4,6 @@
  * Ticket B — Edit mode                ✅ done
  */
 
-import { isLoggedIn } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
 import { createListing, getListing, updateListing } from '../api/apiClient.js';
 
@@ -140,11 +139,9 @@ export class CreateListingView {
   }
 
   async init() {
-    // ── Protected route: guests cannot access this page ──
-    if (!isLoggedIn()) {
-      navigateTo('/login');
-      return;
-    }
+    // Auth guard handled by the router — no need to check here.
+
+    // Edit mode: load existing data and prefill form
 
     // Edit mode: load existing data and prefill form
     if (this.isEditMode) {

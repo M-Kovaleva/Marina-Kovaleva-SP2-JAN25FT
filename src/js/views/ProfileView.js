@@ -1,40 +1,19 @@
-/**
- * Profile View
- * #P1 — Profile header         ✅ done
- * #P2 — Listings tab        ✅ done
- * #P4 — Wins tab               ✅ done
- * #P3 — Bids tab               ✅ done
- * #P5 — Edit Profile            ✅ this commit
- *
- * Added in #P2:
- * - Tabs: Listings / Bids / Wins
- * - Listings tab active by default
- * - Fetch GET /auction/profiles/:name/listings
- * - Render using createListingCards()
- * - Empty state with Create Listing button
- * - Tabs for Bids and Wins are placeholders (implemented in #P3–#P4)
- */
+/* Profile View */
 
-import { getProfile, getProfileListings, getProfileWins, getProfileBids, updateProfile } from '../api/apiClient.js';
+import { getProfile, getProfileListings, getProfileBids, updateProfile } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
-import { isLoggedIn, getUser, updateUser } from '../auth/storage.js';
+import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
-import { navigateTo } from '../router/router.js';
-import { escHtml, formatDate } from '../utils/format.js';
 import { showSuccessToast } from '../utils/toast.js';
+import { escHtml, formatDate } from '../utils/format.js';
 
 export class ProfileView {
   constructor(params) {
     this.params       = params;
-    // /profile      → show own profile (name from localStorage)
-    // /profile/:name → show that user's profile
     this.profileName  = params.name || getUser()?.name || null;
   }
 
-  // ─────────────────────────────────────────────
-  // RENDER — static shell
-  // ─────────────────────────────────────────────
-
+  // Render
   async render() {
     return `
       <div class="page-container">
@@ -45,7 +24,7 @@ export class ProfileView {
           <p class="text-text-secondary text-sm">Loading profile...</p>
         </div>
 
-        <!-- Error / 404 state -->
+        <!-- Error - 404 state -->
         <div id="profile-error" class="hidden text-center py-24">
           <p class="text-5xl mb-4">😕</p>
           <h2 class="text-xl font-bold text-text-primary mb-2">Profile not found</h2>
@@ -58,27 +37,20 @@ export class ProfileView {
         <!-- Main content -->
         <div id="profile-content" class="hidden">
 
-          <!-- ── #P1: Profile Header Card ── -->
+          <!-- Profile header card -->
           <div class="card overflow-hidden mb-6 sm:mb-8">
 
             <!-- Banner -->
             <div id="profile-banner"
               class="h-24 sm:h-32 lg:h-40 bg-gradient-to-r from-primary-500 to-primary-600 overflow-hidden">
-              <!-- Banner image injected by JS if available -->
             </div>
 
-            <!-- Avatar + Info -->
+            <!-- Avatar and Info -->
             <div class="px-4 sm:px-6 pb-6">
               <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12 mb-4">
-
-                <!-- Avatar -->
                 <div id="profile-avatar"
-                  class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden
-                         border-4 border-white bg-primary-100 shadow-md flex-shrink-0">
-                  <!-- Avatar image injected by JS if available -->
+                  class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white bg-primary-100 shadow-md flex-shrink-0">
                 </div>
-
-                <!-- Name + bio -->
                 <div class="sm:mb-2 flex-1 min-w-0">
                   <h1 id="profile-name"
                     class="text-xl sm:text-2xl font-bold text-text-primary truncate">
@@ -88,14 +60,17 @@ export class ProfileView {
                   </p>
                 </div>
 
-                <!-- Edit button (desktop) — own profile only, injected by JS -->
-                <div id="edit-btn-desktop" class="sm:ml-auto sm:mb-2"></div>
-
+                <!-- Edit Profile button for owner only-->
+                <button id="edit-profile-btn" type="button"
+                  class="hidden btn-secondary text-sm sm:ml-auto sm:mb-2">
+                  Edit Profile
+                </button>
               </div>
 
               <!-- Stats row -->
               <div class="flex flex-wrap gap-4 sm:gap-8">
-                <!-- Credits — own profile only, shown by JS -->
+
+                <!-- Credits count for own profile only -->
                 <div id="stat-credits" class="hidden text-center sm:text-left">
                   <p id="profile-credits"
                     class="text-xl sm:text-2xl font-bold text-primary-500">
@@ -104,6 +79,7 @@ export class ProfileView {
                   <p class="text-xs sm:text-sm text-text-secondary">Credits</p>
                 </div>
 
+                <!-- Listings count -->
                 <div class="text-center sm:text-left">
                   <p id="profile-listings-count"
                     class="text-xl sm:text-2xl font-bold text-text-primary">
@@ -112,6 +88,7 @@ export class ProfileView {
                   <p class="text-xs sm:text-sm text-text-secondary">Listings</p>
                 </div>
 
+                <!-- Wins count for own profile only -->
                 <div id="stat-wins" class="hidden text-center sm:text-left">
                   <p id="profile-wins-count"
                     class="text-xl sm:text-2xl font-bold text-text-primary">
@@ -119,14 +96,8 @@ export class ProfileView {
                   </p>
                   <p class="text-xs sm:text-sm text-text-secondary">Wins</p>
                 </div>
-
-              <!-- Edit button (mobile) — own profile only, injected by JS -->
-              <div id="edit-btn-mobile" class="hidden sm:hidden mt-4"></div>
-
             </div>
           </div>
-
-          <!-- ── #P2: Tabs + Content ── -->
 
           <!-- Tab navigation -->
           <div class="border-b border-border mb-6">
@@ -154,18 +125,18 @@ export class ProfileView {
             </nav>
           </div>
 
-          <!-- Tab content panels -->
-
-          <!-- Listings panel (default visible) -->
+          <!-- Listings -->
           <div id="tab-listings">
+
             <!-- Loading -->
             <div id="profile-listings-loading" class="flex justify-center py-12">
               <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
             </div>
-            <!-- Grid populated by JS -->
+            <!-- Grid with listings-->
             <div id="profile-listings-grid"
               class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             </div>
+
             <!-- Empty state -->
             <div id="profile-listings-empty" class="hidden text-center py-16">
               <div class="text-5xl mb-4">📦</div>
@@ -175,14 +146,17 @@ export class ProfileView {
             </div>
           </div>
 
-          <!-- Bids panel (hidden by default) -->
+          <!-- Bids -->
           <div id="tab-bids" class="hidden">
+
             <!-- Loading -->
             <div id="profile-bids-loading" class="flex justify-center py-12">
               <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
             </div>
-            <!-- Bids list populated by JS -->
+
+            <!-- List with bids -->
             <div id="profile-bids-list" class="hidden space-y-3"></div>
+
             <!-- Empty state -->
             <div id="profile-bids-empty" class="hidden text-center py-16">
               <div class="text-5xl mb-4">🎯</div>
@@ -194,16 +168,19 @@ export class ProfileView {
             </div>
           </div>
 
-          <!-- Wins panel (hidden by default) -->
+          <!-- Wins -->
           <div id="tab-wins" class="hidden">
+
             <!-- Loading -->
             <div id="profile-wins-loading" class="flex justify-center py-12">
               <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
             </div>
-            <!-- Grid populated by JS -->
+
+            <!-- Grid with wins(listings) -->
             <div id="profile-wins-grid"
               class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             </div>
+
             <!-- Empty state -->
             <div id="profile-wins-empty" class="hidden text-center py-16">
               <div class="text-5xl mb-4">🏆</div>
@@ -214,9 +191,10 @@ export class ProfileView {
             </div>
           </div>
 
-        <!-- ── #P5: Edit Profile Modal ── -->
+        <!-- Edit Profile modal window -->
         <div id="edit-profile-modal"
           class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+
           <!-- Backdrop -->
           <div id="edit-profile-backdrop"
             class="absolute inset-0 bg-black/50"></div>
@@ -242,6 +220,7 @@ export class ProfileView {
               <p class="text-error text-sm font-medium"></p>
             </div>
 
+            <!-- Form -->
             <form id="edit-profile-form" class="space-y-4">
 
               <!-- Bio -->
@@ -257,7 +236,7 @@ export class ProfileView {
                 <p class="hint">Maximum 160 characters</p>
               </div>
 
-              <!-- Avatar URL -->
+              <!-- Avatar -->
               <div>
                 <label for="edit-avatar" class="label">Avatar URL</label>
                 <input
@@ -268,7 +247,7 @@ export class ProfileView {
                 />
               </div>
 
-              <!-- Banner URL -->
+              <!-- Banner -->
               <div>
                 <label for="edit-banner" class="label">Banner URL</label>
                 <input
@@ -278,33 +257,20 @@ export class ProfileView {
                   class="input"
                 />
               </div>
-
               <button type="submit" id="edit-profile-submit"
                 class="btn-primary w-full py-3">
                 Save Changes
               </button>
-
             </form>
           </div>
         </div>
-
-        </div><!-- /#profile-content -->
       </div>
     `;
   }
 
-  // ─────────────────────────────────────────────
-  // INIT
-  // ─────────────────────────────────────────────
-
+  // Init
   async init() {
-    // Protected route
-    if (!isLoggedIn()) {
-      navigateTo('/login');
-      return;
-    }
-
-    // Resolve profile name
+    // Auth checking handles by router 
     if (!this.profileName) {
       this._showError();
       return;
@@ -319,19 +285,14 @@ export class ProfileView {
 
       this._showContent();
       this._renderHeader(profile);
-      this._initTabs(profile.name); // #P2: wire up tab switching (owner-aware)
-      this._loadListings();         // #P2: load first tab content
+      this._initTabs(profile.name); 
+      this._loadListings();
     } catch {
       this._showError();
     }
   }
-
-  // ─────────────────────────────────────────────
-  // #P1 — Header
-  // ─────────────────────────────────────────────
-
   /**
-   * Populate all header sections from API data.
+   * Render all header sections from API data
    * @param {Object} profile
    */
   _renderHeader(profile) {
@@ -343,18 +304,18 @@ export class ProfileView {
   }
 
   /**
-   * Banner: show image if URL provided, keep gradient fallback otherwise.
+   * Banner: show image if URL provided, keep placeholder otherwise
    * @param {{ url: string, alt: string }|undefined} banner
    */
   _renderBanner(banner) {
     const bannerEl = document.getElementById('profile-banner');
-    if (!banner?.url?.trim()) return; // gradient fallback stays
+    if (!banner?.url?.trim()) return;
 
     const img = document.createElement('img');
     img.src       = banner.url;
     img.alt       = banner.alt || '';
     img.className = 'w-full h-full object-cover';
-    img.onerror   = () => img.remove(); // broken URL → gradient shows
+    img.onerror   = () => img.remove(); // broken URL - placeholder shows
     bannerEl.innerHTML = '';
     bannerEl.classList.remove(
       'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
@@ -363,25 +324,25 @@ export class ProfileView {
   }
 
   /**
-   * Avatar: show image if URL provided, keep placeholder circle otherwise.
+   * Avatar: show image if URL provided, keep placeholder otherwise
    * @param {{ url: string, alt: string }|undefined} avatar
    */
   _renderAvatar(avatar) {
     const avatarEl = document.getElementById('profile-avatar');
-    if (!avatar?.url?.trim()) return; // placeholder circle stays
+    if (!avatar?.url?.trim()) return;
 
     const img = document.createElement('img');
     img.src       = avatar.url;
     img.alt       = avatar.alt || '';
     img.className = 'w-full h-full object-cover';
-    img.onerror   = () => img.remove(); // broken URL → circle shows
+    img.onerror   = () => img.remove(); // broken URL - pplaceholder shows
     avatarEl.innerHTML = '';
     avatarEl.appendChild(img);
   }
 
   /**
-   * Name and bio.
-   * Bio section is hidden when empty.
+   * Name and bio
+   * Bio section is hidden when empty
    * @param {string} name
    * @param {string|undefined} bio
    */
@@ -397,25 +358,20 @@ export class ProfileView {
 
    /**
    * Stats: 
-   *   - Listings count: public, visible on every profile
-   *   - Credits: private, only on own profile
-   *   - Wins: private, only on own profile
-   *
-   * For own profile: also mirror server credits to localStorage
-   * and refresh the navbar badge — server is source of truth.
-   *
+   * Listings count: public, always shown
+   * Credits count: private, shown for own profile only
+   * Wins count: private, shown for own profile only
    * @param {Object} profile
    */
   _renderStats(profile) {
     const currentUser  = getUser();
     const isOwnProfile = currentUser?.name === profile.name;
 
-    // Listings count — public, always shown
+    // Listings count: public, always shown
     document.getElementById('profile-listings-count').textContent =
       profile._count?.listings ?? 0;
 
-    // Credits + Wins — private, only on own profile
-    if (isOwnProfile) {
+    // Credits and Wins — private, shown for own profile only
       document.getElementById('stat-credits').classList.remove('hidden');
       document.getElementById('profile-credits').textContent =
         (profile.credits ?? 0).toLocaleString();
@@ -424,74 +380,37 @@ export class ProfileView {
       document.getElementById('profile-wins-count').textContent =
         profile._count?.wins ?? 0;
 
-      // Sync server credits → localStorage → navbar
+      // Sync server credits -> localStorage -> navbar
       updateUser({ credits: profile.credits });
       updateNavAuth();
     }
-  }
 
   /**
-   * Edit Profile button — injected only for own profile.
-   * Wires up a click handler (Edit form implemented in #P5).
+   * Edit Profile button — visible only for own profile
    * @param {string} profileName
    */
   _renderEditButton(profileName) {
     const currentUser = getUser();
     if (currentUser?.name !== profileName) return;
 
-    const btnHtml = `
-      <button
-        id="edit-profile-btn"
-        class="btn-secondary text-sm">
-        Edit Profile
-      </button>`;
+    const btn = document.getElementById('edit-profile-btn');
+    if (!btn) return;
 
-    // Desktop slot — shown via media query in style, not Tailwind class
-    const desktopSlot = document.getElementById('edit-btn-desktop');
-    desktopSlot.innerHTML = btnHtml;
-    // Use matchMedia so button only shows on sm+ (≥640px), not on mobile
-    const showDesktopBtn = () => {
-      desktopSlot.style.display = window.matchMedia('(min-width: 640px)').matches
-        ? 'block' : 'none';
-    };
-    showDesktopBtn();
-    window.addEventListener('resize', showDesktopBtn);
-
-    // Mobile slot — different button ID to avoid duplicate
-    const mobileBtnHtml = `
-      <button
-        id="edit-profile-btn-mobile"
-        class="btn-secondary w-full text-sm">
-        Edit Profile
-      </button>`;
-    const mobileSlot = document.getElementById('edit-btn-mobile');
-    mobileSlot.innerHTML = mobileBtnHtml;
-    mobileSlot.classList.remove('hidden');
-    mobileSlot.classList.add('sm:hidden');
-
-    // #P5: open edit modal
-    const handleEdit = () => this._openEditModal();
-
-    document.getElementById('edit-profile-btn')
-      ?.addEventListener('click', handleEdit);
-    document.getElementById('edit-profile-btn-mobile')
-      ?.addEventListener('click', handleEdit);
+    btn.classList.remove('hidden');
+    btn.addEventListener('click', () => this._openEditModal());
   }
 
-  // ─────────────────────────────────────────────
-  // #P2 — Listings tab
-  // ─────────────────────────────────────────────
-
   /**
-   * Wire up tab button clicks.
-   * Hides Bids and Wins tabs for non-owners (they can only see Listings).
+   * Tabs
+   * Enables a click handler
+   * Hides Bids and Wins tabs for non-owners
    * @param {string} profileName
    */
   _initTabs(profileName) {
     const currentUser = getUser();
     const isOwner     = currentUser?.name === profileName;
 
-    // Non-owners: hide Bids and Wins tabs entirely
+    // Hide Bids and Wins tabs for non-owners
     if (!isOwner) {
       document.querySelector('[data-tab="bids"]')?.closest('button')
         ?.classList.add('hidden');
@@ -521,7 +440,7 @@ export class ProfileView {
           );
         });
 
-        // Lazy-load tab content on first click
+        // Load tab content on click
         if (target === 'wins' && !this._winsLoaded) {
           this._loadWins();
           this._winsLoaded = true;
@@ -534,10 +453,7 @@ export class ProfileView {
     });
   }
 
-  /**
-   * Fetch and render Listings.
-   * Uses createListingCards() for consistent card appearance.
-   */
+  // Fetch and render Listings
   async _loadListings() {
     const loadingEl = document.getElementById('profile-listings-loading');
     const gridEl    = document.getElementById('profile-listings-grid');
@@ -567,21 +483,7 @@ export class ProfileView {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // #P3 — Bids tab
-  // ─────────────────────────────────────────────
-
-  /**
-   * Fetch and render Bids.
-   * Called lazily on first click of Bids tab.
-   *
-   * Per bid display:
-   *   - Listing thumbnail (first media image or placeholder)
-   *   - Listing title → links to /listing/:id
-   *   - Bid amount
-   *   - Listing end date (formatted)
-   *   - Status badge: Active / Ended
-   */
+  // Fetch and render Bids.
   async _loadBids() {
     const loadingEl = document.getElementById('profile-bids-loading');
     const listEl    = document.getElementById('profile-bids-list');
@@ -598,7 +500,7 @@ export class ProfileView {
         return;
       }
 
-      // Sort by bid amount descending
+      // Sort by bid amount
       const sorted = [...bids].sort((a, b) => b.amount - a.amount);
 
       listEl.innerHTML = sorted.map((bid) => {
@@ -631,7 +533,7 @@ export class ProfileView {
               </p>
             </div>
 
-            <!-- Bid amount + status -->
+            <!-- Bid amount and status -->
             <div class="text-right flex-shrink-0">
               <p class="font-bold text-primary-500 text-sm">
                 ${bid.amount.toLocaleString()}
@@ -643,6 +545,7 @@ export class ProfileView {
             </div>
 
           </a>`;
+
       }).join('');
 
        listEl.classList.remove('hidden');
@@ -652,14 +555,7 @@ export class ProfileView {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // #P4 — Wins tab
-  // ─────────────────────────────────────────────
-
-  /**
-   * Fetch and render Wins.
-   * Called lazily on first click of Wins tab.
-   */
+  // Fetch and render Wins
   async _loadWins() {
     const loadingEl = document.getElementById('profile-wins-loading');
     const gridEl    = document.getElementById('profile-wins-grid');
@@ -689,13 +585,7 @@ export class ProfileView {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // #P5 — Edit Profile
-  // ─────────────────────────────────────────────
-
-  /**
-   * Open the edit modal and prefill current values from localStorage.
-   */
+  //  Edit Profile modal window
   _openEditModal() {
     const user = getUser();
     const modal = document.getElementById('edit-profile-modal');
@@ -721,14 +611,14 @@ export class ProfileView {
       .addEventListener('submit', (e) => this._handleEditSubmit(e), { once: true });
   }
 
-  /** Close the edit modal */
+  // Close the edit modal
   _closeEditModal() {
     document.getElementById('edit-profile-modal').classList.add('hidden');
   }
 
   /**
-   * Validate, submit and update profile.
-   * On success: update header UI + sync localStorage + show toast.
+   * Validate, submit and update profile
+   * On success: update header UI, sync localStorage, show toast
    * @param {Event} e
    */
   async _handleEditSubmit(e) {
@@ -772,19 +662,15 @@ export class ProfileView {
       const response = await updateProfile(this.profileName, payload);
       const updated  = response.data;
 
-       // Sync localStorage + refresh navbar
-      // (in case avatar is shown in nav now or in the future)
+       // Sync localStorage
       updateUser({
         bio:    updated.bio,
         avatar: updated.avatar,
         banner: updated.banner,
       });
-      updateNavAuth();
-
-      // Update header UI without page reload
+      // Update header 
       this._updateHeaderUI(updated);
 
-      // Reset button before closing so next open shows correct state
       submitBtn.disabled    = false;
       submitBtn.textContent = 'Save Changes';
 
@@ -801,7 +687,6 @@ export class ProfileView {
 
   /**
    * Update the visible header after a successful edit
-   * without re-fetching from the API.
    * @param {Object} updated - profile data from PUT response
    */
   _updateHeaderUI(updated) {
@@ -813,7 +698,6 @@ export class ProfileView {
     } else {
       bioEl.classList.add('hidden');
     }
-
     // Avatar
     const avatarContainer = document.getElementById('profile-avatar');
     avatarContainer.innerHTML = '';
@@ -825,7 +709,6 @@ export class ProfileView {
       img.onerror   = () => img.remove();
       avatarContainer.appendChild(img);
     }
-
     // Banner
     const bannerEl = document.getElementById('profile-banner');
     if (updated.banner?.url) {
@@ -846,11 +729,6 @@ export class ProfileView {
       bannerEl.appendChild(img);
     }
   }
-
-
-  // ─────────────────────────────────────────────
-  // Helpers
-  // ─────────────────────────────────────────────
 
   _showContent() {
     document.getElementById('profile-loading').classList.add('hidden');
