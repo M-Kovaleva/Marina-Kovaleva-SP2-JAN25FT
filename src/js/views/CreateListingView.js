@@ -1,8 +1,4 @@
-/**
- * Create/Edit Listing View
- * #48 — Create Listing form + API     ✅ done
- * Ticket B — Edit mode                ✅ done
- */
+/* Create/Edit Listing view */
 
 import { navigateTo } from '../router/router.js';
 import { createListing, getListing, updateListing } from '../api/apiClient.js';
@@ -14,9 +10,11 @@ export class CreateListingView {
     this.isEditMode = !!this.listingId;
   }
 
+   // Render
   async render() {
     return `
       <div class="page-container max-w-2xl">
+      
         <!-- Back Link -->
         <a href="/" data-link class="inline-flex items-center gap-2 text-text-secondary hover:text-primary-500 mb-6 text-sm sm:text-base transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,7 +23,7 @@ export class CreateListingView {
           Cancel
         </a>
         
-        <!-- Form Card -->
+        <!-- Form card -->
         <div class="card">
           <div class="card-body">
             <h1 class="text-xl sm:text-2xl font-bold text-text-primary mb-2">
@@ -67,7 +65,7 @@ export class CreateListingView {
               
               <!-- End Date -->
               ${this.isEditMode
-                ? `<!-- endsAt cannot be changed after creation (Noroff API limitation) -->
+                ? `
                    <div>
                      <label class="label">End Date</label>
                      <div id="endsAt-readonly"
@@ -139,16 +137,10 @@ export class CreateListingView {
   }
 
   async init() {
-    // Auth guard handled by the router — no need to check here.
-
-    // Edit mode: load existing data and prefill form
-
-    // Edit mode: load existing data and prefill form
+    // Auth checking handles by router. Edit mode: load existing data and prefill form
     if (this.isEditMode) {
       await this._prefillForm();
     }
-
-    // Set minimum date to now — only needed in create mode
     if (!this.isEditMode) {
       const endsAtInput = document.getElementById('endsAt');
       if (endsAtInput) {
@@ -168,10 +160,7 @@ export class CreateListingView {
     }
   }
 
-  // ─────────────────────────────────────────────
   // Form submit handler
-  // ─────────────────────────────────────────────
-
   async _handleSubmit(e) {
     e.preventDefault();
     this._hideError();
@@ -190,7 +179,7 @@ export class CreateListingView {
       return;
     }
 
-    // endsAt: required for create only (API does not allow changing it after creation)
+    // endsAt: required for create only
     if (!this.isEditMode) {
       if (!endsAtRaw) {
         this._showError('End date is required.');
@@ -242,10 +231,7 @@ export class CreateListingView {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // Ticket B — Prefill form in edit mode
-  // ─────────────────────────────────────────────
-
+  // Prefill form in edit mode
   async _prefillForm() {
     try {
       const response = await getListing(this.listingId, false, false);
@@ -254,7 +240,7 @@ export class CreateListingView {
       document.getElementById('title').value = listing.title ?? '';
       document.getElementById('description').value = listing.description ?? '';
 
-      // End date — shown as read-only text (cannot be changed via API)
+      // End date — shown as read-only
       if (listing.endsAt) {
         const readonlyEl = document.getElementById('endsAt-readonly');
         if (readonlyEl) {
