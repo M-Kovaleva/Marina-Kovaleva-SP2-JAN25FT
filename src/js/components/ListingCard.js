@@ -132,7 +132,7 @@ export function createListingCard(listing) {
   const shortDescription = truncateText(description);
 
   return `
-    <article class="card group cursor-pointer hover:shadow-lg transition-all duration-200 ${isEnded ? 'opacity-70 grayscale-[30%]' : ''}">
+    <article class="card group cursor-pointer hover:-translate-y-1 transition-transform duration-200 ${isEnded ? 'opacity-70 grayscale-[30%]' : ''}">
       <a href="/listing/${id}" data-link class="block">
         <!-- Image Container -->
         <div class="relative aspect-[4/3] overflow-hidden rounded-t-xl bg-gray-200">
@@ -140,7 +140,7 @@ export function createListingCard(listing) {
             <img
               src="${imageUrl}"
               alt="${imageAlt}"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              class="w-full h-full object-cover"
               loading="lazy"
               onerror="this.style.display='none'"
             />

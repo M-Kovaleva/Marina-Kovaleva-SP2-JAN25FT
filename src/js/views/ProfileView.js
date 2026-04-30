@@ -514,7 +514,7 @@ export class ProfileView {
 
         return `
           <a href="/listing/${escHtml(listingId)}" data-link
-            class="flex items-center gap-4 p-4 card hover:shadow-md transition-shadow">
+            class="flex items-center gap-4 p-4 card hover:-translate-y-0.5 transition-transform duration-200">
 
             <!-- Thumbnail -->
             <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">

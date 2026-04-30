@@ -102,7 +102,7 @@
 
 /* === CARDS === */
 .card {
-  @apply bg-white border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200;
+  @apply bg-white border border-border rounded-xl shadow-sm;
 }
 
 .card-body {
