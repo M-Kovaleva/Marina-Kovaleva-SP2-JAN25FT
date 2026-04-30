@@ -112,14 +112,13 @@ export class ProfileView {
                   <p class="text-xs sm:text-sm text-text-secondary">Listings</p>
                 </div>
 
-                <div class="text-center sm:text-left">
+                <div id="stat-wins" class="hidden text-center sm:text-left">
                   <p id="profile-wins-count"
                     class="text-xl sm:text-2xl font-bold text-text-primary">
                     —
                   </p>
                   <p class="text-xs sm:text-sm text-text-secondary">Wins</p>
                 </div>
-              </div>
 
               <!-- Edit button (mobile) — own profile only, injected by JS -->
               <div id="edit-btn-mobile" class="hidden sm:hidden mt-4"></div>
@@ -396,13 +395,14 @@ export class ProfileView {
     }
   }
 
-    /**
-   * Stats: Credits (own profile only), Listings count, Wins count.
+   /**
+   * Stats: 
+   *   - Listings count: public, visible on every profile
+   *   - Credits: private, only on own profile
+   *   - Wins: private, only on own profile
    *
-   * For own profile: also mirror server credits to localStorage and
-   * refresh the navbar badge. Server is the source of truth — this
-   * keeps storage in sync if credits changed elsewhere (e.g. a bid
-   * placed in another tab).
+   * For own profile: also mirror server credits to localStorage
+   * and refresh the navbar badge — server is source of truth.
    *
    * @param {Object} profile
    */
@@ -410,21 +410,24 @@ export class ProfileView {
     const currentUser  = getUser();
     const isOwnProfile = currentUser?.name === profile.name;
 
+    // Listings count — public, always shown
+    document.getElementById('profile-listings-count').textContent =
+      profile._count?.listings ?? 0;
+
+    // Credits + Wins — private, only on own profile
     if (isOwnProfile) {
       document.getElementById('stat-credits').classList.remove('hidden');
       document.getElementById('profile-credits').textContent =
         (profile.credits ?? 0).toLocaleString();
 
-      // Sync server credits → localStorage → navbar badge
+      document.getElementById('stat-wins').classList.remove('hidden');
+      document.getElementById('profile-wins-count').textContent =
+        profile._count?.wins ?? 0;
+
+      // Sync server credits → localStorage → navbar
       updateUser({ credits: profile.credits });
       updateNavAuth();
     }
-
-    // Listings and Wins counts from _count
-    document.getElementById('profile-listings-count').textContent =
-      profile._count?.listings ?? 0;
-    document.getElementById('profile-wins-count').textContent =
-      profile._count?.wins ?? 0;
   }
 
   /**
