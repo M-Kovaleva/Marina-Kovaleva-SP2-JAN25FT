@@ -70,15 +70,16 @@ export async function router() {
     return;
   }
 
-  // Handling for /profile
+   // Handling for /profile — replace the URL instead of pushing,
+  // so the back button skips this redirect step entirely.
   if (match.route.path === '/profile') {
     const me = getUser();
     if (me?.name) {
-      navigateTo(`/profile/${me.name}`);
-      return;
+      history.replaceState(null, null, `/profile/${me.name}`);
+      return router();
     }
-    navigateTo('/login');
-    return;
+    history.replaceState(null, null, '/login');
+    return router();
   }
 
   // Extract params if the route has any
