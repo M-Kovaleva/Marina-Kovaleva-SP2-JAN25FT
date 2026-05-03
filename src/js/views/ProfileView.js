@@ -1,6 +1,6 @@
 /* Profile View */
 
-import { getProfile, getProfileListings, getProfileBids, updateProfile } from '../api/apiClient.js';
+import { getProfile, getProfileListings, getProfileBids, getProfileWins, updateProfile } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
@@ -423,7 +423,6 @@ export class ProfileView {
     tabs.forEach((btn) => {
       btn.addEventListener('click', () => {
         const target = btn.dataset.tab;
-
         // Update button styles
         tabs.forEach((b) => {
           const isActive = b.dataset.tab === target;
@@ -560,7 +559,6 @@ export class ProfileView {
     const loadingEl = document.getElementById('profile-wins-loading');
     const gridEl    = document.getElementById('profile-wins-grid');
     const emptyEl   = document.getElementById('profile-wins-empty');
-
     try {
       const response = await getProfileWins(this.profileName, {
         _bids:    true,
