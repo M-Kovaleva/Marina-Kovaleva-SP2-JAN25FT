@@ -60,11 +60,13 @@ export class ProfileView {
                   </p>
                 </div>
 
-                <!-- Edit Profile button for owner only-->
-                <button id="edit-profile-btn" type="button"
-                  class="hidden btn-secondary text-sm sm:ml-auto sm:mb-2">
-                  Edit Profile
-                </button>
+                <!-- Edit Profile button — owner only, shown via JS -->
+                <div id="edit-profile-wrap" class="hidden sm:ml-auto sm:mb-2">
+                  <button id="edit-profile-btn" type="button"
+                    class="btn-secondary text-sm">
+                    Edit Profile
+                  </button>
+                </div>
               </div>
 
               <!-- Stats row -->
@@ -372,18 +374,18 @@ export class ProfileView {
       profile._count?.listings ?? 0;
 
     // Credits and Wins — private, shown for own profile only
+    if (isOwnProfile) {
       document.getElementById('stat-credits').classList.remove('hidden');
       document.getElementById('profile-credits').textContent =
         (profile.credits ?? 0).toLocaleString();
-
       document.getElementById('stat-wins').classList.remove('hidden');
       document.getElementById('profile-wins-count').textContent =
         profile._count?.wins ?? 0;
-
       // Sync server credits -> localStorage -> navbar
       updateUser({ credits: profile.credits });
       updateNavAuth();
     }
+  }
 
   /**
    * Edit Profile button — visible only for own profile
@@ -393,10 +395,12 @@ export class ProfileView {
     const currentUser = getUser();
     if (currentUser?.name !== profileName) return;
 
-    const btn = document.getElementById('edit-profile-btn');
-    if (!btn) return;
+    const wrap = document.getElementById('edit-profile-wrap');
+    const btn  = document.getElementById('edit-profile-btn');
+    if (!wrap || !btn) return;
 
-    btn.classList.remove('hidden');
+    wrap.classList.remove('hidden');
+    wrap.style.display = '';
     btn.addEventListener('click', () => this._openEditModal());
   }
 
