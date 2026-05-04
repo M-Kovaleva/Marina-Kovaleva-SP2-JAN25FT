@@ -15,13 +15,15 @@ export class CreateListingView {
     return `
       <div class="page-container max-w-2xl">
       
-        <!-- Back Link -->
-        <a href="/" data-link class="inline-flex items-center gap-2 text-text-secondary hover:text-primary-500 mb-6 text-sm sm:text-base transition-colors">
+        <!-- Cancel — Edit mode goes to the listing, Create mode goes back -->
+        <button type="button" id="cancel-btn"
+          class="inline-flex items-center gap-2 text-text-secondary hover:text-primary-500
+                 mb-6 text-sm sm:text-base transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
           Cancel
-        </a>
+        </button>
         
         <!-- Form card -->
         <div class="card">
@@ -156,6 +158,17 @@ export class CreateListingView {
       }
     }
 
+    // Cancel button — return to the listing in edit mode, otherwise go back
+    document.getElementById('cancel-btn')?.addEventListener('click', () => {
+      if (this.isEditMode && this.listingId) {
+        navigateTo(`/listing/${this.listingId}`);
+      } else if (history.length > 1) {
+        history.back();
+      } else {
+        navigateTo('/');
+      }
+    });
+
     this._initAddMediaBtn();
 
     const form = document.getElementById('listing-form');
@@ -163,7 +176,6 @@ export class CreateListingView {
       form.addEventListener('submit', (e) => this._handleSubmit(e));
     }
   }
-
   // Form submit handler
   async _handleSubmit(e) {
     e.preventDefault();
