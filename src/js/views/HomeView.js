@@ -92,7 +92,7 @@ export class HomeView {
 
       <div class="page-container" id="listings">
         <!-- Search & Filter Bar -->
-        <div class="bg-white rounded-xl shadow-sm border border-border p-4 mb-6 sm:mb-8 -mt-6 relative z-10">
+        <div class="py-4 mb-6 sm:mb-8 -mt-6 relative z-10">
           <div class="flex flex-col lg:flex-row gap-4">
             <!-- Search Input with clickable search icon on the left, centered placeholder -->
             <div class="flex-1">
@@ -151,7 +151,6 @@ export class HomeView {
         <!-- Empty State -->
         <div id="empty-state" class="hidden">
           <div class="text-center py-12 sm:py-16">
-            <div class="text-5xl sm:text-6xl mb-4">🔍</div>
             <h3 class="text-xl sm:text-2xl font-semibold text-text-primary mb-2">No listings found</h3>
             <p class="text-text-secondary mb-6 max-w-md mx-auto">
               Try adjusting your search or filters to find what you're looking for.
@@ -163,7 +162,7 @@ export class HomeView {
         <!-- Error State -->
         <div id="error-state" class="hidden">
           <div class="text-center py-12 sm:py-16">
-            <div class="text-5xl sm:text-6xl mb-4">😕</div>
+            <div class="text-5xl sm:text-6xl mb-4"></div>
             <h3 class="text-xl sm:text-2xl font-semibold text-text-primary mb-2">Something went wrong</h3>
             <p id="error-message" class="text-text-secondary mb-6 max-w-md mx-auto">
               We couldn't load the listings. Please try again.

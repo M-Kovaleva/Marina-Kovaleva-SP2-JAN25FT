@@ -108,7 +108,7 @@ function showEndOfListings() {
   if (loadMoreContainer && totalCount > 0) {
     loadMoreContainer.innerHTML = `
       <div class="text-center py-8 text-text-secondary">
-        <p class="text-sm">You've reached the end! 🎉</p>
+        <p class="text-sm">You've reached the end</p>
         <p class="text-xs mt-1">${totalCount} listings total</p>
       </div>
     `;
