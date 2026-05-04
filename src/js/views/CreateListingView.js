@@ -98,12 +98,16 @@ export class CreateListingView {
                       placeholder="https://example.com/image.jpg"
                       class="input"
                     />
-                    <button type="button" class="btn-secondary px-3" id="add-media-btn" aria-label="Add another image">
-                      +
-                    </button>
+                    <button type="button"
+                      class="btn-ghost px-3 text-error hover:bg-error/10"
+                      aria-label="Remove image">×</button>
                   </div>
                 </div>
-                <p class="hint mt-2">Add up to 8 image URLs</p>
+                <button type="button" id="add-media-btn"
+                  class="btn-secondary text-sm mt-3">
+                  + Add image
+                </button>
+                <p class="hint mt-2">Up to 8 images</p>
               </div>
               
               <!-- Tags -->
@@ -205,12 +209,21 @@ export class CreateListingView {
     const tags = tagsRaw.split(',').map((t) => t.trim()).filter(Boolean);
     if (tags.length) payload.tags = tags;
 
-    const mediaInputs = document.querySelectorAll('input[name="media[]"]');
+     const mediaInputs = document.querySelectorAll('input[name="media[]"]');
     const media = Array.from(mediaInputs)
       .map((input) => input.value.trim())
       .filter(Boolean)
       .map((url) => ({ url, alt: '' }));
-    if (media.length) payload.media = media;
+
+    if (this.isEditMode) {
+      // Edit mode: always send media (possibly empty) so the server
+      // knows to clear it. Without this, removed-down-to-zero media
+      // would silently keep the old images.
+      payload.media = media;
+    } else if (media.length) {
+      // Create mode: only include if non-empty
+      payload.media = media;
+    }
 
     this._setLoading(true);
 
@@ -259,10 +272,9 @@ export class CreateListingView {
         const container = document.getElementById('media-container');
         container.innerHTML = '';
 
-        listing.media.forEach((item, i) => {
+        listing.media.forEach((item) => {
           const row = document.createElement('div');
           row.className = 'flex gap-2';
-          const isFirst = i === 0;
           row.innerHTML = `
             <input
               type="url"
@@ -271,18 +283,12 @@ export class CreateListingView {
               placeholder="https://example.com/image.jpg"
               class="input"
             />
-            ${isFirst
-              ? `<button type="button" class="btn-secondary px-3" id="add-media-btn"
-                   aria-label="Add another image">+</button>`
-              : `<button type="button"
-                   class="btn-ghost px-3 text-error hover:bg-error/10"
-                   aria-label="Remove image">×</button>`
-            }
+            <button type="button"
+              class="btn-ghost px-3 text-error hover:bg-error/10"
+              aria-label="Remove image">×</button>
           `;
           container.appendChild(row);
-          if (!isFirst) {
-            row.querySelector('button').addEventListener('click', () => row.remove());
-          }
+          row.querySelector('button').addEventListener('click', () => row.remove());
         });
       }
     } catch (err) {
@@ -296,9 +302,29 @@ export class CreateListingView {
     const mediaContainer = document.getElementById('media-container');
     if (!addMediaBtn || !mediaContainer) return;
 
+    // Re-evaluate Add button disabled state based on current row count
+    const updateAddBtnState = () => {
+      const count = mediaContainer.querySelectorAll('input[name="media[]"]').length;
+      addMediaBtn.disabled = count >= 8;
+    };
+
+    // Attach Remove handler that also updates Add button state
+    const wireRemove = (row) => {
+      row.querySelector('button[aria-label="Remove image"]')
+        ?.addEventListener('click', () => {
+          row.remove();
+          updateAddBtnState();
+        });
+    };
+
+    // Wire up remove buttons on existing rows (initial + prefilled)
+    mediaContainer.querySelectorAll('div.flex').forEach(wireRemove);
+    // Initial state — handles edit mode where prefill may already be at limit
+    updateAddBtnState();
+
     addMediaBtn.addEventListener('click', () => {
-      const inputs = mediaContainer.querySelectorAll('input[name="media[]"]');
-      if (inputs.length >= 8) return;
+      if (addMediaBtn.disabled) return;
+
       const row = document.createElement('div');
       row.className = 'flex gap-2';
       row.innerHTML = `
@@ -313,7 +339,8 @@ export class CreateListingView {
           aria-label="Remove image">×</button>
       `;
       mediaContainer.appendChild(row);
-      row.querySelector('button').addEventListener('click', () => row.remove());
+      wireRemove(row);
+      updateAddBtnState();
     });
   }
 
