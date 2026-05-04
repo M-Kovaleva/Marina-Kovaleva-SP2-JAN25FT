@@ -38,6 +38,7 @@ function getElements() {
     totalListings: document.getElementById('total-listings'),
     searchInput: document.getElementById('search-input'),
     clearSearch: document.getElementById('clear-search'),
+    searchBtn: document.getElementById('search-btn'), 
     searchInfo: document.getElementById('search-info'),
     resultsCount: document.getElementById('results-count'),
     searchQuery: document.getElementById('search-query'),
@@ -488,10 +489,11 @@ function initEventListeners() {
     resetFilters,
   } = getElements();
 
-  // Search on Enter
+  // Search on Enter (desktop) or click on search button (touchscreens)
   if (searchInput) {
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         handleSearch(searchInput.value);
       }
     });
@@ -501,6 +503,14 @@ function initEventListeners() {
       if (clearSearch) {
         clearSearch.classList.toggle('hidden', !searchInput.value);
       }
+    });
+  }
+
+  // Search button — clickable for touchscreens
+  const { searchBtn } = getElements();
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      handleSearch(searchInput?.value || '');
     });
   }
 

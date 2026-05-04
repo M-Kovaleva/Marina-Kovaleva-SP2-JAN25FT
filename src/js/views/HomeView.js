@@ -94,18 +94,25 @@ export class HomeView {
         <!-- Search & Filter Bar -->
         <div class="bg-white rounded-xl shadow-sm border border-border p-4 mb-6 sm:mb-8 -mt-6 relative z-10">
           <div class="flex flex-col lg:flex-row gap-4">
-            <!-- Search Input -->
+            <!-- Search Input with clickable search icon on the left, centered placeholder -->
             <div class="flex-1">
               <div class="relative">
                 <input
                   type="search"
                   id="search-input"
                   placeholder="Search listings..."
-                  class="input pl-10 pr-10"
+                  class="input pl-10 text-center"
                 />
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
+                <button type="button" id="search-btn"
+                  class="absolute top-1/2 -translate-y-1/2 left-3 p-1
+                         text-text-secondary hover:text-primary-500
+                         transition-colors cursor-pointer"
+                  aria-label="Search">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                </button>
               </div>
             </div>
             
