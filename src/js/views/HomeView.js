@@ -3,7 +3,7 @@
  */
 
 import { initListingsHandler, cleanupListingsHandler } from '../handlers/listingsHandler.js';
-import { isLoggedIn } from '../auth/storage.js';
+import { getListings } from '../api/apiClient.js';
 
 export class HomeView {
   constructor(params) {
@@ -12,25 +12,81 @@ export class HomeView {
 
   async render() {
     return `
-      <!-- Hero Section -->
-      <section class="bg-gradient-to-br from-primary-500 to-primary-700 text-white py-12 sm:py-16 lg:py-20">
-        <div class="max-w-6xl mx-auto px-4 text-center">
-          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-            Student Auction Platform
-          </h1>
-          <p class="text-primary-100 text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
-            Buy and sell with your fellow Noroff students. Start bidding or create your own listing today.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#listings" class="btn-secondary bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 text-base font-semibold">
-              Browse Listings
-            </a>
-            <a href="/listing/create" data-link
-              id="hero-create-btn"
-              class="btn-primary bg-primary-800 hover:bg-primary-900 border-primary-800 px-6 py-3 text-base font-semibold">
-              + Create Listing
+      <!-- Hero Section: hottest active listing or fallback -->
+      <section id="hero" class="bg-gradient-to-br from-primary-500 to-primary-700 text-white py-12 sm:py-16 lg:py-20">
+        <div class="max-w-6xl mx-auto px-4">
+
+          <!-- Loading skeleton -->
+          <div id="hero-loading" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
+            <div class="space-y-4 order-2 md:order-1">
+              <div class="h-4 w-24 bg-white/20 rounded"></div>
+              <div class="h-10 w-3/4 bg-white/20 rounded"></div>
+              <div class="h-4 w-full bg-white/15 rounded"></div>
+              <div class="h-4 w-2/3 bg-white/15 rounded"></div>
+            </div>
+            <div class="aspect-[4/3] bg-white/10 rounded-2xl order-1 md:order-2"></div>
+          </div>
+
+          <!-- Hot listing — populated via JS -->
+          <div id="hero-listing"
+            class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
+
+            <!-- Text column -->
+            <div class="order-2 md:order-1">
+              <span class="inline-block text-xs font-semibold uppercase tracking-wider
+                           bg-white/20 px-3 py-1 rounded-full mb-4">
+                🔥 Hottest auction
+              </span>
+
+              <h1 id="hero-title"
+                class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight"
+                style="font-family: var(--font-heading);">
+              </h1>
+
+              <p id="hero-description"
+                class="text-primary-100 text-base sm:text-lg mb-6 line-clamp-2">
+              </p>
+
+              <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-6">
+                <div>
+                  <span class="text-primary-200 text-xs uppercase tracking-wider">Current bid</span>
+                  <p id="hero-bid" class="text-2xl sm:text-3xl font-bold"></p>
+                </div>
+                <div class="text-primary-100">
+                  <span id="hero-bid-count" class="font-semibold"></span>
+                  <span class="ml-3 text-primary-200" id="hero-ends"></span>
+                </div>
+              </div>
+
+              <!-- CTA -->
+              <a id="hero-cta" href="#" data-link
+                class="inline-block bg-white text-primary-600 hover:bg-primary-50
+                       font-semibold px-6 py-3 rounded-lg transition-colors">
+                View auction
+              </a>
+            </div>
+
+            <!-- Image column — clickable, links to listing -->
+            <a id="hero-image-link" href="#" data-link
+              class="aspect-[4/3] rounded-2xl overflow-hidden bg-white/10 order-1 md:order-2
+                     shadow-2xl">
+              <img id="hero-image" src="" alt=""
+                class="w-full h-full object-cover" />
             </a>
           </div>
+
+          <!-- Fallback (no active listings) -->
+          <div id="hero-fallback" class="hidden text-center max-w-2xl mx-auto">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4"
+                style="font-family: var(--font-heading);">
+              Student Auction Platform
+            </h1>
+            <p class="text-primary-100 text-lg sm:text-xl">
+              Buy and sell with your fellow Noroff students.
+              Start bidding or create your own listing today.
+            </p>
+          </div>
+
         </div>
       </section>
 
@@ -121,13 +177,112 @@ export class HomeView {
   }
 
   async init() {
-    // Guest: hero button redirects to login; logged-in: goes to create
-    const heroBtn = document.getElementById('hero-create-btn');
-    if (heroBtn && !isLoggedIn()) {
-      heroBtn.href = '/login';
-    }
+    // Hero is independent of the feed — load it in parallel
+    this._loadHero();
 
     await initListingsHandler();
+  }
+
+  /**
+   * Find and render the hottest active listing for the hero section.
+   * "Hottest" = active auction with the most bids.
+   * Falls back to a generic welcome message if none exist.
+   */
+  async _loadHero() {
+    const loadingEl  = document.getElementById('hero-loading');
+    const listingEl  = document.getElementById('hero-listing');
+    const fallbackEl = document.getElementById('hero-fallback');
+
+    try {
+      // Pull a generous batch of active listings, then pick the hottest
+      const response = await getListings({
+        _active: true,
+        _bids:   true,
+        limit:   100,
+      });
+      const all = response.data ?? [];
+
+      // Pick the one with the most bids (server doesn't sort by this)
+      const hot = all
+        .filter((l) => l._count?.bids > 0)
+        .sort((a, b) => (b._count?.bids ?? 0) - (a._count?.bids ?? 0))[0];
+
+      loadingEl.classList.add('hidden');
+
+      if (!hot) {
+        fallbackEl.classList.remove('hidden');
+        return;
+      }
+
+      this._renderHero(hot);
+      listingEl.classList.remove('hidden');
+      listingEl.style.display = 'grid'; // override .hidden when becoming visible
+    } catch {
+      loadingEl.classList.add('hidden');
+      fallbackEl.classList.remove('hidden');
+    }
+  }
+
+  /**
+   * Populate hero DOM from a listing object.
+   * @param {Object} listing
+   */
+  _renderHero(listing) {
+    const href = `/listing/${listing.id}`;
+    document.getElementById('hero-image-link').href = href;
+    document.getElementById('hero-cta').href = href;
+
+    document.getElementById('hero-title').textContent =
+      listing.title || 'Untitled listing';
+
+    const desc = document.getElementById('hero-description');
+    if (listing.description?.trim()) {
+      desc.textContent = listing.description;
+    } else {
+      desc.classList.add('hidden');
+    }
+
+    // Highest bid
+    const bids = listing.bids ?? [];
+    const top  = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
+    document.getElementById('hero-bid').textContent =
+      `${top.toLocaleString()} cr`;
+
+    // Bid count
+    const count = listing._count?.bids ?? bids.length;
+    document.getElementById('hero-bid-count').textContent =
+      `${count} ${count === 1 ? 'bid' : 'bids'}`;
+
+    // Time remaining (compact)
+    document.getElementById('hero-ends').textContent =
+      `Ends in ${this._formatTimeLeft(listing.endsAt)}`;
+
+    // Image
+    const img = document.getElementById('hero-image');
+    const url = listing.media?.[0]?.url;
+    if (url) {
+      img.src = url;
+      img.alt = listing.media[0].alt || listing.title || '';
+    } else {
+      // Hide image column when no media — let text expand
+      document.getElementById('hero-image-link').classList.add('hidden');
+    }
+  }
+
+  /**
+   * Compact "time until" string for hero (e.g. "2d 3h", "5h 23m", "12m").
+   * @param {string} endsAt - ISO date
+   * @returns {string}
+   */
+  _formatTimeLeft(endsAt) {
+    const diff = new Date(endsAt) - Date.now();
+    if (diff <= 0) return 'soon';
+    const days    = Math.floor(diff / 86_400_000);
+    const hours   = Math.floor((diff % 86_400_000) / 3_600_000);
+    const minutes = Math.floor((diff % 3_600_000)  / 60_000);
+    if (days > 0)  return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
   }
 
   /**
