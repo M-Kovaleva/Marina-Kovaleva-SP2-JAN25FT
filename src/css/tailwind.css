@@ -383,6 +383,12 @@
   .ml-auto {
     margin-left: auto;
   }
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
@@ -454,6 +460,9 @@
   }
   .max-h-\[432px\] {
     max-height: 432px;
+  }
+  .min-h-\[20px\] {
+    min-height: 20px;
   }
   .min-h-\[70vh\] {
     min-height: 70vh;

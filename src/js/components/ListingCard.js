@@ -93,7 +93,7 @@ function getListingStatus(endsAt) {
  * @param {number} maxLength - Maximum length
  * @returns {string} Truncated text
  */
-function truncateText(text, maxLength = 80) {
+function truncateText(text, maxLength = 60) {
   if (!text) return '';
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength).trim() + '...';
@@ -170,12 +170,10 @@ export function createListingCard(listing) {
             ${title}
           </h3>
           
-          <!-- Description -->
-          ${shortDescription ? `
-            <p class="text-text-secondary text-sm line-clamp-2 mb-3">
-              ${shortDescription}
-            </p>
-          ` : ''}
+          <!-- Description (always reserved to keep card heights consistent) -->
+          <p class="text-text-secondary text-sm line-clamp-1 mb-3 min-h-[20px]">
+            ${shortDescription || ''}
+          </p>
           
           <!-- Meta Info -->
           <div class="flex justify-between items-end pt-3 border-t border-border">
