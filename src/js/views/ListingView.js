@@ -89,15 +89,9 @@ export class ListingView {
             <!-- Right: Details column -->
             <div class="space-y-5">
 
-              <!-- Status badge + seller name (#43) -->
+              <!-- Status badge -->
               <div class="flex flex-wrap items-center gap-2">
                 <span id="listing-status-badge" class="badge-success">Active</span>
-                <span class="text-text-secondary text-sm">
-                  Listed by
-                  <a id="listing-seller-link" href="#" data-link
-                    class="text-primary-500 hover:underline font-medium">
-                  </a>
-                </span>
               </div>
 
               <!-- Title + owner actions -->
@@ -366,15 +360,9 @@ export class ListingView {
   // ─────────────────────────────────────────────
 
   _renderBasicInfo(listing) {
-    const { title, seller, endsAt } = listing;
+    const { title, endsAt } = listing;
 
     document.getElementById('listing-title').textContent = title;
-
-    const sellerLink = document.getElementById('listing-seller-link');
-    if (seller) {
-      sellerLink.textContent = `@${seller.name}`;
-      sellerLink.href        = `/profile/${seller.name}`;
-    }
 
     const isActive = new Date(endsAt) > new Date();
     const badge    = document.getElementById('listing-status-badge');
