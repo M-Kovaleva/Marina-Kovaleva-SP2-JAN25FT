@@ -132,7 +132,6 @@ export async function login({ email, password }) {
  * @param {number} params.page - Page number
  * @param {string} params.sort - Sort field
  * @param {string} params.sortOrder - 'asc' or 'desc'
- * @param {string} params._tag - Filter by tag
  * @param {boolean} params._active - Filter active listings only
  * @param {boolean} params._seller - Include seller info
  * @param {boolean} params._bids - Include bids info
@@ -164,7 +163,7 @@ export async function getListing(id, includeSeller = true, includeBids = true) {
 
 /**
  * Create a new listing
- * @param {Object} listingData - { title, description, tags, media, endsAt }
+ * @param {Object} listingData - { title, description, media, endsAt }
  * @returns {Promise<Object>} Created listing data
  */
 export async function createListing(listingData) {
@@ -178,7 +177,7 @@ export async function createListing(listingData) {
 /**
  * Update a listing
  * @param {string} id - Listing ID
- * @param {Object} listingData - { title, description, tags, media }
+ * @param {Object} listingData - { title, description, media }
  * @returns {Promise<Object>} Updated listing data
  */
 export async function updateListing(id, listingData) {

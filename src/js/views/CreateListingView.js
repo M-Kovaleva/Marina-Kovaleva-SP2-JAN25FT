@@ -112,19 +112,6 @@ export class CreateListingView {
                 <p class="hint mt-2">Up to 8 images</p>
               </div>
               
-              <!-- Tags -->
-              <div>
-                <label for="tags" class="label">Tags</label>
-                <input
-                  type="text"
-                  id="tags"
-                  name="tags"
-                  placeholder="electronics, vintage, rare"
-                  class="input"
-                />
-                <p class="hint">Comma-separated tags to help buyers find your item</p>
-              </div>
-              
               <!-- Submit Button -->
               <div class="pt-4">
                 <!-- Error Message — shown above submit button -->
@@ -186,7 +173,6 @@ export class CreateListingView {
     // endsAt input only exists in create mode — in edit mode the field is read-only
     const endsAtInput = document.getElementById('endsAt');
     const endsAtRaw   = endsAtInput ? endsAtInput.value : null;
-    const tagsRaw     = document.getElementById('tags').value;
 
     // Validation
     if (!title) {
@@ -217,9 +203,6 @@ export class CreateListingView {
     }
 
     if (description) payload.description = description;
-
-    const tags = tagsRaw.split(',').map((t) => t.trim()).filter(Boolean);
-    if (tags.length) payload.tags = tags;
 
      const mediaInputs = document.querySelectorAll('input[name="media[]"]');
     const media = Array.from(mediaInputs)
@@ -274,10 +257,6 @@ export class CreateListingView {
             hour: '2-digit', minute: '2-digit',
           });
         }
-      }
-
-      if (listing.tags?.length) {
-        document.getElementById('tags').value = listing.tags.join(', ');
       }
 
       if (listing.media?.length) {

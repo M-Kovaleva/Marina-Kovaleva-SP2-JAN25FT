@@ -3,7 +3,7 @@
  *
  * Displays a single listing with:
  *  - Image gallery (main + thumbnails)
- *  - Title, description, tags, seller card
+ *  - Title, description,seller card
  *  - Live countdown timer until auction end
  *  - Current highest bid + bid history
  *  - Bid form with five mutually exclusive states:
@@ -127,14 +127,6 @@ export class ListingView {
                 <p id="listing-description"
                   class="text-text-primary leading-relaxed whitespace-pre-line break-words">
                 </p>
-              </div>
-
-              <!-- Tags (#45) -->
-              <div id="listing-tags-block" class="hidden">
-                <h2 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-                  Tags
-                </h2>
-                <div id="listing-tags" class="flex flex-wrap gap-2"></div>
               </div>
 
               <!-- Seller card (#45) -->
@@ -395,9 +387,8 @@ export class ListingView {
   // ─────────────────────────────────────────────
 
   _renderDetails(listing) {
-    const { description, tags, seller, created } = listing;
+    const { description, seller, created } = listing;
     this._renderDescription(description);
-    this._renderTags(tags);
     this._renderSellerCard(seller, created);
   }
 
@@ -409,20 +400,6 @@ export class ListingView {
     } else {
       block.classList.add('hidden');
     }
-  }
-
-  _renderTags(tags) {
-    if (!tags?.length) return;
-    document.getElementById('listing-tags-block').classList.remove('hidden');
-    document.getElementById('listing-tags').innerHTML = tags
-      .map(
-        (tag) =>
-          `<span class="px-3 py-1 bg-white border border-border
-                        text-text-secondary text-sm rounded-full">
-            ${this._escHtml(tag)}
-          </span>`
-      )
-      .join('');
   }
 
   _renderSellerCard(seller, created) {
