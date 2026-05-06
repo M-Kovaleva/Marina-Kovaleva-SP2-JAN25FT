@@ -100,10 +100,10 @@ export class ListingView {
                 </span>
               </div>
 
-              <!-- Title + owner actions (#43) -->
-              <div class="flex items-start justify-between gap-3">
+              <!-- Title + owner actions -->
+              <div class="flex items-start justify-between gap-3 min-w-0">
                 <h1 id="listing-title"
-                  class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight">
+                  class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight break-words min-w-0">
                 </h1>
 
                 <!-- Owner-only actions, shown via JS in _renderOwnerActions -->
@@ -125,7 +125,7 @@ export class ListingView {
                   Description
                 </h2>
                 <p id="listing-description"
-                  class="text-text-primary leading-relaxed whitespace-pre-line">
+                  class="text-text-primary leading-relaxed whitespace-pre-line break-words">
                 </p>
               </div>
 

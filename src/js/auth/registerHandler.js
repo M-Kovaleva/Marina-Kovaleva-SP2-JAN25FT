@@ -77,7 +77,7 @@ export function initRegisterHandler() {
       showSuccess(form, successContainer);
       setTimeout(() => {
         navigateTo('/');
-      }, 1500);
+      }, 50000); // Change to 1500 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     } catch (error) {
       showError(errorContainer, error.message);
       setFormLoading(form, false);
