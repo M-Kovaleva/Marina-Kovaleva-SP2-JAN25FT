@@ -13,8 +13,7 @@ export class RegisterView {
     return `
       <div class="auth-container py-8">
         <div class="auth-card">
-          <h1 class="auth-title">Create Account</h1>
-          <p class="auth-subtitle">Join BidNoroff today</p>
+          <h1 class="auth-title">Create account</h1>
           
           <!-- Error Message (hidden by default) -->
           <div id="register-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
@@ -73,7 +72,7 @@ export class RegisterView {
             </div>
             
             <button type="submit" class="btn-primary w-full py-3">
-              Create Account
+              Create account
             </button>
           </form>
           

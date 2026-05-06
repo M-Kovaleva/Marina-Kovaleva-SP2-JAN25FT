@@ -204,9 +204,6 @@ export class ListingView {
 
                   <!-- State E: User already has the highest bid -->
                   <div id="state-winning" class="hidden text-center py-2">
-                    <p class="text-green-700 text-sm font-medium mb-1">
-                      🏆 You're winning!
-                    </p>
                     <p class="text-text-secondary text-xs">
                       You can place a new bid once someone outbids you.
                     </p>
@@ -233,7 +230,7 @@ export class ListingView {
                     </div>
 
                     <button type="submit" id="bid-submit" class="btn-primary w-full py-3">
-                      Place Bid
+                      Place bid
                     </button>
                   </form>
 

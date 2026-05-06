@@ -119,7 +119,7 @@ export class HomeView {
             <!-- Filters -->
             <div class="flex items-center gap-3">
               <!-- Active Only Toggle -->
-              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 bg-surface rounded-lg border border-border whitespace-nowrap">
+              <label class="flex items-center gap-2 cursor-pointer  py-2 whitespace-nowrap">
                 <input
                   type="checkbox"
                   id="active-filter"

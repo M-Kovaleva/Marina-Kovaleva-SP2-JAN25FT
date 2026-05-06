@@ -29,7 +29,7 @@ export class CreateListingView {
         <div class="card">
           <div class="card-body">
             <h1 class="text-xl sm:text-2xl font-bold text-text-primary mb-2">
-              ${this.isEditMode ? 'Edit Listing' : 'Create Listing'}
+              ${this.isEditMode ? 'Edit listing' : 'Create listing'}
             </h1>
             <p class="text-text-secondary mb-6 sm:mb-8 text-sm sm:text-base">
               ${this.isEditMode ? 'Update your listing details' : 'Add a new item for auction'}
@@ -132,7 +132,7 @@ export class CreateListingView {
                   <p class="text-error text-sm font-medium"></p>
                 </div>
                 <button type="submit" id="submit-btn" class="btn-primary w-full py-3">
-                  ${this.isEditMode ? 'Update Listing' : 'Create Listing'}
+                  ${this.isEditMode ? 'Save changes' : 'Create listing'}
                 </button>
               </div>
             </form>
@@ -362,7 +362,7 @@ export class CreateListingView {
     btn.disabled    = isLoading;
     btn.textContent = isLoading
       ? (this.isEditMode ? 'Saving…' : 'Creating…')
-      : (this.isEditMode ? 'Update Listing' : 'Create Listing');
+      : (this.isEditMode ? 'Save changes' : 'Create listing');
     inputs.forEach((el) => (el.disabled = isLoading));
   }
 

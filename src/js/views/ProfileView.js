@@ -141,10 +141,9 @@ export class ProfileView {
 
             <!-- Empty state -->
             <div id="profile-listings-empty" class="hidden text-center py-16">
-              <div class="text-5xl mb-4">📦</div>
               <h3 class="text-lg font-semibold text-text-primary mb-2">No listings yet</h3>
               <p class="text-text-secondary mb-6 text-sm">Create your first listing to start selling</p>
-              <a href="/listing/create" data-link class="btn-primary">+ Create Listing</a>
+              <a href="/listing/create" data-link class="btn-primary">+ New listing</a>
             </div>
           </div>
 
@@ -161,12 +160,11 @@ export class ProfileView {
 
             <!-- Empty state -->
             <div id="profile-bids-empty" class="hidden text-center py-16">
-              <div class="text-5xl mb-4">🎯</div>
               <h3 class="text-lg font-semibold text-text-primary mb-2">No bids placed yet</h3>
               <p class="text-text-secondary text-sm">
                 Browse listings and place your first bid
               </p>
-              <a href="/" data-link class="btn-primary mt-6 inline-block">Browse listings</a>
+              <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
             </div>
           </div>
 
@@ -185,11 +183,11 @@ export class ProfileView {
 
             <!-- Empty state -->
             <div id="profile-wins-empty" class="hidden text-center py-16">
-              <div class="text-5xl mb-4">🏆</div>
               <h3 class="text-lg font-semibold text-text-primary mb-2">No wins yet</h3>
               <p class="text-text-secondary text-sm">
                 Place bids on active listings to win auctions
               </p>
+              <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
             </div>
           </div>
 
@@ -261,7 +259,7 @@ export class ProfileView {
               </div>
               <button type="submit" id="edit-profile-submit"
                 class="btn-primary w-full py-3">
-                Save Changes
+                Save changes
               </button>
             </form>
           </div>

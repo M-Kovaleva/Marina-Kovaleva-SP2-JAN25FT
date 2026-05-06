@@ -11,8 +11,7 @@ export class LoginView {
     return `
       <div class="auth-container">
         <div class="auth-card">
-          <h1 class="auth-title">Welcome Back</h1>
-          <p class="auth-subtitle">Sign in to your account</p>
+          <h1 class="auth-title">Sing in to your account</h1>
           
           <!-- Error Message (hidden by default) -->
           <div id="login-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
@@ -48,7 +47,7 @@ export class LoginView {
             </div>
             
             <button type="submit" class="btn-primary w-full py-3">
-              Sign In
+              Sign in
             </button>
           </form>
           
