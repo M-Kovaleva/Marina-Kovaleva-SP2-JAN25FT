@@ -129,7 +129,7 @@ export class CreateListingView {
               <div class="pt-4">
                 <!-- Error Message — shown above submit button -->
                 <div id="listing-error" class="hidden mb-4 p-4 bg-error/10 border border-error/20 rounded-lg">
-                  <p class="text-error text-sm font-medium"></p>
+                  <p class="text-error text-sm font-medium break-all"></p>
                 </div>
                 <button type="submit" id="submit-btn" class="btn-primary w-full py-3">
                   ${this.isEditMode ? 'Save changes' : 'Create listing'}
