@@ -1,7 +1,4 @@
-/**
- * Shared formatting helpers.
- * Used by ProfileView and ListingView.
- */
+/* Shared formatting helpers */
 
 /** Escape strings before injecting into innerHTML (XSS protection). */
 export function escHtml(str) {

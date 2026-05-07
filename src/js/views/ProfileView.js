@@ -143,11 +143,13 @@ export class ProfileView {
             </div>
 
             <!-- Empty state -->
-            <div id="profile-listings-empty" class="hidden text-center py-16">
-              <h3 class="text-lg font-semibold text-text-primary mb-2">No listings yet</h3>
-              <p class="text-text-secondary mb-6 text-sm">Create your first listing to start selling</p>
-              <a href="/listing/create" data-link class="btn-primary">+ New listing</a>
-            </div>
+              <div id="profile-listings-empty" class="hidden text-center py-16">
+                <h3 id="profile-listings-empty-title" class="text-lg font-semibold text-text-primary mb-2">No listings yet</h3>
+                <p id="profile-listings-empty-body" class="text-text-secondary mb-6 text-sm">Create your first listing to start selling</p>
+                <div id="profile-listings-empty-cta-wrap">
+                  <a href="/listing/create" data-link class="btn-primary">+ New listing</a>
+                </div>
+              </div>
           </div>
 
           <!-- Bids -->
@@ -415,12 +417,22 @@ export class ProfileView {
     const currentUser = getUser();
     const isOwner     = currentUser?.name === profileName;
 
-    // Hide Bids and Wins tabs for non-owners
+    // Hide owner-only UI for non-owners
     if (!isOwner) {
+      // Hide Bids and Wins tabs
       document.querySelector('[data-tab="bids"]')?.closest('button')
         ?.classList.add('hidden');
       document.querySelector('[data-tab="wins"]')?.closest('button')
         ?.classList.add('hidden');
+
+      // Listings empty state — change copy + hide CTA (can't create listings
+      // for someone else)
+      const emptyTitle = document.getElementById('profile-listings-empty-title');
+      const emptyBody  = document.getElementById('profile-listings-empty-body');
+      const emptyCta   = document.getElementById('profile-listings-empty-cta-wrap');
+      if (emptyTitle) emptyTitle.textContent = 'No listings yet';
+      if (emptyBody)  emptyBody.classList.add('hidden');
+      if (emptyCta)   emptyCta.classList.add('hidden');
     }
 
     const tabs = document.querySelectorAll('.tab-btn');
@@ -688,7 +700,7 @@ export class ProfileView {
       errorEl.querySelector('p').textContent =
         err.message || 'Could not update profile. Please try again.';
       submitBtn.disabled    = false;
-      submitBtn.textContent = 'Save changes';
+      submitBtn.textContent = 'Save hanges';
     }
   }
 
