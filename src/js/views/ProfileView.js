@@ -7,6 +7,9 @@ import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { escHtml, formatDate } from '../utils/format.js';
 
+const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
+const PLACEHOLDER_BANNER = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
+
 export class ProfileView {
   constructor(params) {
     this.params       = params;
@@ -644,16 +647,20 @@ export class ProfileView {
       }
     }
 
-    // Build payload — only include non-empty fields
-    const payload = {};
-    if (bio)       payload.bio    = bio;
-    if (avatarUrl) payload.avatar = { url: avatarUrl, alt: '' };
-    if (bannerUrl) payload.banner = { url: bannerUrl, alt: '' };
-
-    if (!Object.keys(payload).length) {
-      this._closeEditModal();
-      return;
-    }
+    // Build payload — always send all 3 fields so server can clear them.
+    // Empty bio = ''. Empty avatar/banner = placeholder URL (server requires
+    // a valid URL object — null and empty string both rejected).
+    const payload = {
+      bio: bio || '',
+      avatar: {
+        url: avatarUrl || PLACEHOLDER_AVATAR,
+        alt: '',
+      },
+      banner: {
+        url: bannerUrl || PLACEHOLDER_BANNER,
+        alt: '',
+      },
+    };
 
     submitBtn.disabled    = true;
     submitBtn.textContent = 'Saving…';
@@ -672,7 +679,7 @@ export class ProfileView {
       this._updateHeaderUI(updated);
 
       submitBtn.disabled    = false;
-      submitBtn.textContent = 'Save Changes';
+      submitBtn.textContent = 'Save changes';
 
       this._closeEditModal();
       showSuccessToast('Profile updated successfully.');
@@ -681,12 +688,14 @@ export class ProfileView {
       errorEl.querySelector('p').textContent =
         err.message || 'Could not update profile. Please try again.';
       submitBtn.disabled    = false;
-      submitBtn.textContent = 'Save Changes';
+      submitBtn.textContent = 'Save changes';
     }
   }
 
   /**
-   * Update the visible header after a successful edit
+   * Update the visible header after a successful edit.
+   * Avatar and banner are always present (server enforces a URL),
+   * so we just swap the image. Bio toggles based on whether it's empty.
    * @param {Object} updated - profile data from PUT response
    */
   _updateHeaderUI(updated) {
@@ -698,7 +707,8 @@ export class ProfileView {
     } else {
       bioEl.classList.add('hidden');
     }
-    // Avatar
+
+    // Avatar — always has a URL (placeholder or user-supplied)
     const avatarContainer = document.getElementById('profile-avatar');
     avatarContainer.innerHTML = '';
     if (updated.avatar?.url) {
@@ -709,13 +719,14 @@ export class ProfileView {
       img.onerror   = () => img.remove();
       avatarContainer.appendChild(img);
     }
-    // Banner
+
+    // Banner — always has a URL (placeholder or user-supplied)
     const bannerEl = document.getElementById('profile-banner');
+    bannerEl.innerHTML = '';
+    bannerEl.classList.remove(
+      'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
+    );
     if (updated.banner?.url) {
-      bannerEl.innerHTML = '';
-      bannerEl.classList.remove(
-        'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
-      );
       const img = document.createElement('img');
       img.src       = updated.banner.url;
       img.alt       = updated.banner.alt || '';
