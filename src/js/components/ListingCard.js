@@ -134,7 +134,7 @@ export function createListingCard(listing) {
   const shortDescription = truncateText(description);
 
   return `
-    <article class="card group cursor-pointer hover:-translate-y-1 transition-transform duration-200 ${isEnded ? 'opacity-70 grayscale-[30%]' : ''}">
+    <article class="card shadow-sm group cursor-pointer hover:-translate-y-1 transition-transform duration-200 ${isEnded ? 'opacity-70 grayscale-[30%]' : ''}">
       <a href="/listing/${id}" data-link class="block">
         <!-- Image Container -->
         <div class="relative aspect-[4/3] overflow-hidden rounded-t-xl bg-gray-200">
@@ -207,7 +207,7 @@ export function createListingCards(listings) {
  */
 export function createSkeletonCard() {
   return `
-    <article class="card animate-pulse">
+    <article class="card shadow-sm animate-pulse">
       <!-- Image Skeleton -->
       <div class="aspect-[4/3] rounded-t-xl bg-gray-200"></div>
       

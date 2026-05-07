@@ -208,7 +208,7 @@ export class ProfileView {
             class="absolute inset-0 bg-black/50"></div>
 
           <!-- Modal card -->
-          <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
+          <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5">
 
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>
@@ -533,7 +533,7 @@ export class ProfileView {
 
         return `
           <a href="/listing/${escHtml(listingId)}" data-link
-            class="flex items-center gap-4 p-4 card hover:-translate-y-0.5 transition-transform duration-200">
+            class="group flex items-center gap-4 p-4 card">
 
             <!-- Thumbnail -->
             <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">
@@ -546,7 +546,7 @@ export class ProfileView {
 
             <!-- Info -->
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary truncate text-sm">${escHtml(title)}</p>
+              <p class="font-semibold text-text-primary truncate text-sm group-hover:text-primary-600 transition-colors">${escHtml(title)}</p>
               <p class="text-xs text-text-secondary mt-0.5">
                 Ends ${listing?.endsAt ? formatDate(listing.endsAt) : '—'}
               </p>
