@@ -19,6 +19,7 @@ import { syncUserFromProfile } from '../auth/userSync.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
+import { imagePlaceholderHtml } from '../utils/format.js';
 
 export class ListingView {
   constructor(params) {
@@ -283,19 +284,11 @@ export class ListingView {
   _renderGallery(media) {
     const mainImg      = document.getElementById('gallery-main');
     const thumbsWrap   = document.getElementById('gallery-thumbnails');
-    const PLACEHOLDER  =
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' " +
-      "viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f6f9fc'/%3E" +
-      "%3Cpath d='M80 60h40a8 8 0 0 1 8 8v64a8 8 0 0 1-8 8H80a8 8 0 0 1-8-8V68a8 " +
-      "8 0 0 1 8-8zm20 12a16 16 0 1 0 0 32 16 16 0 0 0 0-32zm-28 52 " +
-      "16-16 10 10 22-24' fill='none' stroke='%23e3e8ef' stroke-width='6' " +
-      "stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
-
     // ── No images ──
     if (!media?.length) {
-      mainImg.src = PLACEHOLDER;
-      mainImg.alt = 'No image available';
-      mainImg.classList.replace('opacity-0', 'opacity-100');
+      // Replace the <img> with placeholder markup. Use the parent's
+      // existing aspect-square container.
+      mainImg.parentElement.innerHTML = imagePlaceholderHtml();
       return;
     }
 
@@ -304,8 +297,7 @@ export class ListingView {
       mainImg.classList.replace('opacity-100', 'opacity-0');
       mainImg.onload  = () => mainImg.classList.replace('opacity-0', 'opacity-100');
       mainImg.onerror = () => {
-        mainImg.src = PLACEHOLDER;
-        mainImg.classList.replace('opacity-0', 'opacity-100');
+        mainImg.parentElement.innerHTML = imagePlaceholderHtml();
       };
       mainImg.alt = alt || 'Listing image';
       mainImg.src = url;

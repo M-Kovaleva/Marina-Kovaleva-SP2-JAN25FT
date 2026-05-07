@@ -5,7 +5,7 @@ import { createListingCards } from '../components/ListingCard.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
-import { escHtml, formatDate } from '../utils/format.js';
+import { escHtml, formatDate, imagePlaceholderHtml } from '../utils/format.js';
 
 const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
 const PLACEHOLDER_BANNER = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
@@ -540,7 +540,7 @@ export class ProfileView {
               ${imageUrl
                 ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(title)}"
                        class="w-full h-full object-cover"/>`
-                : '<div class="w-full h-full bg-primary-100"></div>'
+                : imagePlaceholderHtml()
               }
             </div>
 
