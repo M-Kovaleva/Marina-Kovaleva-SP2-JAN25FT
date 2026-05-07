@@ -50,26 +50,28 @@ export class ProfileView {
 
             <!-- Avatar and Info -->
             <div class="px-4 sm:px-6 pb-6">
-              <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-12 mb-4">
-                <div id="profile-avatar"
-                  class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white bg-primary-100 shadow-md flex-shrink-0">
-                </div>
-                <div class="sm:mb-2 flex-1 min-w-0">
-                  <h1 id="profile-name"
-                    class="text-xl sm:text-2xl font-bold text-text-primary truncate">
-                  </h1>
-                  <p id="profile-bio"
-                    class="hidden text-text-secondary text-sm sm:text-base mt-1">
-                  </p>
-                </div>
+              <!-- Avatar — overlap banner -->
+              <div id="profile-avatar"
+                class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white bg-primary-100 shadow-md -mt-10 sm:-mt-12">
+              </div>
 
-                <!-- Edit Profile button — owner only, shown via JS -->
-                <div id="edit-profile-wrap" class="hidden sm:ml-auto sm:mb-2">
-                  <button id="edit-profile-btn" type="button"
-                    class="btn-secondary text-sm">
-                    Edit Profile
-                  </button>
-                </div>
+              <!-- Name + Bio — under avatar, vertical stack on all sizes -->
+              <div class="mt-3 mb-4 min-w-0">
+                <h1 id="profile-name"
+                  class="text-xl sm:text-2xl font-bold text-text-primary truncate">
+                </h1>
+                <p id="profile-bio"
+                  class="hidden text-text-secondary text-sm sm:text-base mt-1">
+                </p>
+              </div>
+
+              <!-- Edit Profile button — owner only, in normal flow below bio
+                   on both mobile and desktop. Shown via JS. -->
+              <div id="edit-profile-wrap" class="hidden mb-4">
+                <button id="edit-profile-btn" type="button"
+                  class="btn-secondary text-sm">
+                  Edit Profile
+                </button>
               </div>
 
               <!-- Stats row -->
@@ -101,6 +103,7 @@ export class ProfileView {
                   </p>
                   <p class="text-xs sm:text-sm text-text-secondary">Wins</p>
                 </div>
+              </div>
             </div>
           </div>
 
