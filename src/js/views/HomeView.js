@@ -44,17 +44,19 @@ export class HomeView {
               </h1>
 
               <p id="hero-description"
-                class="text-primary-100 text-base sm:text-lg mb-6 line-clamp-2">
+                class="text-white text-base sm:text-lg mb-6 line-clamp-2">
               </p>
 
-              <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-6">
+              <div class="flex flex-col gap-2 text-sm mb-6">
                 <div>
-                  <span class="text-primary-200 text-xs uppercase tracking-wider">Current bid</span>
+                  <span class="text-white text-xs uppercase tracking-wider">Current bid</span>
                   <p id="hero-bid" class="text-2xl sm:text-3xl font-bold"></p>
                 </div>
-                <div class="text-primary-100">
+                <div class="text-white">
                   <span id="hero-bid-count" class="font-semibold"></span>
-                  <span class="ml-3 text-primary-200" id="hero-ends"></span>
+                </div>
+                <div class="text-white">
+                  <span id="hero-ends"></span>
                 </div>
               </div>
 
