@@ -125,7 +125,7 @@ export class ListingView {
               </div>
 
               <!-- Seller card (#45) -->
-              <div class="flex items-center gap-3 p-4 bg-surface rounded-xl">
+              <div class="flex items-center gap-3 py-4 bg-surface rounded-xl">
                 <div id="seller-avatar"
                   class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                 </div>
@@ -227,7 +227,7 @@ export class ListingView {
             </div>
           </div>
 
-          <!-- Bid History (#47a) -->
+          <!-- Bid History -->
           <section class="mt-10 sm:mt-14">
             <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
             <div class="card overflow-hidden">
@@ -317,7 +317,7 @@ export class ListingView {
         <button
           data-index="${i}"
           class="aspect-square rounded-lg overflow-hidden border-2 transition-all duration-150 focus:outline-none
-                 ${i === 0 ? 'border-primary-500' : 'border-transparent hover:border-primary-300'}"
+                 ${i === 0 ? 'border-primary-500' : 'border-transparent hover:border-primary-500'}"
           aria-label="View image ${i + 1}"
         >
           <img
@@ -340,7 +340,7 @@ export class ListingView {
 
       thumbsWrap.querySelectorAll('[data-index]').forEach((b) => {
         b.classList.replace('border-primary-500', 'border-transparent');
-        b.classList.add('hover:border-primary-300');
+        b.classList.add('hover:border-primary-500');
       });
       btn.classList.replace('border-transparent', 'border-primary-500');
       btn.classList.remove('hover:border-primary-300');
@@ -348,7 +348,7 @@ export class ListingView {
   }
 
   // ─────────────────────────────────────────────
-  // #43 — Basic info
+  // Basic info
   // ─────────────────────────────────────────────
 
   _renderBasicInfo(listing) {
@@ -363,7 +363,7 @@ export class ListingView {
   }
 
   // ─────────────────────────────────────────────
-  // #45 — Listing details
+  // Listing details
   // ─────────────────────────────────────────────
 
   _renderDetails(listing) {
