@@ -231,7 +231,7 @@ export class ListingView {
           <section class="mt-10 sm:mt-14">
             <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
             <div class="card overflow-hidden">
-              <div id="bid-history" class="divide-y divide-border max-h-[432px] overflow-y-auto">
+              <div id="bid-history" class="divide-y divide-border">
               </div>
             </div>
           </section>
