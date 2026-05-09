@@ -6,12 +6,9 @@
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
 import { syncUserFromProfile } from './userSync.js';
-import {
-  validateRegisterForm,
-  showInputError,
-  clearFormErrors,
-} from '../utils/validation.js';
+import {validateRegisterForm, showInputError,clearFormErrors} from '../utils/validation.js';
 import { updateNavAuth } from '../components/Nav.js';
+import { showSuccessToast } from '../utils/toast.js';
 import { navigateTo } from '../router/router.js';
 
 /**
@@ -21,7 +18,6 @@ import { navigateTo } from '../router/router.js';
 export function initRegisterHandler() {
   const form = document.getElementById('register-form');
   const errorContainer = document.getElementById('register-error');
-  const successContainer = document.getElementById('register-success');
 
   if (!form) return;
 
@@ -62,7 +58,7 @@ export function initRegisterHandler() {
       });
       saveAuth(loginResponse.data.accessToken, loginResponse.data);
 
-      // 3. Sync full profile (login response lacks credits — Noroff API quirk)
+      // Sync full profile (login response lacks credits — Noroff API quirk)
       try {
         await syncUserFromProfile(loginResponse.data.name);
       } catch (syncErr) {
@@ -70,14 +66,14 @@ export function initRegisterHandler() {
         console.warn('Profile sync failed after register:', syncErr.message);
       }
 
-      // 4. Update navbar with fresh data
+      // Update navbar with fresh data
       updateNavAuth();
 
-      // 5. Show success and redirect
-      showSuccess(form, successContainer);
+      // Show success and redirect
+      showSuccessToast('Account created.');
       setTimeout(() => {
         navigateTo('/');
-      }, 50000); // Change to 1500 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      }, 1500); // Change to 1500 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     } catch (error) {
       showError(errorContainer, error.message);
       setFormLoading(form, false);
@@ -120,20 +116,6 @@ function showError(container, message) {
 function hideError(container) {
   if (!container) return;
   container.classList.add('hidden');
-}
-
-/**
- * Show success message and hide form
- * @param {HTMLFormElement} form
- * @param {HTMLElement} successContainer
- */
-function showSuccess(form, successContainer) {
-  if (form) {
-    form.classList.add('hidden');
-  }
-  if (successContainer) {
-    successContainer.classList.remove('hidden');
-  }
 }
 
 /**

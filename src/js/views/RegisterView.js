@@ -20,12 +20,6 @@ export class RegisterView {
             <p class="text-error text-sm font-medium"></p>
           </div>
           
-          <!-- Success Message (hidden by default) -->
-          <div id="register-success" class="hidden mb-6 p-4 bg-success/10 border border-success/20 rounded-lg text-center">
-            <p class="text-green-700 font-medium">✓ Account created successfully!</p>
-            <p class="text-green-700 font-medium">Redirecting to Home...</p>
-          </div>
-          
           <form id="register-form" class="space-y-5">
             <div>
               <label for="name" class="label">Username</label>

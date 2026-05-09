@@ -692,12 +692,6 @@
   .border-primary-500 {
     border-color: var(--color-primary-500);
   }
-  .border-success\/20 {
-    border-color: color-mix(in srgb, #34d399 20%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-success) 20%, transparent);
-    }
-  }
   .border-transparent {
     border-color: transparent;
   }
@@ -739,12 +733,6 @@
   }
   .bg-primary-100 {
     background-color: var(--color-primary-100);
-  }
-  .bg-success\/10 {
-    background-color: color-mix(in srgb, #34d399 10%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-success) 10%, transparent);
-    }
   }
   .bg-success\/90 {
     background-color: color-mix(in srgb, #34d399 90%, transparent);
