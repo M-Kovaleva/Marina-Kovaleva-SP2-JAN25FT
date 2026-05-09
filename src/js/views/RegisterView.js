@@ -11,7 +11,7 @@ export class RegisterView {
 
   async render() {
     return `
-      <div class="auth-container py-8">
+      <div class="auth-container">
         <div class="auth-card">
           <h1 class="auth-title">Create account</h1>
           

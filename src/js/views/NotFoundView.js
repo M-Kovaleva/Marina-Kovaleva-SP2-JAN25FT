@@ -23,15 +23,10 @@ export class NotFoundView {
             The page you're looking for doesn't exist or has been moved.
           </p>
           
-          <!-- Actions -->
-          <div class="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="/" data-link class="btn-primary">
-              Back to Home
-            </a>
-            <button onclick="history.back()" class="btn-secondary">
-              Go Back
-            </button>
-          </div>
+          <!-- Action -->
+          <a href="/" data-link class="btn-primary">
+            Back to Home
+          </a>
         </div>
       </div>
     `;

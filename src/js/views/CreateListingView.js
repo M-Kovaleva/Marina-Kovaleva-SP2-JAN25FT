@@ -2,6 +2,7 @@
 
 import { navigateTo } from '../router/router.js';
 import { createListing, getListing, updateListing } from '../api/apiClient.js';
+import { showSuccessToast } from '../utils/toast.js';
 
 export class CreateListingView {
   constructor(params) {
@@ -225,9 +226,11 @@ export class CreateListingView {
     try {
       if (this.isEditMode) {
         await updateListing(this.listingId, payload);
+        showSuccessToast('Listing updated.');
         navigateTo(`/listing/${this.listingId}`);
       } else {
         const response = await createListing(payload);
+        showSuccessToast('Listing created.');
         navigateTo(`/listing/${response.data.id}`);
       }
     } catch (err) {

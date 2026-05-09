@@ -36,15 +36,6 @@ export class ListingView {
     return `
       <div class="page-container">
 
-        <!-- Back link -->
-        <a href="/" data-link
-          class="inline-flex items-center gap-2 text-text-secondary hover:text-primary-500 mb-6 text-sm transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-          </svg>
-          Back to listings
-        </a>
-
         <!-- Loading state -->
         <div id="listing-loading" class="flex flex-col items-center justify-center py-24 gap-4">
           <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
@@ -623,7 +614,7 @@ export class ListingView {
       submitBtn.textContent = 'Place Bid';
       this._renderBidForm(updated);
 
-      showSuccessToast('Bid placed!');
+      showSuccessToast('Bid placed.');
     } catch (err) {
       this._showBidError(err.message || 'Could not place bid. Try again.');
       submitBtn.disabled    = false;

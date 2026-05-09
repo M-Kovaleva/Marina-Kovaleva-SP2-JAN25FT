@@ -11,8 +11,7 @@ export class LoginView {
     return `
       <div class="auth-container">
         <div class="auth-card">
-          <h1 class="auth-title">Sing in to your account</h1>
-          
+          <h1 class="auth-title">Sign in to your account</h1>
           <!-- Error Message (hidden by default) -->
           <div id="login-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
             <p class="text-error text-sm font-medium"></p>

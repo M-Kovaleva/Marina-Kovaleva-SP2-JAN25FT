@@ -200,15 +200,17 @@ export class ProfileView {
           </div>
 
         <!-- Edit Profile modal window -->
-        <div id="edit-profile-modal"
-          class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
 
-          <!-- Backdrop -->
+          <!-- Backdrop — fixed so it stays put while modal content scrolls -->
           <div id="edit-profile-backdrop"
-            class="absolute inset-0 bg-black/50"></div>
+            class="fixed inset-0 bg-black/50"></div>
 
-          <!-- Modal card -->
-          <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5">
+          <!-- Centering wrapper — min-h-full + flex enables scroll on short viewports -->
+          <div class="relative flex min-h-full items-center justify-center p-4">
+
+            <!-- Modal card -->
+            <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5 my-4">
 
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>
@@ -271,6 +273,7 @@ export class ProfileView {
               </button>
             </form>
           </div>
+        </div>
         </div>
       </div>
     `;
@@ -615,6 +618,7 @@ export class ProfileView {
     document.getElementById('edit-profile-error').classList.add('hidden');
 
     modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');  // блокируем скролл страницы за модалкой
 
     // Close on backdrop click
     document.getElementById('edit-profile-backdrop')
@@ -629,9 +633,9 @@ export class ProfileView {
       .addEventListener('submit', (e) => this._handleEditSubmit(e), { once: true });
   }
 
-  // Close the edit modal
   _closeEditModal() {
     document.getElementById('edit-profile-modal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');  // снимаем lock
   }
 
   /**
@@ -697,13 +701,13 @@ export class ProfileView {
       submitBtn.textContent = 'Save changes';
 
       this._closeEditModal();
-      showSuccessToast('Profile updated successfully.');
+      showSuccessToast('Profile updated.');
     } catch (err) {
       errorEl.classList.remove('hidden');
       errorEl.querySelector('p').textContent =
         err.message || 'Could not update profile. Please try again.';
       submitBtn.disabled    = false;
-      submitBtn.textContent = 'Save hanges';
+      submitBtn.textContent = 'Save changes';
     }
   }
 
