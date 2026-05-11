@@ -223,7 +223,7 @@ export class ProfileView {
             <!-- Inline error -->
             <div id="edit-profile-error"
               class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
-              <p class="text-error text-sm font-medium"></p>
+              <p class="alert-error"></p>
             </div>
 
             <!-- Form -->

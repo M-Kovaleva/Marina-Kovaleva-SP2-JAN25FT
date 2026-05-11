@@ -17,7 +17,7 @@ export class RegisterView {
           
           <!-- Error Message (hidden by default) -->
           <div id="register-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
-            <p class="text-error text-sm font-medium"></p>
+            <p class="alert-error"></p>
           </div>
           
           <form id="register-form" class="space-y-5">

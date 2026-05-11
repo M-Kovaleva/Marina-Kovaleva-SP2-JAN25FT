@@ -101,6 +101,10 @@
   @apply text-xs text-text-secondary mt-1;
 }
 
+.alert-error {
+  @apply text-error text-sm font-medium break-words;
+}
+
 /* === CARDS === */
 .card {
   @apply bg-white border border-border rounded-xl;

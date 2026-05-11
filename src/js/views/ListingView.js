@@ -205,7 +205,7 @@ export class ListingView {
 
                     <!-- Inline error -->
                     <div id="bid-error" class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
-                      <p class="text-error text-sm font-medium"></p>
+                      <p class="alert-error"></p>
                     </div>
 
                     <button type="submit" id="bid-submit" class="btn-primary w-full py-3">

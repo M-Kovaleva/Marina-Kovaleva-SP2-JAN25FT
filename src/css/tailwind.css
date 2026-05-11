@@ -927,9 +927,6 @@
   .break-words {
     overflow-wrap: break-word;
   }
-  .break-all {
-    word-break: break-all;
-  }
   .whitespace-nowrap {
     white-space: nowrap;
   }
@@ -1515,6 +1512,14 @@
   font-size: var(--text-xs);
   line-height: var(--tw-leading, var(--text-xs--line-height));
   color: var(--color-text-secondary);
+}
+.alert-error {
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  --tw-font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: break-word;
+  color: var(--color-error);
 }
 .card {
   border-radius: var(--radius-xl);
