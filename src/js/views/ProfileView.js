@@ -110,24 +110,13 @@ export class ProfileView {
           <!-- Tab navigation -->
           <div class="border-b border-border mb-6">
             <nav class="flex gap-1 overflow-x-auto">
-              <button
-                data-tab="listings"
-                class="tab-btn tab-active pb-3 px-4 text-sm sm:text-base font-medium
-                       whitespace-nowrap border-b-2 border-primary-500 text-primary-500">
+              <button data-tab="listings" class="tab-btn tab-active">
                 Listings
               </button>
-              <button
-                data-tab="bids"
-                class="tab-btn pb-3 px-4 text-sm sm:text-base font-medium
-                       whitespace-nowrap border-b-2 border-transparent
-                       text-text-secondary hover:text-text-primary transition-colors">
+              <button data-tab="bids" class="tab-btn">
                 Bids
               </button>
-              <button
-                data-tab="wins"
-                class="tab-btn pb-3 px-4 text-sm sm:text-base font-medium
-                       whitespace-nowrap border-b-2 border-transparent
-                       text-text-secondary hover:text-text-primary transition-colors">
+              <button data-tab="wins" class="tab-btn">
                 Wins
               </button>
             </nav>
@@ -448,11 +437,7 @@ export class ProfileView {
         const target = btn.dataset.tab;
         // Update button styles
         tabs.forEach((b) => {
-          const isActive = b.dataset.tab === target;
-          b.classList.toggle('border-primary-500', isActive);
-          b.classList.toggle('text-primary-500', isActive);
-          b.classList.toggle('border-transparent', !isActive);
-          b.classList.toggle('text-text-secondary', !isActive);
+          b.classList.toggle('tab-active', b.dataset.tab === target);
         });
 
         // Show/hide panels

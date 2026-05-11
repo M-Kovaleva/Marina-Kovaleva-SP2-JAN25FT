@@ -179,6 +179,22 @@
   @apply p-2 rounded-lg text-text-primary hover:bg-gray-100 transition-colors;
 }
 
+/* Base tab — applies to all tabs (inactive look) */
+.tab-btn {
+  @apply pb-3 px-4 text-sm sm:text-base font-medium
+         whitespace-nowrap border-b-2 border-transparent
+         text-text-secondary transition-colors cursor-pointer;
+}
+
+/* Hover — only for INACTIVE tabs */
+.tab-btn:not(.tab-active):hover {
+  @apply text-text-primary;
+}
+
+/* Active tab — overrides base look, has NO hover effect */
+.tab-active {
+  @apply text-primary-500 border-primary-500;
+}
 /* ============================================
    Touch device fixes
    

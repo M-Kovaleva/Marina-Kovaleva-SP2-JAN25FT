@@ -673,10 +673,6 @@
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
   }
-  .border-b-2 {
-    border-bottom-style: var(--tw-border-style);
-    border-bottom-width: 2px;
-  }
   .border-border {
     border-color: var(--color-border);
   }
@@ -864,9 +860,6 @@
   }
   .pt-12 {
     padding-top: calc(var(--spacing) * 12);
-  }
-  .pb-3 {
-    padding-bottom: calc(var(--spacing) * 3);
   }
   .pb-6 {
     padding-bottom: calc(var(--spacing) * 6);
@@ -1685,6 +1678,34 @@
       background-color: var(--color-gray-100);
     }
   }
+}
+.tab-btn {
+  cursor: pointer;
+  border-bottom-style: var(--tw-border-style);
+  border-bottom-width: 2px;
+  border-color: transparent;
+  padding-inline: calc(var(--spacing) * 4);
+  padding-bottom: calc(var(--spacing) * 3);
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  --tw-font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+  @media (width >= 40rem) {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
+}
+.tab-btn:not(.tab-active):hover {
+  color: var(--color-text-primary);
+}
+.tab-active {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
 }
 @media (hover: none) {
   .card:hover, article:hover, .btn:hover, .btn-primary:hover, .btn-secondary:hover, .btn-ghost:hover, .btn-danger:hover {
