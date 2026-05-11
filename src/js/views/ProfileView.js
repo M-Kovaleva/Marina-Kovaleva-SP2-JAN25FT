@@ -6,6 +6,7 @@ import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { escHtml, formatDate, imagePlaceholderHtml } from '../utils/format.js';
+import { getListingStatus } from '../components/ListingCard.js';
 
 const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
 const PLACEHOLDER_BANNER = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
@@ -515,9 +516,9 @@ export class ProfileView {
         const imageUrl  = listing?.media?.[0]?.url ?? '';
         const title     = listing?.title ?? 'Unknown listing';
         const listingId = listing?.id ?? '';
-        const isActive  = listing?.endsAt
-          ? new Date(listing.endsAt) > new Date()
-          : false;
+        const status    = listing?.endsAt
+          ? getListingStatus(listing.endsAt)
+          : { label: 'Unknown', cssClass: 'badge-error' };
 
         return `
           <a href="/listing/${escHtml(listingId)}" data-link
@@ -546,11 +547,10 @@ export class ProfileView {
                 ${bid.amount.toLocaleString()}
                 <span class="text-xs font-normal text-text-secondary">cr</span>
               </p>
-              <span class="${isActive ? 'badge-success' : 'badge-error'} text-xs mt-1 inline-block">
-                ${isActive ? 'Active' : 'Ended'}
+              <span class="${status.cssClass} text-xs mt-1 inline-block">
+                ${status.label}
               </span>
             </div>
-
           </a>`;
 
       }).join('');

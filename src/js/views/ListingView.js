@@ -20,6 +20,7 @@ import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { imagePlaceholderHtml } from '../utils/format.js';
+import { getListingStatus } from '../components/ListingCard.js';
 
 export class ListingView {
   constructor(params) {
@@ -347,10 +348,10 @@ export class ListingView {
 
     document.getElementById('listing-title').textContent = title;
 
-    const isActive = new Date(endsAt) > new Date();
-    const badge    = document.getElementById('listing-status-badge');
-    badge.textContent = isActive ? 'Active' : 'Ended';
-    badge.className   = isActive ? 'badge-success' : 'badge-error';
+    const status = getListingStatus(endsAt);
+    const badge  = document.getElementById('listing-status-badge');
+    badge.textContent = status.label;
+    badge.className   = status.cssClass;
   }
 
   // ─────────────────────────────────────────────
@@ -425,8 +426,9 @@ export class ListingView {
         countdownEl.textContent = 'Auction ended';
         countdownEl.className   =
           'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
-        statusBadge.textContent = 'Ended';
-        statusBadge.className   = 'badge-error';
+        const status = getListingStatus(endsAt);
+        statusBadge.textContent = status.label;
+        statusBadge.className   = status.cssClass;
         clearInterval(this._countdownInterval);
         this._countdownInterval = null;
         // Switch bid form to ended state live

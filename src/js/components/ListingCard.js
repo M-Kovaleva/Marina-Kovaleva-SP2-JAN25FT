@@ -53,40 +53,30 @@ function formatTimeLeft(endsAt) {
 }
 
 /**
- * Get listing status based on end date
+ * Get listing status based on end date.
+ * Exported so ListingView can use the same logic.
+ *
  * @param {string} endsAt - ISO date string
- * @returns {Object} Status object with type and label
+ * @returns {{ type: string, label: string, cssClass: string }}
  */
-function getListingStatus(endsAt) {
+export function getListingStatus(endsAt) {
   const now = new Date();
   const end = new Date(endsAt);
   const diff = end - now;
 
   // Ended
   if (diff <= 0) {
-    return {
-      type: 'ended',
-      label: 'Ended',
-      badgeClass: 'bg-gray-500/90 text-white',
-    };
+    return { type: 'ended', label: 'Ended', cssClass: 'badge-error' };
   }
 
   // Ending soon (less than 24 hours)
   const hoursLeft = diff / (1000 * 60 * 60);
   if (hoursLeft < 24) {
-    return {
-      type: 'ending-soon',
-      label: 'Ending Soon',
-      badgeClass: 'bg-warning/90 text-amber-900',
-    };
+    return { type: 'ending-soon', label: 'Ending Soon', cssClass: 'badge-warning' };
   }
 
   // Active
-  return {
-    type: 'active',
-    label: 'Active',
-    badgeClass: 'bg-success/90 text-green-900',
-  };
+  return { type: 'active', label: 'Active', cssClass: 'badge-success' };
 }
 
 /**
@@ -149,7 +139,7 @@ export function createListingCard(listing) {
           ` : imagePlaceholderHtml()}
           
           <!-- Status Badge -->
-          <span class="absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full ${status.badgeClass}">
+          <span class="absolute top-2 right-2 ${status.cssClass}">
             ${status.label}
           </span>
           

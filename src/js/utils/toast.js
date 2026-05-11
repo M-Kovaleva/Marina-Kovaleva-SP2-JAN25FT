@@ -16,6 +16,6 @@ export function showSuccessToast(message) {
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 500);////////////////////set 500
+    setTimeout(() => toast.remove(), 500);
   }, 250000);///////////////////////////set 2500
 }
