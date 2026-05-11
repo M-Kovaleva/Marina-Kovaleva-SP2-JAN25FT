@@ -64,7 +64,7 @@ export class HomeView {
               <!-- CTA -->
               <a id="hero-cta" href="#" data-link
                 class="inline-block bg-white text-primary-600 hover:bg-primary-50
-                       font-semibold px-6 py-3 rounded-lg transition-colors">
+                      font-semibold text-sm px-3 py-2 rounded-lg transition-colors">
                 View auction
               </a>
             </div>

@@ -64,23 +64,23 @@
 .btn-secondary,
 .btn-ghost,
 .btn-danger {
-  @apply inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 text-sm font-semibold transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-primary {
-  @apply px-4 py-2.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus-visible:ring-primary-500;
+  @apply px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus-visible:ring-primary-500;
 }
 
 .btn-secondary {
-  @apply px-4 py-2.5 bg-white text-text-primary border-2 border-border rounded-lg hover:border-primary-500 hover:text-primary-500;
+  @apply px-3 py-2 bg-white text-text-primary border-2 border-border rounded-lg hover:border-primary-500 hover:text-primary-500;
 }
 
 .btn-ghost {
-  @apply px-4 py-2.5 text-text-secondary hover:text-primary-500 hover:bg-primary-50 rounded-lg;
+  @apply px-3 py-2 text-text-secondary hover:text-primary-500 hover:bg-primary-50 rounded-lg;
 }
 
 .btn-danger {
-  @apply px-4 py-2.5 bg-error text-white rounded-lg hover:bg-red-600 focus-visible:ring-error;
+  @apply px-3 py-2 bg-error text-white rounded-lg hover:bg-red-600 focus-visible:ring-error;
 }
 
 /* === FORM INPUTS === */
