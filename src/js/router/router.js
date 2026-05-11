@@ -6,6 +6,7 @@ import { ListingView } from '../views/ListingView.js';
 import { ProfileView } from '../views/ProfileView.js';
 import { CreateListingView } from '../views/CreateListingView.js';
 import { NotFoundView } from '../views/NotFoundView.js';
+import { showLoginRequiredModal } from '../components/LoginRequiredModal.js';
 import { isLoggedIn, getUser } from '../auth/storage.js';
 
 //Routes
@@ -66,7 +67,10 @@ export async function router() {
 
   // Authorization checking
   if (PROTECTED.includes(match.route.path) && !isLoggedIn()) {
-    navigateTo('/login');
+    // Guest hit a protected URL directly (F5, pasted link, history)
+    // Send them to home and surface the modal instead of forcing /login.
+    navigateTo('/');
+    showLoginRequiredModal();
     return;
   }
 

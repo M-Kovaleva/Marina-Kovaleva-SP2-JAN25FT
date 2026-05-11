@@ -102,8 +102,8 @@ export function updateNavAuth() {
 
     if (creditsBadgeMobile) creditsBadgeMobile.style.display = 'none';
 
-    // Guest: redirect to login on click
-    createBtns.forEach((btn) => { btn.href = '/login'; });
+    // Guest: keep href as /listing/create — main.js intercepts and shows modal
+    createBtns.forEach((btn) => { btn.href = '/listing/create'; });
   }
 }
 

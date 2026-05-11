@@ -171,7 +171,9 @@ export class ListingView {
                   <!-- State B: Guest -->
                   <div id="state-guest" class="hidden space-y-3 text-center py-2">
                     <p class="text-text-secondary text-sm">Sign in to place a bid</p>
-                    <a href="/login" data-link class="btn-primary block">Sign in to bid</a>
+                    <button type="button" data-action="login-required" class="btn-primary w-full py-3">
+                      Sign in to bid
+                    </button>
                   </div>
 
                   <!-- State C: Own listing -->
