@@ -5,7 +5,7 @@ import { createListingCards } from '../components/ListingCard.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
-import { escHtml, formatDate, imagePlaceholderHtml } from '../utils/format.js';
+import { escHtml, formatDate, imagePlaceholderHtml, formatCredits } from '../utils/format.js';
 import { getListingStatus } from '../components/ListingCard.js';
 
 const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
@@ -382,7 +382,7 @@ export class ProfileView {
     if (isOwnProfile) {
       document.getElementById('stat-credits').classList.remove('hidden');
       document.getElementById('profile-credits').textContent =
-        (profile.credits ?? 0).toLocaleString();
+        formatCredits(profile.credits);
       document.getElementById('stat-wins').classList.remove('hidden');
       document.getElementById('profile-wins-count').textContent =
         profile._count?.wins ?? 0;
@@ -550,7 +550,7 @@ export class ProfileView {
             <!-- Bid amount and status -->
             <div class="text-right flex-shrink-0">
               <p class="font-bold text-primary-500 text-sm">
-                ${bid.amount.toLocaleString()}
+                ${formatCredits(bid.amount)}
                 <span class="text-xs font-normal text-text-secondary">cr</span>
               </p>
               <span class="${status.cssClass} text-xs mt-1 inline-block">

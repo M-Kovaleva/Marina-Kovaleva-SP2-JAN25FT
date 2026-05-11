@@ -19,7 +19,7 @@ import { syncUserFromProfile } from '../auth/userSync.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
-import { imagePlaceholderHtml } from '../utils/format.js';
+import { imagePlaceholderHtml, formatCredits } from '../utils/format.js';
 import { getListingStatus } from '../components/ListingCard.js';
 
 export class ListingView {
@@ -403,7 +403,7 @@ export class ListingView {
     const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
 
     document.getElementById('listing-current-bid').textContent =
-      `${highest.toLocaleString()} credits`;
+      `${formatCredits(highest)} credits`
     document.getElementById('listing-bid-count').textContent =
       `${bids.length} ${bids.length === 1 ? 'bid' : 'bids'}`;
   }
@@ -584,7 +584,7 @@ export class ListingView {
     }
     if (amount > userCredits) {
       this._showBidError(
-        `You only have ${userCredits.toLocaleString()} credits available.`
+        `You only have ${formatCredits(userCredits)} credits available.`
       );
       return;
     }
@@ -638,7 +638,7 @@ export class ListingView {
     input.placeholder = `Min: ${newMin}`;
 
     document.getElementById('bid-hint').textContent =
-      `Minimum: ${newMin} cr · Your balance: ${newCredits.toLocaleString()} cr`;
+      `Minimum: ${newMin} cr · Your balance: ${formatCredits(newCredits)} cr`
   }
 
 
@@ -701,7 +701,7 @@ export class ListingView {
 
             <p class="font-bold text-sm flex-shrink-0
                       ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
-              ${bid.amount.toLocaleString()}
+              ${formatCredits(bid.amount)}
               <span class="font-normal text-text-secondary text-xs">credits</span>
             </p>
 

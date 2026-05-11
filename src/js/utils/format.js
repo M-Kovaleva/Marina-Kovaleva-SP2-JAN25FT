@@ -35,3 +35,16 @@ export function imagePlaceholderHtml() {
     </div>
   `;
 }
+
+/**
+ * Format a credit amount for display.
+ * Currently shows the raw number without thousand separators
+ * (e.g. 1000, not 1,000). Centralised so the format can be changed
+ * project-wide by editing one place.
+ *
+ * @param {number|null|undefined} amount
+ * @returns {string}
+ */
+export function formatCredits(amount) {
+  return String(amount ?? 0);
+}

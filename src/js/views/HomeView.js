@@ -4,6 +4,7 @@
 
 import { initListingsHandler, cleanupListingsHandler } from '../handlers/listingsHandler.js';
 import { getListings } from '../api/apiClient.js';
+import { formatCredits } from '../utils/format.js';
 
 export class HomeView {
   constructor(params) {
@@ -254,7 +255,7 @@ export class HomeView {
     const bids = listing.bids ?? [];
     const top  = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
     document.getElementById('hero-bid').textContent =
-      `${top.toLocaleString()} cr`;
+      `${formatCredits(top)} cr`;
 
     // Bid count
     const count = listing._count?.bids ?? bids.length;
