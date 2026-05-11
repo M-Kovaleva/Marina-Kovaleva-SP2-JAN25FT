@@ -50,14 +50,20 @@ export class ProfileView {
             </div>
 
             <!-- Avatar and Info -->
-            <div class="px-4 sm:px-6 pb-6">
-              <!-- Avatar — overlap banner -->
+            <div class="relative px-4 sm:px-6 pb-6">
+              <!-- Avatar — overlaps banner -->
               <div id="profile-avatar"
-                class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white bg-primary-100 shadow-md -mt-10 sm:-mt-12">
+                class="absolute -top-12 sm:-top-14 left-4 sm:left-6
+                      w-20 h-20 sm:w-24 sm:h-24
+                      rounded-full overflow-hidden
+                      border-4 border-white bg-primary-100 shadow-md">
               </div>
 
-              <!-- Name + Bio — under avatar, vertical stack on all sizes -->
-              <div class="mt-3 mb-4 min-w-0">
+              <!-- Spacer — reserves vertical space for the avatar's bottom half -->
+              <div class="h-10 sm:h-12"></div>
+
+              <!-- Name + Bio — full width, below avatar -->
+              <div class="mb-4 min-w-0">
                 <h1 id="profile-name"
                   class="text-xl sm:text-2xl font-bold text-text-primary truncate">
                 </h1>
