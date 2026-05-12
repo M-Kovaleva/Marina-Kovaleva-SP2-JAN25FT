@@ -17,7 +17,7 @@ export class LoginView {
             <p class="alert-error"></p>
           </div>
           
-          <form id="login-form" class="space-y-5">
+          <form id="login-form" class="space-y-5" novalidate>
             <div>
               <label for="email" class="label">Email</label>
               <input
@@ -38,7 +38,6 @@ export class LoginView {
                 id="password"
                 name="password"
                 required
-                minlength="8"
                 placeholder="••••••••"
                 autocomplete="current-password"
                 class="input"

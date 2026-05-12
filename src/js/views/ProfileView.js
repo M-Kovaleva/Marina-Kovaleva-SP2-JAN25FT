@@ -6,6 +6,7 @@ import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { escHtml, formatDate, imagePlaceholderHtml, formatCredits } from '../utils/format.js';
+import { validateProfileForm, showValidationErrors, clearFormErrors } from '../utils/validation.js';
 import { getListingStatus } from '../components/ListingCard.js';
 
 const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
@@ -166,7 +167,7 @@ export class ProfileView {
             <div id="profile-bids-empty" class="hidden text-center py-16">
               <h3 class="text-lg font-semibold text-text-primary mb-2">No bids placed yet</h3>
               <p class="text-text-secondary text-sm">
-                Browse listings and place your first bid
+                Explore listings and place your first bid
               </p>
               <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
             </div>
@@ -227,13 +228,14 @@ export class ProfileView {
             </div>
 
             <!-- Form -->
-            <form id="edit-profile-form" class="space-y-4">
+            <form id="edit-profile-form" class="space-y-4" novalidate>
 
               <!-- Bio -->
               <div>
                 <label for="edit-bio" class="label">Bio</label>
                 <textarea
                   id="edit-bio"
+                  name="bio"
                   rows="3"
                   maxlength="160"
                   placeholder="Tell others about yourself..."
@@ -248,6 +250,7 @@ export class ProfileView {
                 <input
                   type="url"
                   id="edit-avatar"
+                  name="avatar"
                   placeholder="https://example.com/avatar.jpg"
                   class="input"
                 />
@@ -259,6 +262,7 @@ export class ProfileView {
                 <input
                   type="url"
                   id="edit-banner"
+                  name="banner"
                   placeholder="https://example.com/banner.jpg"
                   class="input"
                 />
@@ -601,11 +605,15 @@ export class ProfileView {
   _openEditModal() {
     const user = getUser();
     const modal = document.getElementById('edit-profile-modal');
+    const form  = document.getElementById('edit-profile-form');
 
     // Prefill current values
     document.getElementById('edit-bio').value    = user?.bio    ?? '';
     document.getElementById('edit-avatar').value = user?.avatar?.url ?? '';
     document.getElementById('edit-banner').value = user?.banner?.url ?? '';
+
+    // Clear errors from previous attempts
+    clearFormErrors(form);
     document.getElementById('edit-profile-error').classList.add('hidden');
 
     modal.classList.remove('hidden');
@@ -637,37 +645,43 @@ export class ProfileView {
   async _handleEditSubmit(e) {
     e.preventDefault();
 
-    const bio       = document.getElementById('edit-bio').value.trim();
-    const avatarUrl = document.getElementById('edit-avatar').value.trim();
-    const bannerUrl = document.getElementById('edit-banner').value.trim();
-    const submitBtn = document.getElementById('edit-profile-submit');
-    const errorEl   = document.getElementById('edit-profile-error');
+    const form        = document.getElementById('edit-profile-form');
+    const bioInput    = document.getElementById('edit-bio');
+    const avatarInput = document.getElementById('edit-avatar');
+    const bannerInput = document.getElementById('edit-banner');
+    const submitBtn   = document.getElementById('edit-profile-submit');
+    const errorEl     = document.getElementById('edit-profile-error');
 
+    // Clear previous errors
+    clearFormErrors(form);
     errorEl.classList.add('hidden');
 
-    // URL validation
-    for (const [label, url] of [['Avatar', avatarUrl], ['Banner', bannerUrl]]) {
-      if (url) {
-        try { new URL(url); } catch {
-          errorEl.classList.remove('hidden');
-          errorEl.querySelector('p').textContent =
-            `${label} URL is not valid. Must start with https://`;
-          return;
-        }
-      }
+    // Read trimmed values
+    const data = {
+      bio:       bioInput.value.trim(),
+      avatarUrl: avatarInput.value.trim(),
+      bannerUrl: bannerInput.value.trim(),
+    };
+
+    // Client-side validation
+    const { isValid, errors } = validateProfileForm(data);
+
+    if (!isValid) {
+      showValidationErrors(form, errors);
+      return;
     }
 
     // Build payload — always send all 3 fields so server can clear them.
     // Empty bio = ''. Empty avatar/banner = placeholder URL (server requires
     // a valid URL object — null and empty string both rejected).
     const payload = {
-      bio: bio || '',
+      bio: data.bio || '',
       avatar: {
-        url: avatarUrl || PLACEHOLDER_AVATAR,
+        url: data.avatarUrl || PLACEHOLDER_AVATAR,
         alt: '',
       },
       banner: {
-        url: bannerUrl || PLACEHOLDER_BANNER,
+        url: data.bannerUrl || PLACEHOLDER_BANNER,
         alt: '',
       },
     };
@@ -679,13 +693,14 @@ export class ProfileView {
       const response = await updateProfile(this.profileName, payload);
       const updated  = response.data;
 
-       // Sync localStorage
+      // Sync localStorage
       updateUser({
         bio:    updated.bio,
         avatar: updated.avatar,
         banner: updated.banner,
       });
-      // Update header 
+
+      // Update header
       this._updateHeaderUI(updated);
 
       submitBtn.disabled    = false;
@@ -701,7 +716,6 @@ export class ProfileView {
       submitBtn.textContent = 'Save changes';
     }
   }
-
   /**
    * Update the visible header after a successful edit.
    * Avatar and banner are always present (server enforces a URL),

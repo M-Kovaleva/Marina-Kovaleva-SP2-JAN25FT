@@ -6,7 +6,7 @@
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
 import { syncUserFromProfile } from './userSync.js';
-import {validateRegisterForm, showInputError,clearFormErrors} from '../utils/validation.js';
+import { validateRegisterForm, clearFormErrors, showValidationErrors } from '../utils/validation.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { navigateTo } from '../router/router.js';
@@ -82,20 +82,6 @@ export function initRegisterHandler() {
 }
 
 /**
- * Show validation errors on form fields
- * @param {HTMLFormElement} form
- * @param {Object} errors
- */
-function showValidationErrors(form, errors) {
-  Object.entries(errors).forEach(([field, message]) => {
-    const input = form.querySelector(`[name="${field}"]`);
-    if (input) {
-      showInputError(input, message);
-    }
-  });
-}
-
-/**
  * Show error message in error container
  * @param {HTMLElement} container
  * @param {string} message
@@ -133,7 +119,7 @@ function setFormLoading(form, isLoading) {
     inputs.forEach((input) => (input.disabled = true));
   } else {
     button.disabled = false;
-    button.textContent = 'Create Account';
+    button.textContent = 'Create account';
     inputs.forEach((input) => (input.disabled = false));
   }
 }

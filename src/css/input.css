@@ -105,6 +105,9 @@
   @apply text-error text-sm font-medium break-words;
 }
 
+.field-error {
+  @apply text-error text-xs mt-1;
+}
 /* === CARDS === */
 .card {
   @apply bg-white border border-border rounded-xl;

@@ -118,12 +118,20 @@ export function validateListingForm({ title, endsAt, description, media }) {
     errors.title = 'Title must be less than 280 characters';
   }
 
-  if (!endsAt) {
-    errors.endsAt = 'End date is required';
-  } else {
-    const endDate = new Date(endsAt);
-    if (endDate <= new Date()) {
-      errors.endsAt = 'End date must be in the future';
+  // Skip endsAt validation entirely when null (edit mode — field is readonly)
+  if (endsAt !== null) {
+    if (!endsAt) {
+      errors.endsAt = 'End date is required';
+    } else {
+      const endDate = new Date(endsAt);
+      const oneYearAhead = new Date();
+      oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1);
+
+      if (isNaN(endDate.getTime()) || endDate > oneYearAhead) {
+        errors.endsAt = 'End date must be within one year from now';
+      } else if (endDate <= new Date()) {
+        errors.endsAt = 'End date must be in the future';
+      }
     }
   }
 
@@ -154,7 +162,7 @@ export function showInputError(input, message) {
   let errorEl = input.parentElement.querySelector('.error-message');
   if (!errorEl) {
     errorEl = document.createElement('p');
-    errorEl.className = 'error-message text-error text-xs mt-1';
+    errorEl.className = 'error-message field-error';
     input.parentElement.appendChild(errorEl);
   }
   errorEl.textContent = message;
@@ -184,4 +192,46 @@ export function clearFormErrors(form) {
 
   const errorMessages = form.querySelectorAll('.error-message');
   errorMessages.forEach((el) => el.remove());
+}
+
+/**
+ * Validate profile edit form
+ * @param {Object} data - { bio, avatarUrl, bannerUrl }
+ * @returns {{ isValid: boolean, errors: Object }}
+ */
+export function validateProfileForm({ bio, avatarUrl, bannerUrl }) {
+  const errors = {};
+
+  if (bio && bio.length > 160) {
+    errors.bio = 'Bio must be 160 characters or less';
+  }
+
+  if (avatarUrl && !isValidUrl(avatarUrl)) {
+    errors.avatar = 'Must be a valid URL starting with https://';
+  }
+
+  if (bannerUrl && !isValidUrl(bannerUrl)) {
+    errors.banner = 'Must be a valid URL starting with https://';
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+}
+
+/**
+ * Display field-specific errors on a form via showInputError.
+ * Looks up inputs by their `name` attribute.
+ *
+ * @param {HTMLFormElement} form
+ * @param {Object} errors - { fieldName: 'error message' }
+ */
+export function showValidationErrors(form, errors) {
+  Object.entries(errors).forEach(([field, message]) => {
+    const input = form.querySelector(`[name="${field}"]`);
+    if (input) {
+      showInputError(input, message);
+    }
+  });
 }

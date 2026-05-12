@@ -20,7 +20,7 @@ export class RegisterView {
             <p class="alert-error"></p>
           </div>
           
-          <form id="register-form" class="space-y-5">
+          <form id="register-form" class="space-y-5" novalidate>
             <div>
               <label for="name" class="label">Username</label>
               <input
@@ -28,7 +28,6 @@ export class RegisterView {
                 id="name"
                 name="name"
                 required
-                pattern="^[a-zA-Z0-9_]+$"
                 placeholder="your_username"
                 autocomplete="username"
                 class="input"
@@ -57,7 +56,6 @@ export class RegisterView {
                 id="password"
                 name="password"
                 required
-                minlength="8"
                 placeholder="••••••••"
                 autocomplete="new-password"
                 class="input"

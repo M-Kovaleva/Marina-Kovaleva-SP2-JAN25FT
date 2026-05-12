@@ -6,11 +6,7 @@
 import { login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
 import { syncUserFromProfile } from './userSync.js';
-import {
-  validateLoginForm,
-  showInputError,
-  clearFormErrors,
-} from '../utils/validation.js';
+import { validateLoginForm, clearFormErrors, showValidationErrors } from '../utils/validation.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { navigateTo } from '../router/router.js';
 
@@ -75,19 +71,6 @@ export function initLoginHandler() {
   });
 }
 
-/**
- * Show validation errors on form fields
- * @param {HTMLFormElement} form
- * @param {Object} errors
- */
-function showValidationErrors(form, errors) {
-  Object.entries(errors).forEach(([field, message]) => {
-    const input = form.querySelector(`[name="${field}"]`);
-    if (input) {
-      showInputError(input, message);
-    }
-  });
-}
 
 /**
  * Show error message in error container
@@ -127,7 +110,7 @@ function setFormLoading(form, isLoading) {
     inputs.forEach((input) => (input.disabled = true));
   } else {
     button.disabled = false;
-    button.textContent = 'Sign In';
+    button.textContent = 'Sign in';
     inputs.forEach((input) => (input.disabled = false));
   }
 }

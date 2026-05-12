@@ -21,6 +21,7 @@ import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { imagePlaceholderHtml, formatCredits } from '../utils/format.js';
 import { getListingStatus } from '../components/ListingCard.js';
+import { clearFormErrors, showInputError } from '../utils/validation.js';
 
 export class ListingView {
   constructor(params) {
@@ -45,12 +46,11 @@ export class ListingView {
 
         <!-- Error / 404 state -->
         <div id="listing-error" class="hidden text-center py-24">
-          <p class="text-5xl mb-4">😕</p>
           <h2 class="text-xl font-bold text-text-primary mb-2">Listing not found</h2>
           <p class="text-text-secondary mb-6">
             This listing may have been removed or the link is invalid.
           </p>
-          <a href="/" data-link class="btn-primary">Browse listings</a>
+          <a href="/" data-link class="btn-primary">Explore listings</a>
         </div>
 
         <!-- Main content -->
@@ -191,7 +191,7 @@ export class ListingView {
                   </div>
 
                   <!-- State D: Bid form -->
-                  <form id="bid-form" class="hidden space-y-3">
+                  <form id="bid-form" class="hidden space-y-3" novalidate>
                     <div>
                       <label for="bid-amount" class="label">Your bid (credits)</label>
                       <input
@@ -548,14 +548,16 @@ export class ListingView {
    * @param {Object} listing
    */
   _setupBidForm(listing) {
-    this._refreshBidHint(listing.bids ?? [], getUserCredits() ?? 0);
+  this._refreshBidHint(listing.bids ?? [], getUserCredits() ?? 0);
 
-    document.getElementById('bid-form').addEventListener('submit', (e) =>
-      this._handleBidSubmit(e, listing.id)
-    );
-  
-  }
+  // Clear stale errors from previous bid attempts
+  const form = document.getElementById('bid-form');
+  if (form) clearFormErrors(form);
 
+  form.addEventListener('submit', (e) =>
+    this._handleBidSubmit(e, listing.id)
+  );
+}
   /**
    * Handle bid form submission.
    *
@@ -569,62 +571,71 @@ export class ListingView {
    * @param {Event}  e
    * @param {string} listingId
    */
-  async _handleBidSubmit(e, listingId) { 
-    e.preventDefault();
+  async _handleBidSubmit(e, listingId) {
+  e.preventDefault();
 
-    const input     = document.getElementById('bid-amount');
-    const submitBtn = document.getElementById('bid-submit');
-    const amount    = Number(input.value);
+  const form      = document.getElementById('bid-form');
+  const input     = document.getElementById('bid-amount');
+  const submitBtn = document.getElementById('bid-submit');
 
-    // Read fresh values — never trust closure from setup time
-    const minBid      = Number(input.min) || 1;
-    const userCredits = getUserCredits() ?? 0;
+  // Clear previous errors
+  clearFormErrors(form);
+  this._hideBidError();
 
-    if (!Number.isInteger(amount) || amount < minBid) {
-      this._showBidError(`Bid must be a whole number, at least ${minBid} credits.`);
-      return;
-    }
-    if (amount > userCredits) {
-      this._showBidError(
-        `You only have ${formatCredits(userCredits)} credits available.`
-      );
-      return;
-    }
+  const amount      = Number(input.value);
+  const minBid      = Number(input.min) || 1;
+  const userCredits = getUserCredits() ?? 0;
 
-    submitBtn.disabled    = true;
-    submitBtn.textContent = 'Placing bid…';
-    this._hideBidError();
-
-    try {
-      // 1. Send bid
-      await placeBid(listingId, amount);
-
-      // 2. Server is source of truth — refresh listing + user in parallel
-      const [listingRes] = await Promise.all([
-        getListing(listingId, true, true),
-        syncUserFromProfile(getUser().name),
-      ]);
-      const updated = listingRes.data;
-
-      // 3. Update UI from real server data
-      this._renderBidSummary(updated);
-      this._renderBidHistory(updated.bids);
-      updateNavAuth();
-
-      // 4. Re-evaluate which state to show.
-      //    User just bid → likely "winning" state now.
-      input.value = '';
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Place Bid';
-      this._renderBidForm(updated);
-
-      showSuccessToast('Bid placed.');
-    } catch (err) {
-      this._showBidError(err.message || 'Could not place bid. Try again.');
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Place Bid';
-    }
+  // Field-level validation — inline under input
+  if (!Number.isInteger(amount) || amount < minBid) {
+    showInputError(
+      input,
+      `Bid must be a whole number, at least ${minBid} credits.`
+    );
+    return;
   }
+  if (amount > userCredits) {
+    showInputError(
+      input,
+      `You only have ${formatCredits(userCredits)} credits available.`
+    );
+    return;
+  }
+
+  submitBtn.disabled    = true;
+  submitBtn.textContent = 'Placing bid…';
+
+  try {
+    // 1. Send bid
+    await placeBid(listingId, amount);
+
+    // 2. Server is source of truth — refresh listing + user in parallel
+    const [listingRes] = await Promise.all([
+      getListing(listingId, true, true),
+      syncUserFromProfile(getUser().name),
+    ]);
+    const updated = listingRes.data;
+
+    // 3. Update UI from real server data
+    this._renderBidSummary(updated);
+    this._renderBidHistory(updated.bids);
+    updateNavAuth();
+
+    // 4. Re-evaluate which state to show.
+    //    User just bid → likely "winning" state now.
+    input.value = '';
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Place Bid';
+    this._renderBidForm(updated);
+
+    showSuccessToast('Bid placed.');
+  } catch (err) {
+    // API/network error — top general error block
+    this._showBidError(err.message || 'Could not place bid. Try again.');
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Place Bid';
+  }
+}
   /**
    * Update min value, max value, and hint text after a successful bid.
    * @param {Array}  bids        - updated bids from API

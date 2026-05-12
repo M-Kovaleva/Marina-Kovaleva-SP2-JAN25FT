@@ -3,6 +3,7 @@
 import { navigateTo } from '../router/router.js';
 import { createListing, getListing, updateListing } from '../api/apiClient.js';
 import { showSuccessToast } from '../utils/toast.js';
+import { validateListingForm, showValidationErrors, clearFormErrors } from '../utils/validation.js';
 
 export class CreateListingView {
   constructor(params) {
@@ -36,7 +37,7 @@ export class CreateListingView {
               ${this.isEditMode ? 'Update your listing details' : 'Add a new item for auction'}
             </p>
             
-            <form id="listing-form" class="space-y-5 sm:space-y-6">
+            <form id="listing-form" class="space-y-5 sm:space-y-6" novalidate>
               <!-- Title -->
               <div>
                 <label for="title" class="label">Title *</label>
@@ -166,83 +167,97 @@ export class CreateListingView {
   }
   // Form submit handler
   async _handleSubmit(e) {
-    e.preventDefault();
-    this._hideError();
+      e.preventDefault();
 
-    const title       = document.getElementById('title').value.trim();
-    const description = document.getElementById('description').value.trim();
-    // endsAt input only exists in create mode — in edit mode the field is read-only
-    const endsAtInput = document.getElementById('endsAt');
-    const endsAtRaw   = endsAtInput ? endsAtInput.value : null;
+      const form        = document.getElementById('listing-form');
+      const titleInput  = document.getElementById('title');
+      const descInput   = document.getElementById('description');
+      const endsAtInput = document.getElementById('endsAt');  // null in edit mode
 
-    // Validation
-    if (!title) {
-      this._showError('Title is required.');
-      document.getElementById('title').focus();
-      return;
-    }
+      // Clear previous errors
+      clearFormErrors(form);
+      this._hideError();
 
-    // endsAt: required for create only
-    if (!this.isEditMode) {
-      if (!endsAtRaw) {
-        this._showError('End date is required.');
-        endsAtInput.focus();
+      // Collect media URLs (dynamic inputs)
+      const mediaInputs = document.querySelectorAll('input[name="media[]"]');
+      const media = Array.from(mediaInputs)
+        .map((input) => input.value.trim())
+        .filter(Boolean)
+        .map((url) => ({ url, alt: '' }));
+
+      // Build data object for validation
+      const data = {
+        title:       titleInput.value.trim(),
+        description: descInput.value.trim(),
+        // In edit mode endsAt input doesn't exist → pass null to skip validation
+        endsAt:      endsAtInput ? endsAtInput.value : null,
+        media,
+      };
+
+      // Client-side validation
+      const { isValid, errors } = validateListingForm(data);
+
+      if (!isValid) {
+        // Field-specific errors — inline under inputs.
+        // Media error goes to top block (multiple inputs share it).
+        const fieldErrors = { ...errors };
+        delete fieldErrors.media;
+
+        showValidationErrors(form, fieldErrors);
+
+        if (errors.media) {
+          this._showError(errors.media);
+        }
+
+        // Focus first errored field for keyboard users
+        const firstField = Object.keys(errors)[0];
+        const firstInput = form.querySelector(`[name="${firstField}"]`);
+        if (firstInput) firstInput.focus();
+
         return;
       }
-      const endsAtDate = new Date(endsAtRaw);
-      if (endsAtDate <= new Date()) {
-        this._showError('End date must be in the future.');
-        endsAtInput.focus();
-        return;
+
+      // Build payload
+      const payload = { title: data.title };
+      if (!this.isEditMode && data.endsAt) {
+        payload.endsAt = new Date(data.endsAt).toISOString();
       }
-    }
+      if (data.description) payload.description = data.description;
 
-    // Build payload
-    const payload = { title };
-    if (!this.isEditMode && endsAtRaw) {
-      payload.endsAt = new Date(endsAtRaw).toISOString();
-    }
-
-    if (description) payload.description = description;
-
-     const mediaInputs = document.querySelectorAll('input[name="media[]"]');
-    const media = Array.from(mediaInputs)
-      .map((input) => input.value.trim())
-      .filter(Boolean)
-      .map((url) => ({ url, alt: '' }));
-
-    if (this.isEditMode) {
-      // Edit mode: always send media (possibly empty) so the server
-      // knows to clear it. Without this, removed-down-to-zero media
-      // would silently keep the old images.
-      payload.media = media;
-    } else if (media.length) {
-      // Create mode: only include if non-empty
-      payload.media = media;
-    }
-
-    this._setLoading(true);
-
-    try {
       if (this.isEditMode) {
-        await updateListing(this.listingId, payload);
-        showSuccessToast('Listing updated.');
-        navigateTo(`/listing/${this.listingId}`);
-      } else {
-        const response = await createListing(payload);
-        showSuccessToast('Listing created.');
-        navigateTo(`/listing/${response.data.id}`);
+        // Edit mode: always send media (possibly empty) so the server
+        // knows to clear it. Without this, removed-down-to-zero media
+        // would silently keep the old images.
+        payload.media = data.media;
+      } else if (data.media.length) {
+        // Create mode: only include if non-empty
+        payload.media = data.media;
       }
-    } catch (err) {
-      this._showError(
-        err.message ||
-        (this.isEditMode ? 'Could not update listing.' : 'Could not create listing.')
-      );
-      this._setLoading(false);
-    }
-  }
 
+      this._setLoading(true);
+
+      try {
+        if (this.isEditMode) {
+          await updateListing(this.listingId, payload);
+          showSuccessToast('Listing updated.');
+          navigateTo(`/listing/${this.listingId}`);
+        } else {
+          const response = await createListing(payload);
+          showSuccessToast('Listing created.');
+          navigateTo(`/listing/${response.data.id}`);
+        }
+      } catch (err) {
+        this._showError(
+          err.message ||
+          (this.isEditMode ? 'Could not update listing.' : 'Could not create listing.')
+        );
+        this._setLoading(false);
+      }
+    }
+
+  // ─────────────────────────────────────────────
   // Prefill form in edit mode
+  // ─────────────────────────────────────────────
   async _prefillForm() {
     try {
       const response = await getListing(this.listingId, false, false);
@@ -288,9 +303,11 @@ export class CreateListingView {
     } catch (err) {
       this._showError('Could not load listing data. Please try again.');
     }
-    // Note: _initAddMediaBtn() is called in init() after _prefillForm() completes
   }
 
+  // ─────────────────────────────────────────────
+  // Add image button with 8-item limit
+  // ─────────────────────────────────────────────
   _initAddMediaBtn() {
     const addMediaBtn    = document.getElementById('add-media-btn');
     const mediaContainer = document.getElementById('media-container');
@@ -313,7 +330,6 @@ export class CreateListingView {
 
     // Wire up remove buttons on existing rows (initial + prefilled)
     mediaContainer.querySelectorAll('div.flex').forEach(wireRemove);
-    // Initial state — handles edit mode where prefill may already be at limit
     updateAddBtnState();
 
     addMediaBtn.addEventListener('click', () => {
@@ -337,6 +353,7 @@ export class CreateListingView {
       updateAddBtnState();
     });
   }
+
 
   _setLoading(isLoading) {
     const btn    = document.getElementById('submit-btn');
