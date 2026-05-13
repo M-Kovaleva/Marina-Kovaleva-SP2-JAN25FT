@@ -1,840 +1,238 @@
 /**
- * Single Listing View
+ * Listing View — single listing page.
  *
- * Displays a single listing with:
- *  - Image gallery (main + thumbnails)
- *  - Title, description,seller card
- *  - Live countdown timer until auction end
- *  - Current highest bid + bid history
- *  - Bid form with five mutually exclusive states:
- *      ended → guest → own listing → already winning → form
- *  - Owner-only Edit/Delete actions (active auctions only)
- *
- * Server is the single source of truth for credits — after each bid,
- * we sync the user profile from the API rather than guessing locally.
+ * Thin: owns the HTML template and the lifecycle hooks only.
+ * All data loading and DOM mutation lives in handlers:
+ *   - listingDetailHandler — orchestrator: gallery, info, seller, summary,
+ *                            countdown, bid history, owner actions
+ *   - bidFormHandler       — bid form state machine + place bid
  */
-import { getListing, placeBid, deleteListing } from '../api/apiClient.js';
-import { getUser, isLoggedIn, getUserCredits } from '../auth/storage.js';
-import { syncUserFromProfile } from '../auth/userSync.js';
-import { updateNavAuth } from '../components/Nav.js';
-import { navigateTo } from '../router/router.js';
-import { showSuccessToast } from '../utils/toast.js';
-import { imagePlaceholderHtml, formatCredits } from '../utils/format.js';
-import { getListingStatus } from '../components/ListingCard.js';
-import { clearFormErrors, showInputError } from '../utils/validation.js';
+
+import {
+  initListingDetail,
+  cleanupListingDetail,
+} from '../handlers/listingDetailHandler.js';
 
 export class ListingView {
   constructor(params) {
-    this.params    = params;
+    this.params = params;
     this.listingId = params.id;
-    this._countdownInterval = null;
   }
-
-  // ─────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────
 
   async render() {
-    return `
-      <div class="page-container">
-
-        <!-- Loading state -->
-        <div id="listing-loading" class="flex flex-col items-center justify-center py-24 gap-4">
-          <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-          <p class="text-text-secondary text-sm">Loading listing...</p>
-        </div>
-
-        <!-- Error / 404 state -->
-        <div id="listing-error" class="hidden text-center py-24">
-          <h2 class="text-xl font-bold text-text-primary mb-2">Listing not found</h2>
-          <p class="text-text-secondary mb-6">
-            This listing may have been removed or the link is invalid.
-          </p>
-          <a href="/" data-link class="btn-primary">Explore listings</a>
-        </div>
-
-        <!-- Main content -->
-        <div id="listing-content" class="hidden">
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-
-            <!-- Left: Image Gallery (#44) -->
-            <div class="space-y-3">
-
-              <!-- Main image -->
-              <div class="rounded-xl overflow-hidden aspect-square bg-surface">
-                <img
-                  id="gallery-main"
-                  src=""
-                  alt=""
-                  class="w-full h-full object-cover transition-opacity duration-200 opacity-0"
-                />
-              </div>
-
-              <!-- Thumbnails — hidden when 0 or 1 image -->
-              <div
-                id="gallery-thumbnails"
-                class="hidden grid-cols-5 gap-2">
-              </div>
-
-            </div>
-
-            <!-- Right: Details column -->
-            <div class="space-y-5">
-
-              <!-- Status badge -->
-              <div class="flex flex-wrap items-center gap-2">
-                <span id="listing-status-badge" class="badge-success">Active</span>
-              </div>
-
-              <!-- Title + owner actions -->
-              <div class="flex items-start justify-between gap-3 min-w-0">
-                <h1 id="listing-title"
-                  class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight break-words min-w-0">
-                </h1>
-
-                <!-- Owner-only actions, shown via JS in _renderOwnerActions -->
-                <div id="owner-actions" class="hidden flex-shrink-0 flex gap-2">
-                  <a id="edit-listing-btn" href="#" data-link
-                    class="btn-secondary text-sm">
-                    Edit
-                  </a>
-                  <button id="delete-listing-btn" type="button"
-                    class="btn-danger text-sm">
-                    Delete
-                  </button>
-                </div>
-              </div>
-
-              <!-- Description (#45) -->
-              <div id="listing-description-block">
-                <h2 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-                  Description
-                </h2>
-                <p id="listing-description"
-                  class="text-text-primary leading-relaxed whitespace-pre-line break-words">
-                </p>
-              </div>
-
-              <!-- Seller card (#45) -->
-              <div class="flex items-center gap-3 py-4 bg-surface rounded-xl">
-                <div id="seller-avatar"
-                  class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                </div>
-                <div class="min-w-0">
-                  <p class="text-xs text-text-secondary mb-0.5">Seller</p>
-                  <a id="seller-profile-link" href="#" data-link
-                    class="font-semibold text-text-primary hover:text-primary-500 transition-colors truncate block">
-                  </a>
-                </div>
-                <div class="ml-auto text-right flex-shrink-0">
-                  <p class="text-xs text-text-secondary mb-0.5">Listed on</p>
-                  <p id="listing-created-date" class="text-xs font-medium text-text-primary"></p>
-                </div>
-              </div>
-
-              <!-- Bid card -->
-              <div class="card">
-                <div class="card-body space-y-5">
-
-                  <!-- Current bid + countdown (#46) -->
-                  <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-                    <div>
-                      <p class="text-xs text-text-secondary mb-1">Current bid</p>
-                      <p id="listing-current-bid"
-                        class="text-2xl sm:text-3xl font-bold text-primary-500">
-                        0 credits
-                      </p>
-                      <p id="listing-bid-count"
-                        class="text-xs text-text-secondary mt-1">
-                        0 bids
-                      </p>
-                    </div>
-                    <div class="sm:text-right">
-                      <p class="text-xs text-text-secondary mb-1">Ends in</p>
-                      <p id="countdown"
-                        class="text-xl sm:text-2xl font-semibold tabular-nums text-green-700">
-                      </p>
-                      <p id="listing-ends-date"
-                        class="text-xs text-text-secondary mt-1">
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- ── Bid form states (mutually exclusive) ── -->
-
-                  <!-- State A: Auction ended -->
-                  <div id="state-ended" class="hidden text-center py-2">
-                    <p class="text-red-700 text-sm font-medium">This auction has ended.</p>
-                  </div>
-
-                  <!-- State B: Guest -->
-                  <div id="state-guest" class="hidden space-y-3 text-center py-2">
-                    <p class="text-text-secondary text-sm">Sign in to place a bid</p>
-                    <button type="button" data-action="login-required" class="btn-primary w-full py-3">
-                      Place bid
-                    </button>
-                  </div>
-
-                  <!-- State C: Own listing -->
-                  <div id="state-own" class="hidden text-center py-2">
-                    <p class="text-text-secondary text-sm">
-                      You cannot bid on your own listing.
-                    </p>
-                  </div>
-
-                  <!-- State E: User already has the highest bid -->
-                  <div id="state-winning" class="hidden text-center py-2">
-                    <p class="text-text-secondary text-xs">
-                      You can place a new bid once someone outbids you.
-                    </p>
-                  </div>
-
-                  <!-- State D: Bid form -->
-                  <form id="bid-form" class="hidden space-y-3" novalidate>
-                    <div>
-                      <label for="bid-amount" class="label">Your bid (credits)</label>
-                      <input
-                        type="number"
-                        id="bid-amount"
-                        name="amount"
-                        min="1"
-                        class="input"
-                        required
-                      />
-                      <p id="bid-hint" class="hint"></p>
-                    </div>
-
-                    <!-- Inline error -->
-                    <div id="bid-error" class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
-                      <p class="alert-error"></p>
-                    </div>
-
-                    <button type="submit" id="bid-submit" class="btn-primary w-full py-3">
-                      Place bid
-                    </button>
-                  </form>
-
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Bid History -->
-          <section class="mt-10 sm:mt-14">
-            <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
-            <div class="card overflow-hidden">
-              <div id="bid-history" class="divide-y divide-border">
-              </div>
-            </div>
-          </section>
-
-        </div><!-- /#listing-content -->
-      </div>
-    `;
+    return listingDetailTemplate();
   }
-
-  // ─────────────────────────────────────────────
-  // INIT
-  // ─────────────────────────────────────────────
 
   async init() {
-    try {
-      const response = await getListing(this.listingId, true, true);
-      const listing  = response.data;
-
-      this._showContent();
-      this._renderBasicInfo(listing);
-      this._renderGallery(listing.media); // #44
-      this._renderDetails(listing);
-      this._renderBidSummary(listing);
-      this._startCountdown(listing.endsAt);
-      this._renderBidForm(listing);         // #47b
-      this._renderBidHistory(listing.bids);
-      this._renderOwnerActions(listing);
-    } catch (err) {
-      console.error('ListingView: failed to load listing', err);
-      this._showError();
-    }
-  }
-
-  // ─────────────────────────────────────────────
-  // #44 — Image Gallery
-  // ─────────────────────────────────────────────
-
-  /**
-   * Render main image + thumbnail strip.
-   *
-   * Cases:
-   *   0 images → placeholder SVG in main slot, no thumbnails
-   *   1 image  → main image only, no thumbnails
-   *   2+ images → main image + scrollable thumbnail row
-   *               clicking a thumbnail swaps main image (fade transition)
-   *               active thumbnail has primary border
-   *
-   * @param {Array<{url:string, alt:string}>} media
-   */
-  _renderGallery(media) {
-    const mainImg      = document.getElementById('gallery-main');
-    const thumbsWrap   = document.getElementById('gallery-thumbnails');
-    // ── No images ──
-    if (!media?.length) {
-      // Replace the <img> with placeholder markup. Use the parent's
-      // existing aspect-square container.
-      mainImg.parentElement.innerHTML = imagePlaceholderHtml();
-      return;
-    }
-
-    // ── Set main image with fade-in ──
-    const loadMain = (url, alt) => {
-      mainImg.classList.replace('opacity-100', 'opacity-0');
-      mainImg.onload  = () => mainImg.classList.replace('opacity-0', 'opacity-100');
-      mainImg.onerror = () => {
-        mainImg.parentElement.innerHTML = imagePlaceholderHtml();
-      };
-      mainImg.alt = alt || 'Listing image';
-      mainImg.src = url;
-    };
-
-    loadMain(media[0].url, media[0].alt);
-
-    // ── Thumbnails (only for 2+ images) ──
-    if (media.length < 2) return;
-
-    thumbsWrap.classList.remove('hidden');
-    thumbsWrap.style.display = 'grid';
-
-    thumbsWrap.innerHTML = media
-      .map(
-        (item, i) => `
-        <button
-          data-index="${i}"
-          class="aspect-square rounded-lg overflow-hidden border-2 transition-all duration-150 focus:outline-none
-                 ${i === 0 ? 'border-primary-500' : 'border-transparent hover:border-primary-500'}"
-          aria-label="View image ${i + 1}"
-        >
-          <img
-            src="${this._escHtml(item.url)}"
-            alt="${this._escHtml(item.alt || '')}"
-            class="w-full h-full object-cover"
-            loading="lazy"
-          />
-        </button>`
-      )
-      .join('');
-
-    // Click handler — swap main image + update active border
-    thumbsWrap.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-index]');
-      if (!btn) return;
-
-      const idx  = parseInt(btn.dataset.index, 10);
-      loadMain(media[idx].url, media[idx].alt);
-
-      thumbsWrap.querySelectorAll('[data-index]').forEach((b) => {
-        b.classList.replace('border-primary-500', 'border-transparent');
-        b.classList.add('hover:border-primary-500');
-      });
-      btn.classList.replace('border-transparent', 'border-primary-500');
-      btn.classList.remove('hover:border-primary-300');
-    });
-  }
-
-  // ─────────────────────────────────────────────
-  // Basic info
-  // ─────────────────────────────────────────────
-
-  _renderBasicInfo(listing) {
-    const { title, endsAt } = listing;
-
-    document.getElementById('listing-title').textContent = title;
-
-    const status = getListingStatus(endsAt);
-    const badge  = document.getElementById('listing-status-badge');
-    badge.textContent = status.label;
-    badge.className   = status.cssClass;
-  }
-
-  // ─────────────────────────────────────────────
-  // Listing details
-  // ─────────────────────────────────────────────
-
-  _renderDetails(listing) {
-    const { description, seller, created } = listing;
-    this._renderDescription(description);
-    this._renderSellerCard(seller, created);
-  }
-
-  _renderDescription(description) {
-    const block = document.getElementById('listing-description-block');
-    const el    = document.getElementById('listing-description');
-    if (description?.trim()) {
-      el.textContent = description;
-    } else {
-      block.classList.add('hidden');
-    }
-  }
-
-  _renderSellerCard(seller, created) {
-    if (!seller) return;
-
-    const avatarUrl = seller.avatar?.url?.trim();
-    if (avatarUrl) {
-      const img     = document.createElement('img');
-      img.src       = avatarUrl;
-      img.alt       = seller.name;
-      img.className = 'w-full h-full object-cover';
-      document.getElementById('seller-avatar').appendChild(img);
-    }
-
-    const profileLink       = document.getElementById('seller-profile-link');
-    profileLink.textContent = `@${seller.name}`;
-    profileLink.href        = `/profile/${seller.name}`;
-
-    document.getElementById('listing-created-date').textContent =
-      this._formatDate(created);
-  }
-
-  // ─────────────────────────────────────────────
-  // #46 — Bid summary + Countdown
-  // ─────────────────────────────────────────────
-
-  _renderBidSummary(listing) {
-    const bids    = listing.bids ?? [];
-    const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
-
-    document.getElementById('listing-current-bid').textContent =
-      `${formatCredits(highest)} credits`
-    document.getElementById('listing-bid-count').textContent =
-      `${bids.length} ${bids.length === 1 ? 'bid' : 'bids'}`;
-  }
-
-  _startCountdown(endsAt) {
-    const countdownEl = document.getElementById('countdown');
-    const endsDateEl  = document.getElementById('listing-ends-date');
-    const statusBadge = document.getElementById('listing-status-badge');
-    const endDate     = new Date(endsAt);
-
-    endsDateEl.textContent = endDate.toLocaleString('en-GB', {
-      day: 'numeric', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-
-    const tick = () => {
-      const diff = endDate - Date.now();
-
-      if (diff <= 0) {
-        countdownEl.textContent = 'Auction ended';
-        countdownEl.className   =
-          'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
-        const status = getListingStatus(endsAt);
-        statusBadge.textContent = status.label;
-        statusBadge.className   = status.cssClass;
-        clearInterval(this._countdownInterval);
-        this._countdownInterval = null;
-        // Switch bid form to ended state live
-        this._showState('state-ended');
-        // Hide owner actions — listing becomes immutable when ended.
-        // Must clear inline style.display set by _renderOwnerActions,
-        // otherwise it overrides the Tailwind .hidden class.
-        const actions = document.getElementById('owner-actions');
-        if (actions) {
-          actions.classList.add('hidden');
-          actions.style.display = '';
-        }
-        return;
-      }
-
-      const days    = Math.floor(diff / 86_400_000);
-      const hours   = Math.floor((diff % 86_400_000) / 3_600_000);
-      const minutes = Math.floor((diff % 3_600_000)  / 60_000);
-      const seconds = Math.floor((diff % 60_000)     / 1_000);
-
-      if (diff < 86_400_000) {
-        countdownEl.textContent =
-          `${String(hours).padStart(2, '0')}:` +
-          `${String(minutes).padStart(2, '0')}:` +
-          `${String(seconds).padStart(2, '0')}`;
-        countdownEl.className =
-          'text-xl sm:text-2xl font-semibold tabular-nums text-amber-700';
-        return;
-      }
-
-      countdownEl.textContent =
-        `${days}d ${hours}h ${String(minutes).padStart(2, '0')}m ` +
-        `${String(seconds).padStart(2, '0')}s`;
-      countdownEl.className =
-        'text-xl sm:text-2xl font-semibold tabular-nums text-green-700';
-    };
-
-    tick();
-    this._countdownInterval = setInterval(tick, 1000);
+    await initListingDetail(this.listingId);
   }
 
   destroy() {
-    if (this._countdownInterval) {
-      clearInterval(this._countdownInterval);
-      this._countdownInterval = null;
-    }
-  }
-
-  // ─────────────────────────────────────────────
-  // #47b — Bid form
-  // ─────────────────────────────────────────────
-
-  /**
-   * Decide which of five states to show — exactly one at a time.
-   * Order matters: ended → guest → own → already winning → form.
-   * @param {Object} listing
-   */
-  _renderBidForm(listing) {
-    // State A: ended
-    if (new Date(listing.endsAt) <= new Date()) {
-      this._showState('state-ended');
-      return;
-    }
-
-    // State B: guest
-    if (!isLoggedIn()) {
-      this._showState('state-guest');
-      return;
-    }
-
-    // State C: own listing
-    if (listing.seller?.name === getUser()?.name) {
-      this._showState('state-own');
-      return;
-    }
-
-    // State E: user already holds the highest bid — disallow self-outbidding
-    if (this._isUserWinning(listing.bids)) {
-      this._showState('state-winning');
-      return;
-    }
-
-    // State D: bid form
-    this._showState('bid-form');
-    this._setupBidForm(listing);
-  }
-
-  /**
-   * Check whether the current user is the highest bidder on this listing.
-   * Returns false for empty bid history (no winner yet).
-   *
-   * @param {Array} bids
-   * @returns {boolean}
-   */
-  _isUserWinning(bids) {
-    if (!bids?.length) return false;
-
-    const me = getUser()?.name;
-    if (!me) return false;
-
-    const highest = bids.reduce(
-      (max, b) => (b.amount > max.amount ? b : max),
-      bids[0]
-    );
-    return highest.bidder?.name === me;
-  }
-
-  /**
-   * Initial form setup: render hint and attach submit handler.
-   *
-   * Note: minBid and userCredits are NOT captured into the handler closure.
-   * The handler reads fresh values on every submit so a second consecutive
-   * bid uses the up-to-date balance after the first bid was processed.
-   *
-   * @param {Object} listing
-   */
-  _setupBidForm(listing) {
-  this._refreshBidHint(listing.bids ?? [], getUserCredits() ?? 0);
-
-  // Clear stale errors from previous bid attempts
-  const form = document.getElementById('bid-form');
-  if (form) clearFormErrors(form);
-
-  form.addEventListener('submit', (e) =>
-    this._handleBidSubmit(e, listing.id)
-  );
-}
-  /**
-   * Handle bid form submission.
-   *
-   * Flow:
-   *   1. Read FRESH minBid + balance (no stale closure values)
-   *   2. Client-side validate
-   *   3. POST bid to API
-   *   4. Refresh listing + sync user from server in parallel
-   *   5. Re-evaluate bid form state — user may now be winning
-   *
-   * @param {Event}  e
-   * @param {string} listingId
-   */
-  async _handleBidSubmit(e, listingId) {
-  e.preventDefault();
-
-  const form      = document.getElementById('bid-form');
-  const input     = document.getElementById('bid-amount');
-  const submitBtn = document.getElementById('bid-submit');
-
-  // Clear previous errors
-  clearFormErrors(form);
-  this._hideBidError();
-
-  const amount      = Number(input.value);
-  const minBid      = Number(input.min) || 1;
-  const userCredits = getUserCredits() ?? 0;
-
-  // Field-level validation — inline under input
-  if (!Number.isInteger(amount) || amount < minBid) {
-    showInputError(
-      input,
-      `Bid must be a whole number, at least ${minBid} credits.`
-    );
-    return;
-  }
-  if (amount > userCredits) {
-    showInputError(
-      input,
-      `You only have ${formatCredits(userCredits)} credits available.`
-    );
-    return;
-  }
-
-  submitBtn.disabled    = true;
-  submitBtn.textContent = 'Placing bid…';
-
-  try {
-    // 1. Send bid
-    await placeBid(listingId, amount);
-
-    // 2. Server is source of truth — refresh listing + user in parallel
-    const [listingRes] = await Promise.all([
-      getListing(listingId, true, true),
-      syncUserFromProfile(getUser().name),
-    ]);
-    const updated = listingRes.data;
-
-    // 3. Update UI from real server data
-    this._renderBidSummary(updated);
-    this._renderBidHistory(updated.bids);
-    updateNavAuth();
-
-    // 4. Re-evaluate which state to show.
-    //    User just bid → likely "winning" state now.
-    input.value = '';
-    submitBtn.disabled    = false;
-    submitBtn.textContent = 'Place Bid';
-    this._renderBidForm(updated);
-
-    showSuccessToast('Bid placed.');
-  } catch (err) {
-    // API/network error — top general error block
-    this._showBidError(err.message || 'Could not place bid. Try again.');
-    submitBtn.disabled    = false;
-    submitBtn.textContent = 'Place Bid';
+    cleanupListingDetail();
   }
 }
-  /**
-   * Update min value, max value, and hint text after a successful bid.
-   * @param {Array}  bids        - updated bids from API
-   * @param {number} newCredits  - user's remaining credits after deduction
-   */
-  _refreshBidHint(bids, newCredits) {
-    const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
-    const newMin  = highest + 1;
 
-    const input       = document.getElementById('bid-amount');
-    input.min         = newMin;
-    input.max         = newCredits;
-    input.placeholder = `Min: ${newMin}`;
+// ─────────────────────────────────────────────
+// Template (pure HTML, no DOM access, no state)
+// ─────────────────────────────────────────────
 
-    document.getElementById('bid-hint').textContent =
-      `Minimum: ${newMin} cr · Your balance: ${formatCredits(newCredits)} cr`
-  }
+function listingDetailTemplate() {
+  return `
+    <div class="page-container">
 
+      <!-- Loading state -->
+      <div id="listing-loading" class="flex flex-col items-center justify-center py-24 gap-4">
+        <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+        <p class="text-text-secondary text-sm">Loading listing...</p>
+      </div>
 
+      <!-- Error / 404 state -->
+      <div id="listing-error" class="hidden text-center py-24">
+        <h2 class="text-xl font-bold text-text-primary mb-2">Listing not found</h2>
+        <p class="text-text-secondary mb-6">
+          This listing may have been removed or the link is invalid.
+        </p>
+        <a href="/" data-link class="btn-primary">Explore listings</a>
+      </div>
 
-  // ─────────────────────────────────────────────
-  // #47a — Bid history
-  // ─────────────────────────────────────────────
+      <!-- Main content -->
+      <div id="listing-content" class="hidden">
 
-  _renderBidHistory(bids) {
-    const container   = document.getElementById('bid-history');
-    const currentUser = getUser();
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-    if (!bids?.length) {
-      container.innerHTML = `
-        <div class="p-8 text-center">
-          <p class="text-text-secondary">No bids yet. Be the first!</p>
-        </div>`;
-      return;
-    }
+          <!-- Left: Image Gallery -->
+          <div class="space-y-3">
 
-    const sorted = [...bids].sort((a, b) => b.amount - a.amount);
-
-    container.innerHTML = sorted
-      .map((bid, i) => {
-        const isHighest = i === 0;
-        const isOwn     = currentUser?.name && bid.bidder?.name === currentUser.name;
-
-        const avatarHtml = bid.bidder?.avatar?.url
-          ? `<img
-               src="${this._escHtml(bid.bidder.avatar.url)}"
-               alt="${this._escHtml(bid.bidder.name ?? '')}"
-               class="w-full h-full object-cover"
-             />`
-          : '';
-
-        return `
-          <div class="flex items-center gap-4 px-5 py-4
-                      ${isHighest ? 'bg-primary-50' : ''}
-                      ${isOwn && !isHighest ? 'bg-warning/5' : ''}">
-
-            <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-primary-100">
-              ${avatarHtml}
+            <!-- Main image -->
+            <div class="rounded-xl overflow-hidden aspect-square bg-surface">
+              <img
+                id="gallery-main"
+                src=""
+                alt=""
+                class="w-full h-full object-cover transition-opacity duration-200 opacity-0"
+              />
             </div>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <a href="/profile/${this._escHtml(bid.bidder?.name ?? '')}"
-                   data-link
-                   class="font-semibold text-sm text-text-primary
-                          hover:text-primary-500 transition-colors truncate">
-                  @${this._escHtml(bid.bidder?.name ?? 'Unknown')}
+            <!-- Thumbnails — hidden when 0 or 1 image -->
+            <div
+              id="gallery-thumbnails"
+              class="hidden grid-cols-5 gap-2">
+            </div>
+
+          </div>
+
+          <!-- Right: Details column -->
+          <div class="space-y-5">
+
+            <!-- Status badge -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="listing-status-badge" class="badge-success">Active</span>
+            </div>
+
+            <!-- Title + owner actions -->
+            <div class="flex items-start justify-between gap-3 min-w-0">
+              <h1 id="listing-title"
+                class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight break-words min-w-0">
+              </h1>
+
+              <!-- Owner-only actions, toggled by listingDetailHandler -->
+              <div id="owner-actions" class="hidden flex-shrink-0 flex gap-2">
+                <a id="edit-listing-btn" href="#" data-link
+                  class="btn-secondary text-sm">
+                  Edit
                 </a>
-                ${isHighest ? '<span class="badge-success">Highest bid</span>' : ''}
-                ${isOwn     ? '<span class="badge-warning">You</span>'         : ''}
+                <button id="delete-listing-btn" type="button"
+                  class="btn-danger text-sm">
+                  Delete
+                </button>
               </div>
-              <p class="text-xs text-text-secondary mt-0.5">
-                ${this._timeAgo(bid.created)}
+            </div>
+
+            <!-- Description -->
+            <div id="listing-description-block">
+              <h2 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                Description
+              </h2>
+              <p id="listing-description"
+                class="text-text-primary leading-relaxed whitespace-pre-line break-words">
               </p>
             </div>
 
-            <p class="font-bold text-sm flex-shrink-0
-                      ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
-              ${formatCredits(bid.amount)}
-              <span class="font-normal text-text-secondary text-xs">credits</span>
-            </p>
+            <!-- Seller card -->
+            <div class="flex items-center gap-3 py-4 bg-surface rounded-xl">
+              <div id="seller-avatar"
+                class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs text-text-secondary mb-0.5">Seller</p>
+                <a id="seller-profile-link" href="#" data-link
+                  class="font-semibold text-text-primary hover:text-primary-500 transition-colors truncate block">
+                </a>
+              </div>
+              <div class="ml-auto text-right flex-shrink-0">
+                <p class="text-xs text-text-secondary mb-0.5">Listed on</p>
+                <p id="listing-created-date" class="text-xs font-medium text-text-primary"></p>
+              </div>
+            </div>
 
-          </div>`;
-      })
-      .join('');
-  }
- // ─────────────────────────────────────────────
-  // Owner actions — Edit / Delete
-  // ─────────────────────────────────────────────
+            <!-- Bid card -->
+            <div class="card">
+              <div class="card-body space-y-5">
 
-  /**
-   * Show Edit/Delete buttons only when:
-   *   - current user is the listing's seller, AND
-   *   - the auction has not ended yet
-   *
-   * Once an auction ends a winner has effectively been chosen, so the
-   * listing becomes immutable in the UI. The Noroff API will likely
-   * reject changes too, but hiding the buttons gives clearer UX than
-   * letting the user click and see an error.
-   *
-   * @param {Object} listing - listing with seller and endsAt
-   */
-  _renderOwnerActions(listing) {
-    const currentUser = getUser();
-    const isOwner = currentUser?.name && listing.seller?.name === currentUser.name;
-    const isActive = new Date(listing.endsAt) > new Date();
+                <!-- Current bid + countdown -->
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
+                  <div>
+                    <p class="text-xs text-text-secondary mb-1">Current bid</p>
+                    <p id="listing-current-bid"
+                      class="text-2xl sm:text-3xl font-bold text-primary-500">
+                      0 credits
+                    </p>
+                    <p id="listing-bid-count"
+                      class="text-xs text-text-secondary mt-1">
+                      0 bids
+                    </p>
+                  </div>
+                  <div class="sm:text-right">
+                    <p class="text-xs text-text-secondary mb-1">Ends in</p>
+                    <p id="countdown"
+                      class="text-xl sm:text-2xl font-semibold tabular-nums text-green-700">
+                    </p>
+                    <p id="listing-ends-date"
+                      class="text-xs text-text-secondary mt-1">
+                    </p>
+                  </div>
+                </div>
 
-    // Owners of ended auctions don't see the buttons at all
-    if (!isOwner || !isActive) return;
+                <!-- Bid form states (mutually exclusive) -->
 
-    const actions = document.getElementById('owner-actions');
-    actions.classList.remove('hidden');
-    actions.style.display = 'flex';
+                <!-- State A: Auction ended -->
+                <div id="state-ended" class="hidden text-center py-2">
+                  <p class="text-red-700 text-sm font-medium">This auction has ended.</p>
+                </div>
 
-    document.getElementById('edit-listing-btn').href = `/listing/${listing.id}/edit`;
-    document.getElementById('delete-listing-btn')
-      .addEventListener('click', () => this._handleDelete(listing.id));
-  }
+                <!-- State B: Guest -->
+                <div id="state-guest" class="hidden space-y-3 text-center py-2">
+                  <p class="text-text-secondary text-sm">Sign in to place a bid</p>
+                  <button type="button" data-action="login-required" class="btn-primary w-full py-3">
+                    Place bid
+                  </button>
+                </div>
 
-  /**
-   * Confirm and delete the listing.
-   * @param {string} listingId
-   */
-  async _handleDelete(listingId) {
-    const confirmed = window.confirm(
-      'Delete this listing? This cannot be undone.'
-    );
-    if (!confirmed) return;
+                <!-- State C: Own listing -->
+                <div id="state-own" class="hidden text-center py-2">
+                  <p class="text-text-secondary text-sm">
+                    You cannot bid on your own listing.
+                  </p>
+                </div>
 
-    const btn = document.getElementById('delete-listing-btn');
-    btn.disabled    = true;
-    btn.textContent = 'Deleting…';
+                <!-- State E: User already has the highest bid -->
+                <div id="state-winning" class="hidden text-center py-2">
+                  <p class="text-text-secondary text-xs">
+                    You can place a new bid once someone outbids you.
+                  </p>
+                </div>
 
-    try {
-      await deleteListing(listingId);
-      showSuccessToast('Listing deleted.');
-      navigateTo('/');
-    } catch (err) {
-      btn.disabled    = false;
-      btn.textContent = 'Delete';
-      alert(`Could not delete listing: ${err.message}`);
-    }
-  }
-  // ─────────────────────────────────────────────
-  // Helpers
-  // ─────────────────────────────────────────────
+                <!-- State D: Bid form -->
+                <form id="bid-form" class="hidden space-y-3" novalidate>
+                  <div>
+                    <label for="bid-amount" class="label">Your bid (credits)</label>
+                    <input
+                      type="number"
+                      id="bid-amount"
+                      name="amount"
+                      min="1"
+                      class="input"
+                      required
+                    />
+                    <p id="bid-hint" class="hint"></p>
+                  </div>
 
-  _showContent() {
-    document.getElementById('listing-loading').classList.add('hidden');
-    document.getElementById('listing-content').classList.remove('hidden');
-  }
+                  <!-- Inline error -->
+                  <div id="bid-error" class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
+                    <p class="alert-error"></p>
+                  </div>
 
-  _showError() {
-    document.getElementById('listing-loading').classList.add('hidden');
-    document.getElementById('listing-error').classList.remove('hidden');
-  }
+                  <button type="submit" id="bid-submit" class="btn-primary w-full py-3">
+                    Place bid
+                  </button>
+                </form>
 
-  /** Show one bid-form state, hide all the others */
-  _showState(id) {
-    ['state-ended', 'state-guest', 'state-own', 'state-winning', 'bid-form']
-      .forEach((s) => document.getElementById(s)?.classList.add('hidden'));
-    document.getElementById(id)?.classList.remove('hidden');
-  }
+              </div>
+            </div>
 
-  _showBidError(message) {
-    const el = document.getElementById('bid-error');
-    el.classList.remove('hidden');
-    el.querySelector('p').textContent = message;
-  }
+          </div>
+        </div>
 
-  _hideBidError() {
-    document.getElementById('bid-error')?.classList.add('hidden');
-  }
+        <!-- Bid History -->
+        <section class="mt-10 sm:mt-14">
+          <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
+          <div class="card overflow-hidden">
+            <div id="bid-history" class="divide-y divide-border">
+            </div>
+          </div>
+        </section>
 
-  _formatDate(dateStr) {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-      day: 'numeric', month: 'short', year: 'numeric',
-    });
-  }
-
-  _timeAgo(dateStr) {
-    const diff    = Date.now() - new Date(dateStr).getTime();
-    const minutes = Math.floor(diff / 60_000);
-    const hours   = Math.floor(diff / 3_600_000);
-    const days    = Math.floor(diff / 86_400_000);
-
-    if (minutes < 1)  return 'Just now';
-    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-    if (hours   < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
-  }
-
-  _escHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
+      </div><!-- /#listing-content -->
+    </div>
+  `;
 }
