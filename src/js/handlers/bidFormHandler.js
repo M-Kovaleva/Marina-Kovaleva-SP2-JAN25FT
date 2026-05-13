@@ -1,4 +1,19 @@
-/* Bid Form Handler */
+/**
+ * Bid Form Handler
+ *
+ * Owns the five mutually-exclusive states of the bid section on the
+ * listing detail page:
+ *   ended → guest → own listing → already winning → form
+ *
+ * Also handles bid submission (validation, API call, refreshing UI
+ * after the bid is placed).
+ *
+ * The countdown handler (in listingDetailHandler) calls setBidFormEnded()
+ * when the auction expires live in front of the user.
+ *
+ * Must be called after the listing detail HTML is in the DOM —
+ * relies on #bid-form, #bid-amount, #bid-error, #state-*.
+ */
 
 import { placeBid, getListing } from '../api/apiClient.js';
 import { getUser, isLoggedIn, getUserCredits } from '../auth/storage.js';
@@ -7,6 +22,7 @@ import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { formatCredits } from '../utils/format.js';
 import { clearFormErrors, showInputError } from '../utils/validation.js';
+import { showBlockError, hideBlockError } from '../utils/formState.js';
 
 const STATE_IDS = [
   'state-ended',
@@ -16,16 +32,26 @@ const STATE_IDS = [
   'bid-form',
 ];
 
+// ─────────────────────────────────────────────
+// Module state
+// ─────────────────────────────────────────────
+
 let listingId = null;
 let submitAttached = false;
 let onBidPlacedCallback = null;
 
+// ─────────────────────────────────────────────
+// Public API
+// ─────────────────────────────────────────────
+
 /**
- * Initial render. Decides which state to show and attaches the submit handler exactly once for the lifetime of this view
+ * Initial render. Decides which state to show and attaches the
+ * submit handler exactly once for the lifetime of this view.
  *
  * @param {Object} listing
  * @param {Object} [options]
- * @param {Function} [options.onBidPlaced] - called with updated listing after a successful bid, so the caller can refresh summary / history
+ * @param {Function} [options.onBidPlaced] - called with updated listing
+ *   after a successful bid, so the caller can refresh summary / history.
  */
 export function initBidForm(listing, { onBidPlaced } = {}) {
   listingId = listing.id;
@@ -36,19 +62,31 @@ export function initBidForm(listing, { onBidPlaced } = {}) {
   attachSubmitHandler();
 }
 
-//Force-transition to the ended state. Called by the countdown when the auction expires live on the open page
+/**
+ * Force-transition to the ended state. Called by the countdown when
+ * the auction expires live on the open page.
+ */
 export function setBidFormEnded() {
   showState('state-ended');
 }
 
-//Reset module state when leaving the page
+/**
+ * Reset module state when leaving the page.
+ */
 export function cleanupBidForm() {
   listingId = null;
   submitAttached = false;
   onBidPlacedCallback = null;
 }
 
-// States: decide which of the five states to show: ended - guest - own - already winning - form
+// ─────────────────────────────────────────────
+// State machine
+// ─────────────────────────────────────────────
+
+/**
+ * Decide which of the five states to show — exactly one at a time.
+ * Order matters: ended → guest → own → already winning → form.
+ */
 function renderState(listing) {
   if (new Date(listing.endsAt) <= new Date()) return showState('state-ended');
   if (!isLoggedIn()) return showState('state-guest');
@@ -70,7 +108,10 @@ function showState(id) {
   document.getElementById(id)?.classList.remove('hidden');
 }
 
-//Returns true if the current user holds the highest bid.Empty bid history - false (no winner yet)
+/**
+ * Returns true if the current user holds the highest bid.
+ * Empty bid history → false (no winner yet).
+ */
 function isUserWinning(bids) {
   if (!bids?.length) return false;
 
@@ -84,7 +125,14 @@ function isUserWinning(bids) {
   return highest.bidder?.name === me;
 }
 
-// Form setup. Update min value, max value, and hint text on the bid input. Re-run after each successful bid so a second bid uses fresh values
+// ─────────────────────────────────────────────
+// Form setup
+// ─────────────────────────────────────────────
+
+/**
+ * Update min value, max value, and hint text on the bid input.
+ * Re-run after each successful bid so a second bid uses fresh values.
+ */
 function refreshBidHint(bids, newCredits) {
   const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
   const newMin = highest + 1;
@@ -106,9 +154,13 @@ function attachSubmitHandler() {
   submitAttached = true;
 }
 
+// ─────────────────────────────────────────────
+// Submit
+// ─────────────────────────────────────────────
+
 /**
  * Bid submit flow:
- *   1. Read FRESH minBid + balance 
+ *   1. Read FRESH minBid + balance (no stale closure values)
  *   2. Client-side validate
  *   3. POST bid to API
  *   4. Refresh listing + sync user from server in parallel
@@ -122,7 +174,7 @@ async function handleSubmit(e) {
   const submitBtn = document.getElementById('bid-submit');
 
   clearFormErrors(form);
-  hideError();
+  hideBlockError('bid-error');
 
   const amount = Number(input.value);
   const minBid = Number(input.min) || 1;
@@ -166,19 +218,12 @@ async function handleSubmit(e) {
     renderState(updated);
     showSuccessToast('Bid placed.');
   } catch (err) {
-    showError(err.message || 'Could not place bid. Try again.');
+    showBlockError('bid-error', err.message || 'Could not place bid. Try again.');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Place Bid';
   }
 }
 
-// Error block
-function showError(message) {
-  const el = document.getElementById('bid-error');
-  el.classList.remove('hidden');
-  el.querySelector('p').textContent = message;
-}
-
-function hideError() {
-  document.getElementById('bid-error')?.classList.add('hidden');
-}
+// ─────────────────────────────────────────────
+// Bid hint
+// ─────────────────────────────────────────────
