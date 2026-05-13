@@ -1,4 +1,6 @@
-/* Form Validation Utilities */
+/**
+ * Form Validation Utilities
+ */
 
 /**
  * Validate email format (must be @stud.noroff.no)
@@ -46,8 +48,8 @@ export function isValidUrl(url) {
 
 /**
  * Validate login form
- * @param {Object} data - email, password
- * @returns {Object} - isValid, errors
+ * @param {Object} data - { email, password }
+ * @returns {Object} - { isValid, errors }
  */
 export function validateLoginForm({ email, password }) {
   const errors = {};
@@ -72,8 +74,8 @@ export function validateLoginForm({ email, password }) {
 
 /**
  * Validate register form
- * @param {Object} data - name, email, password
- * @returns {Object} - isValid, errors
+ * @param {Object} data - { name, email, password }
+ * @returns {Object} - { isValid, errors }
  */
 export function validateRegisterForm({ name, email, password }) {
   const errors = {};
@@ -104,8 +106,8 @@ export function validateRegisterForm({ name, email, password }) {
 
 /**
  * Validate listing form
- * @param {Object} data - title, endsAt, description, media
- * @returns {Object} - isValid, errors
+ * @param {Object} data - { title, endsAt, description, media }
+ * @returns {Object} - { isValid, errors }
  */
 export function validateListingForm({ title, endsAt, description, media }) {
   const errors = {};
@@ -116,7 +118,7 @@ export function validateListingForm({ title, endsAt, description, media }) {
     errors.title = 'Title must be less than 280 characters';
   }
 
-  // Skip endsAt validation entirely when null (for edit mode — field is readonly)
+  // Skip endsAt validation entirely when null (edit mode — field is readonly)
   if (endsAt !== null) {
     if (!endsAt) {
       errors.endsAt = 'End date is required';
@@ -125,10 +127,12 @@ export function validateListingForm({ title, endsAt, description, media }) {
       const oneYearAhead = new Date();
       oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1);
 
-      if (isNaN(endDate.getTime()) || endDate > oneYearAhead) {
-        errors.endsAt = 'End date must be within one year from now';
+      if (isNaN(endDate.getTime())) {
+        errors.endsAt = 'Please enter a valid date and time';
       } else if (endDate <= new Date()) {
         errors.endsAt = 'End date must be in the future';
+      } else if (endDate > oneYearAhead) {
+        errors.endsAt = 'End date must be within one year from now';
       }
     }
   }
@@ -194,7 +198,7 @@ export function clearFormErrors(form) {
 
 /**
  * Validate profile edit form
- * @param {Object} data - bio, avatarUrl, bannerUrl
+ * @param {Object} data - { bio, avatarUrl, bannerUrl }
  * @returns {{ isValid: boolean, errors: Object }}
  */
 export function validateProfileForm({ bio, avatarUrl, bannerUrl }) {
@@ -219,11 +223,11 @@ export function validateProfileForm({ bio, avatarUrl, bannerUrl }) {
 }
 
 /**
- * Display field-specific errors on a form via showInputError
- * Looks up inputs by their `name` attribute
+ * Display field-specific errors on a form via showInputError.
+ * Looks up inputs by their `name` attribute.
  *
  * @param {HTMLFormElement} form
- * @param {Object} errors - fieldName: 'error message'
+ * @param {Object} errors - { fieldName: 'error message' }
  */
 export function showValidationErrors(form, errors) {
   Object.entries(errors).forEach(([field, message]) => {
