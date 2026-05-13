@@ -1,9 +1,24 @@
-/* Listings Handler. Handles fetching, displaying, filtering, and infinity-scroll pagination of the listings grid on the home page */
+/**
+ * Listings Handler
+ *
+ * Handles fetching, displaying, filtering, and infinity-scroll
+ * pagination of the listings grid on the home page.
+ *
+ * Public API (used by HomeView):
+ *   initListingsHandler()    — wire events, read URL params, load first page
+ *   cleanupListingsHandler() — remove scroll listener, reset all state
+ *   loadListings()           — reload from page 1 (used by HomeView refresh)
+ *   clearAllFilters()        — reset search + active filter (used by Nav)
+ */
 
 import { getListings, searchListings } from '../api/apiClient.js';
 import {
   createListingCards,
 } from '../components/ListingCard.js';
+
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
 
 let currentPage = 1;
 let currentSearch = '';
@@ -13,15 +28,22 @@ let totalCount = 0;
 let isLoading = false;
 let allListingsLoaded = false;
 
-// Cached DOM element references — set once in initListingsHandler
+/** Cached DOM element references — set once in initListingsHandler. */
 let els = null;
 
-// RequestAnimationFrame throttle flag for the scroll handler. Ensures handleScroll runs at most once per animation frame (~16ms)
+/**
+ * requestAnimationFrame throttle flag for the scroll handler.
+ * Ensures handleScroll runs at most once per animation frame (~16ms)
+ * instead of dozens of times per second during a fast scroll.
+ */
 let scrollTicking = false;
 
 const ITEMS_PER_PAGE = 12;
 
+// ─────────────────────────────────────────────
 // DOM elements
+// ─────────────────────────────────────────────
+
 function getElements() {
   return {
     grid: document.getElementById('listings-grid'),
@@ -44,7 +66,10 @@ function getElements() {
   };
 }
 
+// ─────────────────────────────────────────────
 // UI state management
+// ─────────────────────────────────────────────
+
 function showLoading() {
   els.grid.innerHTML = `
     <div class="col-span-full">
@@ -115,7 +140,10 @@ function appendListings(listings) {
   els.grid.insertAdjacentHTML('beforeend', createListingCards(listings));
 }
 
+// ─────────────────────────────────────────────
 // Count display
+// ─────────────────────────────────────────────
+
 function updateTotalCount(meta) {
   if (!meta) return;
 
@@ -139,7 +167,10 @@ function updateSearchInfo(query, count) {
   }
 }
 
+// ─────────────────────────────────────────────
 // Data fetching
+// ─────────────────────────────────────────────
+
 function buildQueryParams() {
   const params = {
     limit: ITEMS_PER_PAGE,
@@ -153,7 +184,7 @@ function buildQueryParams() {
   return params;
 }
 
-// Client-side active filter — backup for search endpoint
+/** Client-side active filter — backup for search endpoint. */
 function filterActiveListings(listings) {
   if (!activeOnly) return listings;
   const now = new Date();
@@ -161,8 +192,9 @@ function filterActiveListings(listings) {
 }
 
 /**
- * Single fetch call for the current page / search / filter state
- * Shared by loadListings and loadMore to avoid duplicating the search with regular branching logic
+ * Single fetch call for the current page / search / filter state.
+ * Shared by loadListings and loadMore to avoid duplicating the
+ * search-vs-regular branching logic.
  *
  * @returns {Promise<{ data: Object[], meta: Object }>}
  */
@@ -181,13 +213,20 @@ async function fetchPage() {
   };
 }
 
-//Load or reload listings from page 1. Called on initial load and whenever filters change.
+/**
+ * Load (or reload) listings from page 1.
+ * Called on initial load and whenever filters change.
+ */
 async function loadListings() {
   resetInfinityScroll();
   showLoading();
 
   try {
     const { data, meta } = await fetchPage();
+
+    // User may have navigated away while the request was in flight —
+    // cleanupListingsHandler() sets els to null on unmount.
+    if (!els) return;
 
     updateSearchInfo(currentSearch, meta?.totalCount ?? data.length);
 
@@ -204,11 +243,15 @@ async function loadListings() {
       if (meta.totalCount > ITEMS_PER_PAGE) showEndOfListings();
     }
   } catch (err) {
+    if (!els) return;
+    console.error('Failed to load listings:', err);
     showError(err.message);
   }
 }
 
-//Load and append the next page (called by infinity scroll)
+/**
+ * Load and append the next page (called by infinity scroll).
+ */
 async function loadMore() {
   if (isLoading || allListingsLoaded) return;
 
@@ -218,6 +261,8 @@ async function loadMore() {
 
   try {
     const { data, meta } = await fetchPage();
+
+    if (!els) return; // navigated away mid-flight
 
     if (data.length) {
       appendListings(data);
@@ -231,20 +276,31 @@ async function loadMore() {
       hideLoadMore();
     }
   } catch (err) {
-    currentPage--; //revert so retry fetches the same page
+    if (!els) return;
+    console.error('Failed to load more listings:', err);
+    currentPage--; // revert so retry fetches the same page
     hideLoadMore();
   } finally {
     isLoading = false;
   }
 }
 
+// ─────────────────────────────────────────────
 // Infinity scroll
+// ─────────────────────────────────────────────
+
 function initInfinityScroll() {
   window.removeEventListener('scroll', handleScroll);
   window.addEventListener('scroll', handleScroll, { passive: true });
 }
 
-// Scroll handler throttled via requestAnimationFrame
+/**
+ * Scroll handler throttled via requestAnimationFrame.
+ *
+ * Without throttling this fires 60+ times/second during a fast scroll
+ * and schedules many redundant loadMore calls. The ticking flag collapses
+ * all events within a single animation frame into one check.
+ */
 function handleScroll() {
   if (scrollTicking) return;
   scrollTicking = true;
@@ -266,7 +322,10 @@ function resetInfinityScroll() {
   isLoading = false;
 }
 
+// ─────────────────────────────────────────────
 // URL persistence
+// ─────────────────────────────────────────────
+
 function updateURL() {
   const params = new URLSearchParams();
   if (currentPage > 1) params.set('page', currentPage);
@@ -291,7 +350,10 @@ function readURLParams() {
   if (els.activeFilter) els.activeFilter.checked = activeOnly;
 }
 
+// ─────────────────────────────────────────────
 // Search
+// ─────────────────────────────────────────────
+
 async function handleSearch(query) {
   currentSearch = query.trim();
   currentPage = 1;
@@ -312,7 +374,10 @@ export async function clearAllFilters() {
   await loadListings();
 }
 
+// ─────────────────────────────────────────────
 // Event listeners
+// ─────────────────────────────────────────────
+
 function initEventListeners() {
   const { searchInput, clearSearch, clearFilters, activeFilter, retryBtn, resetFilters } = els;
 
@@ -336,7 +401,7 @@ function initEventListeners() {
     handleSearch(searchInput?.value || '');
   });
 
-  // Clear search × button
+  // Clear search ×
   clearSearch?.addEventListener('click', () => {
     if (searchInput) searchInput.value = '';
     clearSearch.classList.add('hidden');
@@ -364,7 +429,14 @@ function initEventListeners() {
   retryBtn?.addEventListener('click', loadListings);
 }
 
+// ─────────────────────────────────────────────
 // Init / Cleanup
+// ─────────────────────────────────────────────
+
+/**
+ * Initialize the listings handler.
+ * Must be called after HomeView's HTML is in the DOM.
+ */
 export async function initListingsHandler() {
   els = getElements(); // cache once — avoids repeated getElementById lookups
   readURLParams();
@@ -373,7 +445,11 @@ export async function initListingsHandler() {
   initInfinityScroll();
 }
 
-//Clean up when leaving the home page.
+/**
+ * Clean up when leaving the home page.
+ * Removes the scroll listener and fully resets all module state so
+ * a future visit to the home page starts fresh.
+ */
 export function cleanupListingsHandler() {
   window.removeEventListener('scroll', handleScroll);
 
