@@ -21,6 +21,7 @@ import {
 } from '../api/apiClient.js';
 import { createListingCards } from '../components/ListingCard.js';
 import { getListingStatus } from '../utils/listing.js';
+import { renderAvatarInto } from '../utils/avatar.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
 import {
@@ -147,17 +148,10 @@ function renderBanner(banner) {
 }
 
 function renderAvatar(avatar) {
-  const avatarEl = document.getElementById('profile-avatar');
-  if (!avatar?.url?.trim()) return;
-
-  const img = document.createElement('img');
-  img.src = avatar.url;
-  img.alt = avatar.alt || '';
-  img.className = 'w-full h-full object-cover';
-  img.onerror = () => img.remove(); // broken URL → fall back to placeholder
-
-  avatarEl.innerHTML = '';
-  avatarEl.appendChild(img);
+  renderAvatarInto(document.getElementById('profile-avatar'), {
+    url: avatar?.url,
+    alt: avatar?.alt || '',
+  });
 }
 
 function renderNameAndBio(name, bio) {
@@ -421,16 +415,10 @@ function updateHeaderAfterEdit(updated) {
   }
 
   // Avatar
-  const avatarContainer = document.getElementById('profile-avatar');
-  avatarContainer.innerHTML = '';
-  if (updated.avatar?.url) {
-    const img = document.createElement('img');
-    img.src = updated.avatar.url;
-    img.alt = updated.avatar.alt || '';
-    img.className = 'w-full h-full object-cover';
-    img.onerror = () => img.remove();
-    avatarContainer.appendChild(img);
-  }
+  renderAvatarInto(document.getElementById('profile-avatar'), {
+    url: updated.avatar?.url,
+    alt: updated.avatar?.alt || '',
+  });
 
   // Banner
   const bannerEl = document.getElementById('profile-banner');

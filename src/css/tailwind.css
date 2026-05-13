@@ -230,6 +230,9 @@
   }
 }
 @layer utilities {
+  .visible {
+    visibility: visible;
+  }
   .absolute {
     position: absolute;
   }
@@ -733,9 +736,6 @@
   }
   .bg-primary-50 {
     background-color: var(--color-primary-50);
-  }
-  .bg-primary-100 {
-    background-color: var(--color-primary-100);
   }
   .bg-surface {
     background-color: var(--color-surface);

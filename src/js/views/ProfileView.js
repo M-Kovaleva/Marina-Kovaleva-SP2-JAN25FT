@@ -1,4 +1,11 @@
-/* Profile View — user profile page */
+/**
+ * Profile View — user profile page.
+ *
+ * Thin: owns the HTML template and the lifecycle hooks only.
+ * All data loading and DOM mutation lives in handlers:
+ *   - profileHandler     — fetch, header, tabs, tab content
+ *   - profileEditHandler — Edit Profile modal (own-profile only)
+ */
 
 import { initProfile, cleanupProfile } from '../handlers/profileHandler.js';
 import { getUser } from '../auth/storage.js';
@@ -21,6 +28,10 @@ export class ProfileView {
     cleanupProfile();
   }
 }
+
+// ─────────────────────────────────────────────
+// Template (pure HTML, no DOM access, no state)
+// ─────────────────────────────────────────────
 
 function profileTemplate() {
   return `
@@ -60,7 +71,7 @@ function profileTemplate() {
               class="absolute -top-12 sm:-top-14 left-4 sm:left-6
                     w-20 h-20 sm:w-24 sm:h-24
                     rounded-full overflow-hidden
-                    border-4 border-white bg-primary-100 shadow-md">
+                    border-4 border-white bg-gray-200 shadow-md">
             </div>
 
             <!-- Spacer — reserves vertical space for the avatar's bottom half -->
@@ -76,7 +87,7 @@ function profileTemplate() {
               </p>
             </div>
 
-            <!-- Edit Profile button — for owner only, toggled by handler -->
+            <!-- Edit Profile button — owner only, toggled by handler -->
             <div id="edit-profile-wrap" class="hidden mb-4">
               <button id="edit-profile-btn" type="button"
                 class="btn-secondary text-sm">
@@ -87,7 +98,7 @@ function profileTemplate() {
             <!-- Stats row -->
             <div class="flex flex-wrap gap-4 sm:gap-8">
 
-              <!-- Credits — for owner only -->
+              <!-- Credits — owner only -->
               <div id="stat-credits" class="hidden text-center sm:text-left">
                 <p id="profile-credits"
                   class="text-xl sm:text-2xl font-bold text-primary-500">
@@ -105,7 +116,7 @@ function profileTemplate() {
                 <p class="text-xs sm:text-sm text-text-secondary">Listings</p>
               </div>
 
-              <!-- Wins — for owner only -->
+              <!-- Wins — owner only -->
               <div id="stat-wins" class="hidden text-center sm:text-left">
                 <p id="profile-wins-count"
                   class="text-xl sm:text-2xl font-bold text-text-primary">
@@ -151,7 +162,7 @@ function profileTemplate() {
           </div>
         </div>
 
-        <!-- Bids tab - for owner only -->
+        <!-- Bids tab -->
         <div id="tab-bids" class="hidden">
           <div id="profile-bids-loading" class="flex justify-center py-12">
             <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
@@ -168,7 +179,7 @@ function profileTemplate() {
           </div>
         </div>
 
-        <!-- Wins tab - for owner only -->
+        <!-- Wins tab -->
         <div id="tab-wins" class="hidden">
           <div id="profile-wins-loading" class="flex justify-center py-12">
             <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>

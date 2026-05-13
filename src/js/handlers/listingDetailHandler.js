@@ -23,6 +23,7 @@ import {
 } from '../utils/format.js';
 import { timeAgo } from '../utils/time.js';
 import { getListingStatus } from '../utils/listing.js';
+import { renderAvatarInto } from '../utils/avatar.js';
 import {
   initBidForm,
   setBidFormEnded,
@@ -210,14 +211,10 @@ function renderDescription(description) {
 function renderSellerCard(seller, created) {
   if (!seller) return;
 
-  const avatarUrl = seller.avatar?.url?.trim();
-  if (avatarUrl) {
-    const img = document.createElement('img');
-    img.src = avatarUrl;
-    img.alt = seller.name;
-    img.className = 'w-full h-full object-cover';
-    document.getElementById('seller-avatar').appendChild(img);
-  }
+  renderAvatarInto(document.getElementById('seller-avatar'), {
+    url: seller.avatar?.url,
+    alt: seller.name,
+  });
 
   const profileLink = document.getElementById('seller-profile-link');
   profileLink.textContent = `@${seller.name}`;
@@ -343,6 +340,7 @@ function renderBidHistory(bids) {
              src="${escHtml(bid.bidder.avatar.url)}"
              alt="${escHtml(bid.bidder.name ?? '')}"
              class="w-full h-full object-cover"
+             onerror="this.remove()"
            />`
         : '';
 
@@ -351,7 +349,7 @@ function renderBidHistory(bids) {
                     ${isHighest ? 'bg-primary-50' : ''}
                     ${isOwn && !isHighest ? 'bg-warning/5' : ''}">
 
-          <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-primary-100">
+          <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gray-200">
             ${avatarHtml}
           </div>
 

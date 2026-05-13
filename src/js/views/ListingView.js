@@ -1,4 +1,12 @@
-/* Listing View — single listing page */
+/**
+ * Listing View — single listing page.
+ *
+ * Thin: owns the HTML template and the lifecycle hooks only.
+ * All data loading and DOM mutation lives in handlers:
+ *   - listingDetailHandler — orchestrator: gallery, info, seller, summary,
+ *                            countdown, bid history, owner actions
+ *   - bidFormHandler       — bid form state machine + place bid
+ */
 
 import {
   initListingDetail,
@@ -24,6 +32,10 @@ export class ListingView {
   }
 }
 
+// ─────────────────────────────────────────────
+// Template (pure HTML, no DOM access, no state)
+// ─────────────────────────────────────────────
+
 function listingDetailTemplate() {
   return `
     <div class="page-container">
@@ -48,7 +60,7 @@ function listingDetailTemplate() {
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-          <!-- Left: image gallery -->
+          <!-- Left: Image Gallery -->
           <div class="space-y-3">
 
             <!-- Main image -->
@@ -69,7 +81,7 @@ function listingDetailTemplate() {
 
           </div>
 
-          <!-- Right: details column -->
+          <!-- Right: Details column -->
           <div class="space-y-5">
 
             <!-- Status badge -->
@@ -83,7 +95,7 @@ function listingDetailTemplate() {
                 class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight break-words min-w-0">
               </h1>
 
-              <!-- For owner-only actions, toggled by listingDetailHandler -->
+              <!-- Owner-only actions, toggled by listingDetailHandler -->
               <div id="owner-actions" class="hidden flex-shrink-0 flex gap-2">
                 <a id="edit-listing-btn" href="#" data-link
                   class="btn-secondary text-sm">
@@ -109,7 +121,7 @@ function listingDetailTemplate() {
             <!-- Seller card -->
             <div class="flex items-center gap-3 py-4 bg-surface rounded-xl">
               <div id="seller-avatar"
-                class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200">
               </div>
               <div class="min-w-0">
                 <p class="text-xs text-text-secondary mb-0.5">Seller</p>
@@ -151,7 +163,8 @@ function listingDetailTemplate() {
                   </div>
                 </div>
 
-                <!-- Bid form states -->
+                <!-- Bid form states (mutually exclusive) -->
+
                 <!-- State A: Auction ended -->
                 <div id="state-ended" class="hidden text-center py-2">
                   <p class="text-red-700 text-sm font-medium">This auction has ended.</p>
