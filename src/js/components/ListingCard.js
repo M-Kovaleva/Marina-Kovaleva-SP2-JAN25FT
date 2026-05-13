@@ -1,5 +1,6 @@
 import { imagePlaceholderHtml } from '../utils/format.js';
 import { formatTimeLeft } from '../utils/time.js';
+import { getListingStatus } from '../utils/listing.js';
 /**
  * Listing Card Component
  * Reusable card for displaying listing previews
@@ -18,30 +19,10 @@ function getCurrentBid(bids) {
 
 /**
  * Get listing status based on end date.
- * Exported so ListingView can use the same logic.
- *
- * @param {string} endsAt - ISO date string
- * @returns {{ type: string, label: string, cssClass: string }}
+ * Defined in utils/listing.js — re-exported here for backwards compatibility
+ * with any code that imports it from this module.
  */
-export function getListingStatus(endsAt) {
-  const now = new Date();
-  const end = new Date(endsAt);
-  const diff = end - now;
-
-  // Ended
-  if (diff <= 0) {
-    return { type: 'ended', label: 'Ended', cssClass: 'badge-error' };
-  }
-
-  // Ending soon (less than 24 hours)
-  const hoursLeft = diff / (1000 * 60 * 60);
-  if (hoursLeft < 24) {
-    return { type: 'ending-soon', label: 'Ending Soon', cssClass: 'badge-warning' };
-  }
-
-  // Active
-  return { type: 'active', label: 'Active', cssClass: 'badge-success' };
-}
+export { getListingStatus } from '../utils/listing.js';
 
 /**
  * Truncate text to a maximum length
