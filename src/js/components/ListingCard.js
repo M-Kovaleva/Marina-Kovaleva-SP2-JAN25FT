@@ -1,10 +1,13 @@
-/*  Listing Card Component */
-
 import { imagePlaceholderHtml } from '../utils/format.js';
+import { formatTimeLeft } from '../utils/time.js';
+/**
+ * Listing Card Component
+ * Reusable card for displaying listing previews
+ */
 
 /**
  * Get the current highest bid from bids array
- * @param {Array} bids - array of bid objects
+ * @param {Array} bids - Array of bid objects
  * @returns {number} Highest bid amount or 0
  */
 
@@ -14,45 +17,9 @@ function getCurrentBid(bids) {
 }
 
 /**
- * Format time remaining until end date
- * @param {string} endsAt - ISO date string
- * @returns {string} - formatted time remaining
- */
-function formatTimeLeft(endsAt) {
-  const now = new Date();
-  const end = new Date(endsAt);
-  const diff = end - now;
-
-  // Already ended
-  if (diff <= 0) {
-    return 'Ended';
-  }
-
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 0) {
-    const remainingHours = hours % 24;
-    return `${days}d ${remainingHours}h`;
-  }
-
-  if (hours > 0) {
-    const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes}m`;
-  }
-
-  if (minutes > 0) {
-    return `${minutes}m`;
-  }
-
-  return `${seconds}s`;
-}
-
-/**
- * Get listing status based on end date
- * 
+ * Get listing status based on end date.
+ * Exported so ListingView can use the same logic.
+ *
  * @param {string} endsAt - ISO date string
  * @returns {{ type: string, label: string, cssClass: string }}
  */
@@ -66,21 +33,21 @@ export function getListingStatus(endsAt) {
     return { type: 'ended', label: 'Ended', cssClass: 'badge-error' };
   }
 
-  // Ending soon ( < 24 hours)
+  // Ending soon (less than 24 hours)
   const hoursLeft = diff / (1000 * 60 * 60);
   if (hoursLeft < 24) {
     return { type: 'ending-soon', label: 'Ending Soon', cssClass: 'badge-warning' };
   }
 
-  // Active ( > 24 hours)
+  // Active
   return { type: 'active', label: 'Active', cssClass: 'badge-success' };
 }
 
 /**
- * Truncate text to a max length
- * @param {string} text - text to truncate
- * @param {number} maxLength - max length
- * @returns {string} truncated text
+ * Truncate text to a maximum length
+ * @param {string} text - Text to truncate
+ * @param {number} maxLength - Maximum length
+ * @returns {string} Truncated text
  */
 function truncateText(text, maxLength = 60) {
   if (!text) return '';
@@ -90,7 +57,7 @@ function truncateText(text, maxLength = 60) {
 
 /**
  * Create a listing card HTML string
- * @param {Object} listing - listing data from API
+ * @param {Object} listing - Listing data from API
  * @returns {string} HTML string for the card
  */
 export function createListingCard(listing) {
@@ -117,7 +84,7 @@ export function createListingCard(listing) {
   const timeLeft = formatTimeLeft(endsAt);
   const isEnded = status.type === 'ended';
 
-  // Truncated description
+  // Truncate description
   const shortDescription = truncateText(description);
 
   return `
@@ -135,12 +102,12 @@ export function createListingCard(listing) {
             />
           ` : imagePlaceholderHtml()}
           
-          <!-- Status badge -->
+          <!-- Status Badge -->
           <span class="absolute top-2 right-2 ${status.cssClass}">
             ${status.label}
           </span>
           
-          <!-- Time left badge -->
+          <!-- Time Left Badge -->
           <span class="absolute bottom-2 left-2 px-2 py-1 text-xs font-medium rounded-full bg-black/70 text-white backdrop-blur-sm">
             ⏱ ${timeLeft}
           </span>
@@ -153,12 +120,12 @@ export function createListingCard(listing) {
             ${title}
           </h3>
           
-          <!-- Description -->
+          <!-- Description (always reserved to keep card heights consistent) -->
           <p class="text-text-secondary text-sm line-clamp-1 mb-3 min-h-[20px]">
             ${shortDescription || ''}
           </p>
           
-          <!-- Meta info -->
+          <!-- Meta Info -->
           <div class="flex justify-between items-end pt-3 border-t border-border">
             <div>
               <p class="text-xs text-text-secondary mb-0.5">Current bid</p>
@@ -178,7 +145,7 @@ export function createListingCard(listing) {
 
 /**
  * Create multiple listing cards
- * @param {Array} listings - array of listing objects
+ * @param {Array} listings - Array of listing objects
  * @returns {string} HTML string of all cards
  */
 export function createListingCards(listings) {
@@ -195,10 +162,10 @@ export function createListingCards(listings) {
 export function createSkeletonCard() {
   return `
     <article class="card shadow-sm animate-pulse">
-      <!-- Image skeleton -->
+      <!-- Image Skeleton -->
       <div class="aspect-[4/3] rounded-t-xl bg-gray-200"></div>
       
-      <!-- Content skeleton -->
+      <!-- Content Skeleton -->
       <div class="p-4">
         <div class="h-5 bg-gray-200 rounded mb-2 w-3/4"></div>
         <div class="h-4 bg-gray-200 rounded mb-1 w-full"></div>
@@ -218,7 +185,7 @@ export function createSkeletonCard() {
 
 /**
  * Create multiple skeleton loading cards
- * @param {number} count - number of skeleton cards
+ * @param {number} count - Number of skeleton cards
  * @returns {string} HTML string of skeleton cards
  */
 export function createSkeletonCards(count = 6) {
