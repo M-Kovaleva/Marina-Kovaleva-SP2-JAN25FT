@@ -1,23 +1,15 @@
-/**
- * Navigation Component
- * Handles auth state display in navbar
- */
+/* Navigation Component */
 
 import { isLoggedIn, getUser, clearAuth, getUserCredits } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
 
-/**
- * Initialize navigation
- * Call on app start
- */
+//Initialize navigation
 export function initNav() {
   updateNavAuth();
   initLogoutHandler();
 }
 
-/**
- * Update navbar based on auth state
- */
+//Update navbar based on auth state
 export function updateNavAuth() {
   const user     = getUser();
   const loggedIn = isLoggedIn();
@@ -34,15 +26,15 @@ export function updateNavAuth() {
   const creditsAmountMobile = document.getElementById('credits-amount-mobile');
   const profileLinkMobile   = document.getElementById('profile-link-mobile');
 
-  // "New Listing" buttons — selected by stable ID (not href, which changes)
+  // "+New Listing" buttons 
   const createBtns = [
     document.getElementById('new-listing-btn'),
     document.getElementById('new-listing-btn-mobile'),
   ].filter(Boolean);
 
   if (loggedIn && user) {
-    // === LOGGED IN STATE ===
 
+    //Logged in state
     if (profileLink) profileLink.classList.remove('hidden');
 
     if (authLink) {
@@ -76,8 +68,8 @@ export function updateNavAuth() {
 
     initLogoutHandler();
   } else {
-    // === LOGGED OUT STATE ===
 
+    // Logged out state
     if (profileLink) profileLink.classList.add('hidden');
 
     if (authLink || document.getElementById('logout-link')) {
@@ -108,7 +100,7 @@ export function updateNavAuth() {
 }
 
 /**
- * Update credits display only (called after bid placed)
+ * Update credits display only, called after bid placed
  * @param {number} credits
  */
 export function updateCredits(credits) {
@@ -118,9 +110,7 @@ export function updateCredits(credits) {
   if (creditsAmountMobile) creditsAmountMobile.textContent = credits;
 }
 
-/**
- * Initialize logout handler
- */
+//Initialize logout handler
 function initLogoutHandler() {
   const logoutLink       = document.getElementById('logout-link');
   const logoutLinkMobile = document.getElementById('logout-link-mobile');

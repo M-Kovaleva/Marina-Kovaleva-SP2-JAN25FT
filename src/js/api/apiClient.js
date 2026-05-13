@@ -1,16 +1,8 @@
-/**
- * BidNoroff API Client
- * Noroff Auction House API v2
- *
- * @see https://docs.noroff.dev/docs/v2/auction-house/listings
- */
+/* BidNoroff API Client. Noroff Auction House API v2. @see https://docs.noroff.dev/docs/v2/auction-house/listings */
 
 import { getToken } from '../auth/storage.js';
 
-// ============================================
-// CONSTANTS (from Vite env variables)
-// ============================================
-
+// Constants (from Vite env variables)
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'https://v2.api.noroff.dev';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
@@ -21,10 +13,7 @@ const AUCTION = '/auction';
 const LISTINGS = `${AUCTION}/listings`;
 const PROFILES = `${AUCTION}/profiles`;
 
-// ============================================
-// HEADERS
-// ============================================
-
+//Headers
 /**
  * Get headers for API requests
  * @param {boolean} includeAuth - Include Authorization header
@@ -49,15 +38,12 @@ function getHeaders(includeAuth = false) {
   return headers;
 }
 
-// ============================================
-// FETCH WRAPPER
-// ============================================
-
+//Fetch wrpper
 /**
  * Universal fetch wrapper with error handling
  * @param {string} endpoint - API endpoint
  * @param {Object} options - Fetch options + includeAuth flag
- * @returns {Promise<Object>} API response data
+ * @returns {Promise<Object>} - API response data
  */
 async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -73,7 +59,7 @@ async function apiFetch(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
 
-    // Handle 204 No Content (for DELETE)
+    // Handle 204 No Content (for Delete)
     if (response.status === 204) {
       return { data: null, meta: {} };
     }
@@ -93,14 +79,11 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-// ============================================
-// AUTH ENDPOINTS
-// ============================================
-
+// Auth endpoints
 /**
  * Register a new user
- * @param {Object} userData - { name, email, password }
- * @returns {Promise<Object>} Created user data
+ * @param {Object} userData - name, email, password
+ * @returns {Promise<Object>} - Created user data
  */
 export async function register({ name, email, password }) {
   return apiFetch(`${AUTH}/register`, {
@@ -111,8 +94,8 @@ export async function register({ name, email, password }) {
 
 /**
  * Login user
- * @param {Object} credentials - { email, password }
- * @returns {Promise<Object>} User data with accessToken
+ * @param {Object} credentials - email, password
+ * @returns {Promise<Object>} - User data with accessToken
  */
 export async function login({ email, password }) {
   return apiFetch(`${AUTH}/login`, {
@@ -121,10 +104,7 @@ export async function login({ email, password }) {
   });
 }
 
-// ============================================
-// LISTINGS ENDPOINTS
-// ============================================
-
+// Listings endpoints
 /**
  * Get all listings with optional filters
  * @param {Object} params - Query parameters
@@ -163,7 +143,7 @@ export async function getListing(id, includeSeller = true, includeBids = true) {
 
 /**
  * Create a new listing
- * @param {Object} listingData - { title, description, media, endsAt }
+ * @param {Object} listingData - title, description, media, endsAt
  * @returns {Promise<Object>} Created listing data
  */
 export async function createListing(listingData) {
@@ -177,7 +157,7 @@ export async function createListing(listingData) {
 /**
  * Update a listing
  * @param {string} id - Listing ID
- * @param {Object} listingData - { title, description, media }
+ * @param {Object} listingData - title, description, media
  * @returns {Promise<Object>} Updated listing data
  */
 export async function updateListing(id, listingData) {
@@ -225,10 +205,7 @@ export async function placeBid(id, amount) {
   });
 }
 
-// ============================================
-// PROFILES ENDPOINTS
-// ============================================
-
+// Profiles endpoints
 /**
  * Get all profiles
  * @param {Object} params - Query parameters
@@ -257,7 +234,7 @@ export async function getProfile(name, params = {}) {
 /**
  * Update profile (bio, avatar, banner)
  * @param {string} name - Profile name
- * @param {Object} profileData - { bio, avatar: {url, alt}, banner: {url, alt} }
+ * @param {Object} profileData - bio, avatar: {url, alt}, banner: {url, alt}
  * @returns {Promise<Object>} Updated profile data
  */
 export async function updateProfile(name, profileData) {

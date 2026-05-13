@@ -1,12 +1,4 @@
-/**
- * Listing View — single listing page.
- *
- * Thin: owns the HTML template and the lifecycle hooks only.
- * All data loading and DOM mutation lives in handlers:
- *   - listingDetailHandler — orchestrator: gallery, info, seller, summary,
- *                            countdown, bid history, owner actions
- *   - bidFormHandler       — bid form state machine + place bid
- */
+/* Listing View — single listing page */
 
 import {
   initListingDetail,
@@ -32,10 +24,6 @@ export class ListingView {
   }
 }
 
-// ─────────────────────────────────────────────
-// Template (pure HTML, no DOM access, no state)
-// ─────────────────────────────────────────────
-
 function listingDetailTemplate() {
   return `
     <div class="page-container">
@@ -60,7 +48,7 @@ function listingDetailTemplate() {
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-          <!-- Left: Image Gallery -->
+          <!-- Left: image gallery -->
           <div class="space-y-3">
 
             <!-- Main image -->
@@ -81,7 +69,7 @@ function listingDetailTemplate() {
 
           </div>
 
-          <!-- Right: Details column -->
+          <!-- Right: details column -->
           <div class="space-y-5">
 
             <!-- Status badge -->
@@ -95,7 +83,7 @@ function listingDetailTemplate() {
                 class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight break-words min-w-0">
               </h1>
 
-              <!-- Owner-only actions, toggled by listingDetailHandler -->
+              <!-- For owner-only actions, toggled by listingDetailHandler -->
               <div id="owner-actions" class="hidden flex-shrink-0 flex gap-2">
                 <a id="edit-listing-btn" href="#" data-link
                   class="btn-secondary text-sm">
@@ -163,8 +151,7 @@ function listingDetailTemplate() {
                   </div>
                 </div>
 
-                <!-- Bid form states (mutually exclusive) -->
-
+                <!-- Bid form states -->
                 <!-- State A: Auction ended -->
                 <div id="state-ended" class="hidden text-center py-2">
                   <p class="text-red-700 text-sm font-medium">This auction has ended.</p>

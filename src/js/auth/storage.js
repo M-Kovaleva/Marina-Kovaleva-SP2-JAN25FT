@@ -1,19 +1,13 @@
-/**
- * Auth Storage Utilities
- * Handles token and user data in localStorage
+/* Auth storage utilities - handles token and user data in localStorage
  */
 
 // Storage keys
 const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
 
-// ============================================
-// TOKEN
-// ============================================
-
 /**
  * Get access token from storage
- * @returns {string|null} Access token or null
+ * @returns {string|null} access token or null
  */
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -21,7 +15,7 @@ export function getToken() {
 
 /**
  * Save access token to storage
- * @param {string} token - Access token
+ * @param {string} token - access token
  */
 export function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
@@ -33,10 +27,6 @@ export function setToken(token) {
 export function removeToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
-
-// ============================================
-// USER
-// ============================================
 
 /**
  * Get user data from storage
@@ -64,7 +54,7 @@ export function removeUser() {
 
 /**
  * Update specific user fields in storage
- * @param {Object} updates - Fields to update
+ * @param {Object} updates - fields to update
  */
 export function updateUser(updates) {
   const user = getUser();
@@ -73,17 +63,13 @@ export function updateUser(updates) {
   }
 }
 
-// ============================================
-// AUTH HELPERS
-// ============================================
-
 /**
- * Save auth data after login.
+ * Save auth data after login
  * Strips accessToken from user object so it's not duplicated
- * (token lives in TOKEN_KEY, user in USER_KEY).
+ * (token lives in TOKEN_KEY, user in USER_KEY)
  *
- * @param {string} token - Access token
- * @param {Object} user  - User object from login/register response
+ * @param {string} token - access token
+ * @param {Object} user  - user object from login/register response
  */
 export function saveAuth(token, user) {
   setToken(token);
@@ -93,7 +79,7 @@ export function saveAuth(token, user) {
 }
 
 /**
- * Clear all auth data (logout)
+ * Clear all auth data - logout
  */
 export function clearAuth() {
   removeToken();
@@ -102,7 +88,7 @@ export function clearAuth() {
 
 /**
  * Check if user is logged in
- * @returns {boolean} True if token exists
+ * @returns {boolean} - true if token exists
  */
 export function isLoggedIn() {
   return !!getToken();
@@ -110,7 +96,7 @@ export function isLoggedIn() {
 
 /**
  * Get current user's name
- * @returns {string|null} Username or null
+ * @returns {string|null} - username or null
  */
 export function getUserName() {
   const user = getUser();
@@ -119,7 +105,7 @@ export function getUserName() {
 
 /**
  * Get current user's credits
- * @returns {number} Credits or 0
+ * @returns {number} - Credits or 0
  */
 export function getUserCredits() {
   const user = getUser();

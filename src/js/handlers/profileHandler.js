@@ -1,57 +1,20 @@
-/**
- * Profile Handler
- *
- * Orchestrator for the profile page:
- *   - fetches profile data
- *   - renders header (banner, avatar, name, bio, stats, edit button)
- *   - initializes tabs (Listings / Bids / Wins)
- *   - lazy-loads tab content on first click
- *   - wires the Edit Profile modal (delegated to profileEditHandler)
- *
- * Bids and Wins tabs are owner-only. Non-owners only see Listings.
- *
- * Must be called after ProfileView's HTML is in the DOM.
- */
+/* Profile Handler */
 
-import {
-  getProfile,
-  getProfileListings,
-  getProfileBids,
-  getProfileWins,
-} from '../api/apiClient.js';
+import { getProfile, getProfileListings, getProfileBids, getProfileWins } from '../api/apiClient.js';
 import { createListingCards, getListingStatus } from '../components/ListingCard.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
-import {
-  escHtml,
-  formatDate,
-  imagePlaceholderHtml,
-  formatCredits,
-} from '../utils/format.js';
-import {
-  initProfileEdit,
-  openEditModal,
-  cleanupProfileEdit,
-} from './profileEditHandler.js';
-
-// ─────────────────────────────────────────────
-// Module state
-// ─────────────────────────────────────────────
+import { escHtml, formatDate, imagePlaceholderHtml, formatCredits } from '../utils/format.js';
+import { initProfileEdit, openEditModal, cleanupProfileEdit } from './profileEditHandler.js';
 
 let profileName = null;
 let isOwner = false;
 let bidsLoaded = false;
 let winsLoaded = false;
 
-// ─────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────
-
 /**
- * Entry point. Fetches the profile and renders the page.
- *
+ * Entry point. Fetches the profile and renders the page
  * @param {string|null} name - profile name from the URL, or null
- *   (handled as "not found")
  */
 export async function initProfile(name) {
   resetState();
@@ -75,7 +38,7 @@ export async function initProfile(name) {
     renderHeader(profile);
     initTabs();
 
-    // Edit modal is owner-only
+    // Edit modal is for owner only
     if (isOwner) {
       initProfileEdit(profileName, {
         onUpdate: updateHeaderAfterEdit,
@@ -100,10 +63,7 @@ function resetState() {
   winsLoaded = false;
 }
 
-// ─────────────────────────────────────────────
 // Page-level states
-// ─────────────────────────────────────────────
-
 function showContent() {
   document.getElementById('profile-loading').classList.add('hidden');
   document.getElementById('profile-content').classList.remove('hidden');
@@ -114,10 +74,7 @@ function showError() {
   document.getElementById('profile-error').classList.remove('hidden');
 }
 
-// ─────────────────────────────────────────────
 // Header (banner, avatar, name, bio, stats, edit btn)
-// ─────────────────────────────────────────────
-
 function renderHeader(profile) {
   renderBanner(profile.banner);
   renderAvatar(profile.avatar);
@@ -134,7 +91,7 @@ function renderBanner(banner) {
   img.src = banner.url;
   img.alt = banner.alt || '';
   img.className = 'w-full h-full object-cover';
-  img.onerror = () => img.remove(); // broken URL → fall back to placeholder
+  img.onerror = () => img.remove(); // broken URL -> fall back to placeholder
 
   bannerEl.innerHTML = '';
   bannerEl.classList.remove(
@@ -153,7 +110,7 @@ function renderAvatar(avatar) {
   img.src = avatar.url;
   img.alt = avatar.alt || '';
   img.className = 'w-full h-full object-cover';
-  img.onerror = () => img.remove(); // broken URL → fall back to placeholder
+  img.onerror = () => img.remove(); // broken URL -> fall back to placeholder
 
   avatarEl.innerHTML = '';
   avatarEl.appendChild(img);
@@ -169,10 +126,7 @@ function renderNameAndBio(name, bio) {
   }
 }
 
-/**
- * Listings count is public, credits and wins are owner-only.
- * Also syncs server credits → localStorage → navbar for own profile.
- */
+// Listings count is public, credits and wins are for owner only. Also syncs server credits - localStorage - navbar for own profile
 function renderStats(profile) {
   document.getElementById('profile-listings-count').textContent =
     profile._count?.listings ?? 0;
@@ -187,7 +141,7 @@ function renderStats(profile) {
   document.getElementById('profile-wins-count').textContent =
     profile._count?.wins ?? 0;
 
-  // Server-authoritative credits → storage → navbar
+  // Server-authoritative credits - storage - navbar
   updateUser({ credits: profile.credits });
   updateNavAuth();
 }
@@ -204,12 +158,9 @@ function renderEditButton() {
   btn.addEventListener('click', openEditModal);
 }
 
-// ─────────────────────────────────────────────
 // Tabs
-// ─────────────────────────────────────────────
-
 function initTabs() {
-  // Hide Bids/Wins tabs for non-owners — they're private
+  // Hide Bids/Wins tabs for non-owners 
   if (!isOwner) {
     document
       .querySelector('[data-tab="bids"]')
@@ -220,7 +171,7 @@ function initTabs() {
       ?.closest('button')
       ?.classList.add('hidden');
 
-    // Listings empty-state copy: non-owner can't "create their first listing"
+    // Listings empty state copy: non-owner can't "create their first listing"
     document
       .getElementById('profile-listings-empty-body')
       ?.classList.add('hidden');
@@ -261,10 +212,7 @@ function switchTab(activeBtn, allTabs) {
   }
 }
 
-// ─────────────────────────────────────────────
 // Tab content: Listings
-// ─────────────────────────────────────────────
-
 async function loadListings() {
   const loadingEl = document.getElementById('profile-listings-loading');
   const gridEl = document.getElementById('profile-listings-grid');
@@ -294,10 +242,7 @@ async function loadListings() {
   }
 }
 
-// ─────────────────────────────────────────────
-// Tab content: Bids
-// ─────────────────────────────────────────────
-
+//Tab content: Bids
 async function loadBids() {
   const loadingEl = document.getElementById('profile-bids-loading');
   const listEl = document.getElementById('profile-bids-list');
@@ -367,10 +312,7 @@ function bidRow(bid) {
     </a>`;
 }
 
-// ─────────────────────────────────────────────
 // Tab content: Wins
-// ─────────────────────────────────────────────
-
 async function loadWins() {
   const loadingEl = document.getElementById('profile-wins-loading');
   const gridEl = document.getElementById('profile-wins-grid');
@@ -400,15 +342,7 @@ async function loadWins() {
   }
 }
 
-// ─────────────────────────────────────────────
 // Refresh header after a successful Edit Profile save
-// ─────────────────────────────────────────────
-
-/**
- * Callback passed to profileEditHandler.initProfileEdit.
- * Avatar and banner are always present (server enforces a URL).
- * Bio toggles based on whether it's empty.
- */
 function updateHeaderAfterEdit(updated) {
   // Bio
   const bioEl = document.getElementById('profile-bio');

@@ -1,9 +1,4 @@
-/**
- * Shared time-formatting helpers.
- *
- * One source of truth so listing cards, the hero section, and the
- * listing detail page all format time consistently.
- */
+/* Shared time-formatting helpers. One source of truth so listing cards, the hero section, and listing detail page all format time consistently */
 
 const MS_PER_SECOND = 1_000;
 const MS_PER_MINUTE = 60 * MS_PER_SECOND;
@@ -11,8 +6,7 @@ const MS_PER_HOUR = 60 * MS_PER_MINUTE;
 const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 /**
- * Compact "time remaining" string for badges and headlines.
- * Examples: "2d 5h", "5h 23m", "12m", "45s", "Ended".
+ * "Time remaining" string for badges and headlines
  *
  * @param {string} endsAt - ISO date string
  * @returns {string}
@@ -33,8 +27,7 @@ export function formatTimeLeft(endsAt) {
 }
 
 /**
- * Human-readable "x ago" string for past dates.
- * Examples: "Just now", "5 minutes ago", "3 hours ago", "2 days ago".
+ * "x ago" string for past dates
  *
  * @param {string} dateStr - ISO date string
  * @returns {string}

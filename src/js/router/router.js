@@ -67,15 +67,13 @@ export async function router() {
 
   // Authorization checking
   if (PROTECTED.includes(match.route.path) && !isLoggedIn()) {
-    // Guest hit a protected URL directly (F5, pasted link, history)
-    // Send them to home and surface the modal instead of forcing /login.
+    // Guest hit a protected URL directly (F5, pasted link, history). Send them to home and surface the modal instead of forcing /login
     navigateTo('/');
     showLoginRequiredModal();
     return;
   }
 
-   // Handling for /profile — replace the URL instead of pushing,
-  // so the back button skips this redirect step entirely.
+   // Handling for /profile — replace the URL instead of pushing, so the back button skips this redirect step entirely
   if (match.route.path === '/profile') {
     const me = getUser();
     if (me?.name) {

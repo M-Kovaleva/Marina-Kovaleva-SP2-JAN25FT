@@ -1,6 +1,6 @@
 /* Shared formatting helpers */
 
-/** Escape strings before injecting into innerHTML (XSS protection). */
+//Escape strings before injecting into innerHTML (XSS protection)
 export function escHtml(str) {
   if (!str) return '';
   return String(str)
@@ -10,7 +10,7 @@ export function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-/** Format ISO date as "25 Apr 2026". */
+//Format ISO date as "25 Apr 2026"
 export function formatDate(dateStr) {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -19,11 +19,10 @@ export function formatDate(dateStr) {
 }
 
 /**
- * Returns HTML for an image placeholder shown when a listing has no media.
- * Used in listing cards, listing detail page, and profile bids list.
- * Stays consistent across the app.
+ * Returns HTML for an image placeholder shown when a listing has no media
+ * Used in listing cards, listing detail page, and profile bids list
  *
- * @returns {string} HTML markup
+ * @returns {string}
  */
 export function imagePlaceholderHtml() {
   return `
@@ -37,10 +36,7 @@ export function imagePlaceholderHtml() {
 }
 
 /**
- * Format a credit amount for display.
- * Currently shows the raw number without thousand separators
- * (e.g. 1000, not 1,000). Centralised so the format can be changed
- * project-wide by editing one place.
+ * Format a credit amount for display
  *
  * @param {number|null|undefined} amount
  * @returns {string}

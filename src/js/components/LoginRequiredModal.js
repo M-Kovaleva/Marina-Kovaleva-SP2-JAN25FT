@@ -1,12 +1,4 @@
-/**
- * Login Required Modal
- *
- * Reusable modal shown to guests when they try to access
- * authenticated features (creating listings, bidding, viewing
- * profiles). Provides Sign in and Register actions.
- *
- * Mounted once in main.js. Triggered via showLoginRequiredModal().
- */
+/* Login required modal */
 
 import { navigateTo } from '../router/router.js';
 
@@ -59,9 +51,6 @@ function template() {
   `;
 }
 
-/**
- * Mount the modal in the DOM. Idempotent — safe to call multiple times.
- */
 export function mountLoginRequiredModal() {
   if (modalEl) return;
 
@@ -78,14 +67,14 @@ export function mountLoginRequiredModal() {
   document.getElementById('login-required-close')
     .addEventListener('click', hideLoginRequiredModal);
 
-  // Sign in → navigate to /login
+  // Sign in -> navigate to /login
   document.getElementById('login-required-signin')
     .addEventListener('click', () => {
       hideLoginRequiredModal();
       navigateTo('/login');
     });
 
-  // Register → navigate to /register
+  // Register -> navigate to /register
   document.getElementById('login-required-register')
     .addEventListener('click', () => {
       hideLoginRequiredModal();

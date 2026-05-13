@@ -1,6 +1,4 @@
-/**
- * BidNoroff — Main entry point
- */
+/* BidNoroff — main entry point */
 
 import { router, navigateTo } from './router/router.js';
 import { initMobileMenu, closeMobileMenu } from './utils/mobile-menu.js';
@@ -11,14 +9,11 @@ import {
   showLoginRequiredModal,
 } from './components/LoginRequiredModal.js';
 
-/**
- * Paths that require authentication.
- * Match by substring so /listing/create, /profile/anyone, etc. all match.
- */
+//Paths that require authentication. Match by substring so /listing/create, /profile/anyone, etc. all match
 const PROTECTED_PATTERNS = [
   '/profile/',
   '/listing/create',
-  '/edit',          // catches /listing/:id/edit
+  '/edit',
 ];
 
 function requiresAuth(href) {
@@ -37,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   mountLoginRequiredModal();
 
   document.body.addEventListener('click', (e) => {
-    // 1. Explicit login-required trigger (data-action attribute)
+    //login-required(data-action attribute)
     const trigger = e.target.closest('[data-action="login-required"]');
     if (trigger) {
       e.preventDefault();
@@ -46,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 2. SPA links
+    // SPA links
     const link = e.target.closest('[data-link]');
     if (link) {
       e.preventDefault();

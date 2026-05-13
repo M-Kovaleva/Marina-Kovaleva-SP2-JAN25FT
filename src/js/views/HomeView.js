@@ -1,12 +1,4 @@
-/**
- * Home View — Listings feed with hero section.
- *
- * This view is intentionally thin: it only owns HTML templates and the
- * lifecycle hooks (render / init / destroy). All data loading and DOM
- * mutation lives in handlers:
- *   - heroHandler     — populates the hero section
- *   - listingsHandler — populates the grid, handles search/filter/scroll
- */
+/* Home View — Listings feed with hero section */
 
 import { initHero } from '../handlers/heroHandler.js';
 import { initListingsHandler, cleanupListingsHandler } from '../handlers/listingsHandler.js';
@@ -16,10 +8,6 @@ export class HomeView {
     this.params = params;
   }
 
-  // ─────────────────────────────────────────────
-  // Lifecycle
-  // ─────────────────────────────────────────────
-
   async render() {
     return `
       ${heroTemplate()}
@@ -28,7 +16,7 @@ export class HomeView {
   }
 
   async init() {
-    // Hero and listings feed are independent — fire hero in parallel.
+    // Hero and listings feed are independent 
     // Await the feed so the grid is ready before infinity-scroll attaches.
     initHero();
     await initListingsHandler();
@@ -39,16 +27,12 @@ export class HomeView {
   }
 }
 
-// ─────────────────────────────────────────────
-// Templates (pure HTML, no DOM access, no state)
-// ─────────────────────────────────────────────
-
 function heroTemplate() {
   return `
     <section id="hero" class="bg-gradient-to-br from-primary-500 to-primary-700 text-white py-12 sm:py-16 lg:py-20">
       <div class="max-w-6xl mx-auto px-4">
 
-        <!-- Loading skeleton -->
+        <!-- Loading state -->
         <div id="hero-loading" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
           <div class="space-y-4 order-2 md:order-1">
             <div class="h-4 w-24 bg-white/20 rounded"></div>
@@ -129,7 +113,7 @@ function listingsTemplate() {
   return `
     <div class="page-container" id="listings">
 
-      <!-- Search & Filter Bar -->
+      <!-- Search + Filter -->
       <div class="py-4 mb-6 sm:mb-8 -mt-6 relative z-10">
         <div class="flex flex-col lg:flex-row gap-4">
 
@@ -208,7 +192,7 @@ function listingsTemplate() {
         </div>
       </div>
 
-      <!-- Infinity-scroll sentinel -->
+      <!-- Infinity-scroll -->
       <div id="load-more-container" class="mt-4"></div>
 
       <!-- Showing-count footer -->

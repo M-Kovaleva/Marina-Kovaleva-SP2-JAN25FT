@@ -1,10 +1,6 @@
-/**
- * Mobile Menu Utilities
- */
+/* Mobile menu utilities */
 
-/**
- * Toggle menu button icons (hamburger ↔ X)
- */
+// Toggle menu button icons (hamburger - X)
 function toggleMenuIcon(isOpen) {
   const iconHamburger = document.getElementById('icon-hamburger');
   const iconClose = document.getElementById('icon-close');
@@ -20,9 +16,7 @@ function toggleMenuIcon(isOpen) {
   }
 }
 
-/**
- * Toggle mobile menu visibility
- */
+//Toggle mobile menu visibility
 export function toggleMobileMenu() {
   const mobileMenu = document.getElementById('mobile-menu');
   const menuBtn = document.getElementById('mobile-menu-btn');
@@ -48,9 +42,7 @@ export function toggleMobileMenu() {
   }
 }
 
-/**
- * Close mobile menu (used when navigating)
- */
+//Close mobile menu (used when navigating)
 export function closeMobileMenu() {
   const mobileMenu = document.getElementById('mobile-menu');
   const menuBtn = document.getElementById('mobile-menu-btn');
@@ -68,9 +60,7 @@ export function closeMobileMenu() {
   toggleMenuIcon(false);
 }
 
-/**
- * Initialize mobile menu toggle
- */
+//Initialize mobile menu toggle
 export function initMobileMenu() {
   const menuBtn = document.getElementById('mobile-menu-btn');
 
@@ -88,7 +78,7 @@ export function initMobileMenu() {
     });
   }
 
-  // Close menu on Escape key
+  // Close menu on escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeMobileMenu();

@@ -1,7 +1,4 @@
-/**
- * Register Handler
- * Handles register form submission
- */
+/* Register Handler */
 
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
@@ -11,10 +8,6 @@ import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { navigateTo } from '../router/router.js';
 
-/**
- * Initialize register form handler
- * Call this in RegisterView.init()
- */
 export function initRegisterHandler() {
   const form = document.getElementById('register-form');
   const errorContainer = document.getElementById('register-error');
@@ -48,10 +41,10 @@ export function initRegisterHandler() {
     setFormLoading(form, true);
 
     try {
-      // 1. Create the account
+      // Create the account
       await register(data);
 
-      // 2. Auto-login to get access token
+      // Auto-login to get access token
       const loginResponse = await login({
         email: data.email,
         password: data.password,
@@ -62,8 +55,6 @@ export function initRegisterHandler() {
       try {
         await syncUserFromProfile(loginResponse.data.name);
       } catch (syncErr) {
-        // Non-fatal: account created, user logged in, credits sync later.
-        console.warn('Profile sync failed after register:', syncErr.message);
       }
 
       // Update navbar with fresh data
@@ -73,7 +64,7 @@ export function initRegisterHandler() {
       showSuccessToast('Account created.');
       setTimeout(() => {
         navigateTo('/');
-      }, 1500); // Change to 1500 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      }, 1500);
     } catch (error) {
       showError(errorContainer, error.message);
       setFormLoading(form, false);

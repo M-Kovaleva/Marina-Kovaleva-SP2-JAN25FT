@@ -21,13 +21,13 @@
       <a href="/" data-link class="text-xl font-bold text-primary-500 hover:text-primary-600 transition-colors">
         BidNoroff
       </a>
-      <!-- Desktop Navigation (hidden on mobile, flex on md+) -->
+      <!-- Desktop navigation (hidden on mobile, flex on desktop) -->
       <div class="hidden md:flex items-center gap-6">
         <a href="/" data-link class="nav-link">Explore</a>
         <a href="/profile" data-link class="nav-link hidden" id="profile-link">Profile</a>
         <a href="/login" data-link class="nav-link" id="auth-link">Login</a>
         
-        <!-- Credits Badge (shown when logged in) -->
+        <!-- Credits badge (shown when user logged in) -->
         <div id="credits-badge" class="items-center badge-credits" style="display: none;">
           <span>💰</span>
           <span id="credits-amount"></span>
@@ -36,26 +36,26 @@
         <a href="/listing/create" data-link class="btn-primary text-sm" id="new-listing-btn">+ New listing</a>
       </div>
 
-      <!-- Mobile Navigation Controls -->
+      <!-- Mobile nvigation controls -->
       <div class="flex md:hidden items-center gap-2">
-        <!-- Credits Badge Mobile (shown when logged in) -->
+        <!-- Credits badge mobile (shown when user logged in) -->
         <div id="credits-badge-mobile" class="hidden items-center badge-credits text-xs">
           <span>💰</span>
           <span id="credits-amount-mobile"></span>
         </div>
         
-        <!-- New Listing Button (Mobile) -->
+        <!-- New listing button (mobile) -->
         <a href="/listing/create" data-link class="btn-primary text-sm px-3 py-2" id="new-listing-btn-mobile">
           + New
         </a>
         
-        <!-- Hamburger / Close Menu Button -->
+        <!-- Hamburger / Close menu button -->
         <button id="mobile-menu-btn" class="btn-menu" aria-label="Toggle menu" aria-expanded="false">
-          <!-- Hamburger Icon (visible when menu closed) -->
+          <!-- Hamburger icon (visible when menu closed) -->
           <svg id="icon-hamburger" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
-          <!-- Close Icon (hidden when menu closed) -->
+          <!-- Close icon (hidden when menu closed) -->
           <svg id="icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <!-- Mobile Menu Overlay -->
+    <!-- Mobile menu overlay -->
     <div id="mobile-menu" class="hidden md:hidden fixed inset-x-0 top-[57px] bottom-0 bg-white z-40">
       <div class="flex flex-col items-center gap-6 pt-12 px-4">
         <a href="/" data-link class="nav-link-mobile">Explore</a>
@@ -73,7 +73,7 @@
     </div>
   </nav>
 
-  <!-- App Container -->
+  <!-- App container -->
   <main id="app" class="flex-1">
     <!-- Router will inject views here -->
   </main>
