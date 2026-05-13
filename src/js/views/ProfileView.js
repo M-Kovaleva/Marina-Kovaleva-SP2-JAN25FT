@@ -1,776 +1,281 @@
-/* Profile View */
+/**
+ * Profile View — user profile page.
+ *
+ * Thin: owns the HTML template and the lifecycle hooks only.
+ * All data loading and DOM mutation lives in handlers:
+ *   - profileHandler     — fetch, header, tabs, tab content
+ *   - profileEditHandler — Edit Profile modal (own-profile only)
+ */
 
-import { getProfile, getProfileListings, getProfileBids, getProfileWins, updateProfile } from '../api/apiClient.js';
-import { createListingCards } from '../components/ListingCard.js';
-import { getUser, updateUser } from '../auth/storage.js';
-import { updateNavAuth } from '../components/Nav.js';
-import { showSuccessToast } from '../utils/toast.js';
-import { escHtml, formatDate, imagePlaceholderHtml, formatCredits } from '../utils/format.js';
-import { validateProfileForm, showValidationErrors, clearFormErrors } from '../utils/validation.js';
-import { getListingStatus } from '../components/ListingCard.js';
-
-const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
-const PLACEHOLDER_BANNER = 'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=500&w=1500';
+import { initProfile, cleanupProfile } from '../handlers/profileHandler.js';
+import { getUser } from '../auth/storage.js';
 
 export class ProfileView {
   constructor(params) {
-    this.params       = params;
-    this.profileName  = params.name || getUser()?.name || null;
+    this.params = params;
+    this.profileName = params.name || getUser()?.name || null;
   }
 
-  // Render
   async render() {
-    return `
-      <div class="page-container">
+    return profileTemplate();
+  }
 
-        <!-- Loading state -->
-        <div id="profile-loading" class="flex flex-col items-center justify-center py-24 gap-4">
-          <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-          <p class="text-text-secondary text-sm">Loading profile...</p>
-        </div>
+  async init() {
+    await initProfile(this.profileName);
+  }
 
-        <!-- Error - 404 state -->
-        <div id="profile-error" class="hidden text-center py-24">
-          <h2 class="text-xl font-bold text-text-primary mb-2">Profile not found</h2>
-          <p class="text-text-secondary mb-6">
-            This profile may not exist or the link is invalid.
-          </p>
-          <a href="/" data-link class="btn-primary">Go home</a>
-        </div>
+  destroy() {
+    cleanupProfile();
+  }
+}
 
-        <!-- Main content -->
-        <div id="profile-content" class="hidden">
+// ─────────────────────────────────────────────
+// Template (pure HTML, no DOM access, no state)
+// ─────────────────────────────────────────────
 
-          <!-- Profile header card -->
-          <div class="card overflow-hidden mb-6 sm:mb-8">
+function profileTemplate() {
+  return `
+    <div class="page-container">
 
-            <!-- Banner -->
-            <div id="profile-banner"
-              class="h-24 sm:h-32 lg:h-40 bg-gradient-to-r from-primary-500 to-primary-600 overflow-hidden">
+      <!-- Loading state -->
+      <div id="profile-loading" class="flex flex-col items-center justify-center py-24 gap-4">
+        <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+        <p class="text-text-secondary text-sm">Loading profile...</p>
+      </div>
+
+      <!-- Error / 404 state -->
+      <div id="profile-error" class="hidden text-center py-24">
+        <p class="text-5xl mb-4">😕</p>
+        <h2 class="text-xl font-bold text-text-primary mb-2">Profile not found</h2>
+        <p class="text-text-secondary mb-6">
+          This profile may not exist or the link is invalid.
+        </p>
+        <a href="/" data-link class="btn-primary">Go home</a>
+      </div>
+
+      <!-- Main content -->
+      <div id="profile-content" class="hidden">
+
+        <!-- Profile header card -->
+        <div class="card overflow-hidden mb-6 sm:mb-8">
+
+          <!-- Banner -->
+          <div id="profile-banner"
+            class="h-24 sm:h-32 lg:h-40 bg-gradient-to-r from-primary-500 to-primary-600 overflow-hidden">
+          </div>
+
+          <!-- Avatar and info -->
+          <div class="relative px-4 sm:px-6 pb-6">
+            <!-- Avatar — overlaps banner -->
+            <div id="profile-avatar"
+              class="absolute -top-12 sm:-top-14 left-4 sm:left-6
+                    w-20 h-20 sm:w-24 sm:h-24
+                    rounded-full overflow-hidden
+                    border-4 border-white bg-primary-100 shadow-md">
             </div>
 
-            <!-- Avatar and Info -->
-            <div class="relative px-4 sm:px-6 pb-6">
-              <!-- Avatar — overlaps banner -->
-              <div id="profile-avatar"
-                class="absolute -top-12 sm:-top-14 left-4 sm:left-6
-                      w-20 h-20 sm:w-24 sm:h-24
-                      rounded-full overflow-hidden
-                      border-4 border-white bg-primary-100 shadow-md">
-              </div>
+            <!-- Spacer — reserves vertical space for the avatar's bottom half -->
+            <div class="h-10 sm:h-12"></div>
 
-              <!-- Spacer — reserves vertical space for the avatar's bottom half -->
-              <div class="h-10 sm:h-12"></div>
+            <!-- Name + bio -->
+            <div class="mb-4 min-w-0">
+              <h1 id="profile-name"
+                class="text-xl sm:text-2xl font-bold text-text-primary truncate">
+              </h1>
+              <p id="profile-bio"
+                class="hidden text-text-secondary text-sm sm:text-base mt-1">
+              </p>
+            </div>
 
-              <!-- Name + Bio — full width, below avatar -->
-              <div class="mb-4 min-w-0">
-                <h1 id="profile-name"
-                  class="text-xl sm:text-2xl font-bold text-text-primary truncate">
-                </h1>
-                <p id="profile-bio"
-                  class="hidden text-text-secondary text-sm sm:text-base mt-1">
+            <!-- Edit Profile button — owner only, toggled by handler -->
+            <div id="edit-profile-wrap" class="hidden mb-4">
+              <button id="edit-profile-btn" type="button"
+                class="btn-secondary text-sm">
+                Edit Profile
+              </button>
+            </div>
+
+            <!-- Stats row -->
+            <div class="flex flex-wrap gap-4 sm:gap-8">
+
+              <!-- Credits — owner only -->
+              <div id="stat-credits" class="hidden text-center sm:text-left">
+                <p id="profile-credits"
+                  class="text-xl sm:text-2xl font-bold text-primary-500">
+                  —
                 </p>
+                <p class="text-xs sm:text-sm text-text-secondary">Credits</p>
               </div>
 
-              <!-- Edit Profile button — owner only, in normal flow below bio
-                   on both mobile and desktop. Shown via JS. -->
-              <div id="edit-profile-wrap" class="hidden mb-4">
-                <button id="edit-profile-btn" type="button"
-                  class="btn-secondary text-sm">
-                  Edit Profile
-                </button>
+              <!-- Listings count -->
+              <div class="text-center sm:text-left">
+                <p id="profile-listings-count"
+                  class="text-xl sm:text-2xl font-bold text-text-primary">
+                  —
+                </p>
+                <p class="text-xs sm:text-sm text-text-secondary">Listings</p>
               </div>
 
-              <!-- Stats row -->
-              <div class="flex flex-wrap gap-4 sm:gap-8">
-
-                <!-- Credits count for own profile only -->
-                <div id="stat-credits" class="hidden text-center sm:text-left">
-                  <p id="profile-credits"
-                    class="text-xl sm:text-2xl font-bold text-primary-500">
-                    —
-                  </p>
-                  <p class="text-xs sm:text-sm text-text-secondary">Credits</p>
-                </div>
-
-                <!-- Listings count -->
-                <div class="text-center sm:text-left">
-                  <p id="profile-listings-count"
-                    class="text-xl sm:text-2xl font-bold text-text-primary">
-                    —
-                  </p>
-                  <p class="text-xs sm:text-sm text-text-secondary">Listings</p>
-                </div>
-
-                <!-- Wins count for own profile only -->
-                <div id="stat-wins" class="hidden text-center sm:text-left">
-                  <p id="profile-wins-count"
-                    class="text-xl sm:text-2xl font-bold text-text-primary">
-                    —
-                  </p>
-                  <p class="text-xs sm:text-sm text-text-secondary">Wins</p>
-                </div>
+              <!-- Wins — owner only -->
+              <div id="stat-wins" class="hidden text-center sm:text-left">
+                <p id="profile-wins-count"
+                  class="text-xl sm:text-2xl font-bold text-text-primary">
+                  —
+                </p>
+                <p class="text-xs sm:text-sm text-text-secondary">Wins</p>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Tab navigation -->
-          <div class="border-b border-border mb-6">
-            <nav class="flex gap-1 overflow-x-auto">
-              <button data-tab="listings" class="tab-btn tab-active">
-                Listings
-              </button>
-              <button data-tab="bids" class="tab-btn">
-                Bids
-              </button>
-              <button data-tab="wins" class="tab-btn">
-                Wins
-              </button>
-            </nav>
+        <!-- Tab navigation -->
+        <div class="border-b border-border mb-6">
+          <nav class="flex gap-1 overflow-x-auto">
+            <button data-tab="listings" class="tab-btn tab-active">
+              Listings
+            </button>
+            <button data-tab="bids" class="tab-btn">
+              Bids
+            </button>
+            <button data-tab="wins" class="tab-btn">
+              Wins
+            </button>
+          </nav>
+        </div>
+
+        <!-- Listings tab -->
+        <div id="tab-listings">
+          <div id="profile-listings-loading" class="flex justify-center py-12">
+            <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
           </div>
 
-          <!-- Listings -->
-          <div id="tab-listings">
-
-            <!-- Loading -->
-            <div id="profile-listings-loading" class="flex justify-center py-12">
-              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-            </div>
-            <!-- Grid with listings-->
-            <div id="profile-listings-grid"
-              class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            </div>
-
-            <!-- Empty state -->
-              <div id="profile-listings-empty" class="hidden text-center py-16">
-                <h3 id="profile-listings-empty-title" class="text-lg font-semibold text-text-primary mb-2">No listings yet</h3>
-                <p id="profile-listings-empty-body" class="text-text-secondary mb-6 text-sm">Create your first listing to start selling</p>
-                <div id="profile-listings-empty-cta-wrap">
-                  <a href="/listing/create" data-link class="btn-primary">+ New listing</a>
-                </div>
-              </div>
+          <div id="profile-listings-grid"
+            class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           </div>
 
-          <!-- Bids -->
-          <div id="tab-bids" class="hidden">
-
-            <!-- Loading -->
-            <div id="profile-bids-loading" class="flex justify-center py-12">
-              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-            </div>
-
-            <!-- List with bids -->
-            <div id="profile-bids-list" class="hidden space-y-3"></div>
-
-            <!-- Empty state -->
-            <div id="profile-bids-empty" class="hidden text-center py-16">
-              <h3 class="text-lg font-semibold text-text-primary mb-2">No bids placed yet</h3>
-              <p class="text-text-secondary text-sm">
-                Explore listings and place your first bid
-              </p>
-              <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
+          <div id="profile-listings-empty" class="hidden text-center py-16">
+            <h3 id="profile-listings-empty-title" class="text-lg font-semibold text-text-primary mb-2">No listings yet</h3>
+            <p id="profile-listings-empty-body" class="text-text-secondary mb-6 text-sm">Create your first listing to start selling</p>
+            <div id="profile-listings-empty-cta-wrap">
+              <a href="/listing/create" data-link class="btn-primary">+ New listing</a>
             </div>
           </div>
+        </div>
 
-          <!-- Wins -->
-          <div id="tab-wins" class="hidden">
-
-            <!-- Loading -->
-            <div id="profile-wins-loading" class="flex justify-center py-12">
-              <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-            </div>
-
-            <!-- Grid with wins(listings) -->
-            <div id="profile-wins-grid"
-              class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            </div>
-
-            <!-- Empty state -->
-            <div id="profile-wins-empty" class="hidden text-center py-16">
-              <h3 class="text-lg font-semibold text-text-primary mb-2">No wins yet</h3>
-              <p class="text-text-secondary text-sm">
-                Place bids on active listings to win auctions
-              </p>
-              <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
-            </div>
+        <!-- Bids tab -->
+        <div id="tab-bids" class="hidden">
+          <div id="profile-bids-loading" class="flex justify-center py-12">
+            <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
           </div>
 
-        <!-- Edit Profile modal window -->
+          <div id="profile-bids-list" class="hidden space-y-3"></div>
+
+          <div id="profile-bids-empty" class="hidden text-center py-16">
+            <h3 class="text-lg font-semibold text-text-primary mb-2">No bids placed yet</h3>
+            <p class="text-text-secondary text-sm">
+              Explore listings and place your first bid
+            </p>
+            <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
+          </div>
+        </div>
+
+        <!-- Wins tab -->
+        <div id="tab-wins" class="hidden">
+          <div id="profile-wins-loading" class="flex justify-center py-12">
+            <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+          </div>
+
+          <div id="profile-wins-grid"
+            class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          </div>
+
+          <div id="profile-wins-empty" class="hidden text-center py-16">
+            <h3 class="text-lg font-semibold text-text-primary mb-2">No wins yet</h3>
+            <p class="text-text-secondary text-sm">
+              Place bids on active listings to win auctions
+            </p>
+            <a href="/" data-link class="btn-primary mt-6 inline-block">Explore listings</a>
+          </div>
+        </div>
+
+        <!-- Edit Profile modal -->
         <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
 
-          <!-- Backdrop — fixed so it stays put while modal content scrolls -->
-          <div id="edit-profile-backdrop"
-            class="fixed inset-0 bg-black/50"></div>
+          <!-- Backdrop -->
+          <div id="edit-profile-backdrop" class="fixed inset-0 bg-black/50"></div>
 
-          <!-- Centering wrapper — min-h-full + flex enables scroll on short viewports -->
+          <!-- Centering wrapper -->
           <div class="relative flex min-h-full items-center justify-center p-4">
 
             <!-- Modal card -->
             <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5 my-4">
 
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>
-              <button id="edit-profile-close"
-                class="text-text-secondary hover:text-text-primary transition-colors"
-                aria-label="Close">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>
+                <button id="edit-profile-close"
+                  class="text-text-secondary hover:text-text-primary transition-colors"
+                  aria-label="Close">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Inline error -->
+              <div id="edit-profile-error"
+                class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
+                <p class="alert-error"></p>
+              </div>
+
+              <!-- Form -->
+              <form id="edit-profile-form" class="space-y-4" novalidate>
+                <div>
+                  <label for="edit-bio" class="label">Bio</label>
+                  <textarea
+                    id="edit-bio"
+                    name="bio"
+                    rows="3"
+                    maxlength="160"
+                    placeholder="Tell others about yourself..."
+                    class="input resize-none">
+                  </textarea>
+                  <p class="hint">Maximum 160 characters</p>
+                </div>
+
+                <div>
+                  <label for="edit-avatar" class="label">Avatar URL</label>
+                  <input
+                    type="url"
+                    id="edit-avatar"
+                    name="avatar"
+                    placeholder="https://example.com/avatar.jpg"
+                    class="input"
+                  />
+                </div>
+
+                <div>
+                  <label for="edit-banner" class="label">Banner URL</label>
+                  <input
+                    type="url"
+                    id="edit-banner"
+                    name="banner"
+                    placeholder="https://example.com/banner.jpg"
+                    class="input"
+                  />
+                </div>
+
+                <button type="submit" id="edit-profile-submit"
+                  class="btn-primary w-full py-3">
+                  Save changes
+                </button>
+              </form>
+
             </div>
-
-            <!-- Inline error -->
-            <div id="edit-profile-error"
-              class="hidden p-3 bg-error/10 border border-error/20 rounded-lg">
-              <p class="alert-error"></p>
-            </div>
-
-            <!-- Form -->
-            <form id="edit-profile-form" class="space-y-4" novalidate>
-
-              <!-- Bio -->
-              <div>
-                <label for="edit-bio" class="label">Bio</label>
-                <textarea
-                  id="edit-bio"
-                  name="bio"
-                  rows="3"
-                  maxlength="160"
-                  placeholder="Tell others about yourself..."
-                  class="input resize-none">
-                </textarea>
-                <p class="hint">Maximum 160 characters</p>
-              </div>
-
-              <!-- Avatar -->
-              <div>
-                <label for="edit-avatar" class="label">Avatar URL</label>
-                <input
-                  type="url"
-                  id="edit-avatar"
-                  name="avatar"
-                  placeholder="https://example.com/avatar.jpg"
-                  class="input"
-                />
-              </div>
-
-              <!-- Banner -->
-              <div>
-                <label for="edit-banner" class="label">Banner URL</label>
-                <input
-                  type="url"
-                  id="edit-banner"
-                  name="banner"
-                  placeholder="https://example.com/banner.jpg"
-                  class="input"
-                />
-              </div>
-              <button type="submit" id="edit-profile-submit"
-                class="btn-primary w-full py-3">
-                Save changes
-              </button>
-            </form>
           </div>
         </div>
-        </div>
+
       </div>
-    `;
-  }
-
-  // Init
-  async init() {
-    // Auth checking handles by router 
-    if (!this.profileName) {
-      this._showError();
-      return;
-    }
-
-    try {
-      const response = await getProfile(this.profileName, {
-        _listings: true,
-        _wins: true,
-      });
-      const profile = response.data;
-
-      this._showContent();
-      this._renderHeader(profile);
-      this._initTabs(profile.name); 
-      this._loadListings();
-    } catch {
-      this._showError();
-    }
-  }
-  /**
-   * Render all header sections from API data
-   * @param {Object} profile
-   */
-  _renderHeader(profile) {
-    this._renderBanner(profile.banner);
-    this._renderAvatar(profile.avatar);
-    this._renderNameAndBio(profile.name, profile.bio);
-    this._renderStats(profile);
-    this._renderEditButton(profile.name);
-  }
-
-  /**
-   * Banner: show image if URL provided, keep placeholder otherwise
-   * @param {{ url: string, alt: string }|undefined} banner
-   */
-  _renderBanner(banner) {
-    const bannerEl = document.getElementById('profile-banner');
-    if (!banner?.url?.trim()) return;
-
-    const img = document.createElement('img');
-    img.src       = banner.url;
-    img.alt       = banner.alt || '';
-    img.className = 'w-full h-full object-cover';
-    img.onerror   = () => img.remove(); // broken URL - placeholder shows
-    bannerEl.innerHTML = '';
-    bannerEl.classList.remove(
-      'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
-    );
-    bannerEl.appendChild(img);
-  }
-
-  /**
-   * Avatar: show image if URL provided, keep placeholder otherwise
-   * @param {{ url: string, alt: string }|undefined} avatar
-   */
-  _renderAvatar(avatar) {
-    const avatarEl = document.getElementById('profile-avatar');
-    if (!avatar?.url?.trim()) return;
-
-    const img = document.createElement('img');
-    img.src       = avatar.url;
-    img.alt       = avatar.alt || '';
-    img.className = 'w-full h-full object-cover';
-    img.onerror   = () => img.remove(); // broken URL - pplaceholder shows
-    avatarEl.innerHTML = '';
-    avatarEl.appendChild(img);
-  }
-
-  /**
-   * Name and bio
-   * Bio section is hidden when empty
-   * @param {string} name
-   * @param {string|undefined} bio
-   */
-  _renderNameAndBio(name, bio) {
-    document.getElementById('profile-name').textContent = `@${name}`;
-
-    const bioEl = document.getElementById('profile-bio');
-    if (bio?.trim()) {
-      bioEl.textContent = bio;
-      bioEl.classList.remove('hidden');
-    }
-  }
-
-   /**
-   * Stats: 
-   * Listings count: public, always shown
-   * Credits count: private, shown for own profile only
-   * Wins count: private, shown for own profile only
-   * @param {Object} profile
-   */
-  _renderStats(profile) {
-    const currentUser  = getUser();
-    const isOwnProfile = currentUser?.name === profile.name;
-
-    // Listings count: public, always shown
-    document.getElementById('profile-listings-count').textContent =
-      profile._count?.listings ?? 0;
-
-    // Credits and Wins — private, shown for own profile only
-    if (isOwnProfile) {
-      document.getElementById('stat-credits').classList.remove('hidden');
-      document.getElementById('profile-credits').textContent =
-        formatCredits(profile.credits);
-      document.getElementById('stat-wins').classList.remove('hidden');
-      document.getElementById('profile-wins-count').textContent =
-        profile._count?.wins ?? 0;
-      // Sync server credits -> localStorage -> navbar
-      updateUser({ credits: profile.credits });
-      updateNavAuth();
-    }
-  }
-
-  /**
-   * Edit Profile button — visible only for own profile
-   * @param {string} profileName
-   */
-  _renderEditButton(profileName) {
-    const currentUser = getUser();
-    if (currentUser?.name !== profileName) return;
-
-    const wrap = document.getElementById('edit-profile-wrap');
-    const btn  = document.getElementById('edit-profile-btn');
-    if (!wrap || !btn) return;
-
-    wrap.classList.remove('hidden');
-    wrap.style.display = '';
-    btn.addEventListener('click', () => this._openEditModal());
-  }
-
-  /**
-   * Tabs
-   * Enables a click handler
-   * Hides Bids and Wins tabs for non-owners
-   * @param {string} profileName
-   */
-  _initTabs(profileName) {
-    const currentUser = getUser();
-    const isOwner     = currentUser?.name === profileName;
-
-    // Hide owner-only UI for non-owners
-    if (!isOwner) {
-      // Hide Bids and Wins tabs
-      document.querySelector('[data-tab="bids"]')?.closest('button')
-        ?.classList.add('hidden');
-      document.querySelector('[data-tab="wins"]')?.closest('button')
-        ?.classList.add('hidden');
-
-      // Listings empty state — change copy + hide CTA (can't create listings
-      // for someone else)
-      const emptyTitle = document.getElementById('profile-listings-empty-title');
-      const emptyBody  = document.getElementById('profile-listings-empty-body');
-      const emptyCta   = document.getElementById('profile-listings-empty-cta-wrap');
-      if (emptyTitle) emptyTitle.textContent = 'No listings yet';
-      if (emptyBody)  emptyBody.classList.add('hidden');
-      if (emptyCta)   emptyCta.classList.add('hidden');
-    }
-
-    const tabs = document.querySelectorAll('.tab-btn');
-
-    tabs.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.tab;
-        // Update button styles
-        tabs.forEach((b) => {
-          b.classList.toggle('tab-active', b.dataset.tab === target);
-        });
-
-        // Show/hide panels
-        ['listings', 'bids', 'wins'].forEach((panel) => {
-          document.getElementById(`tab-${panel}`)?.classList.toggle(
-            'hidden', panel !== target
-          );
-        });
-
-        // Load tab content on click
-        if (target === 'wins' && !this._winsLoaded) {
-          this._loadWins();
-          this._winsLoaded = true;
-        }
-        if (target === 'bids' && !this._bidsLoaded) {
-          this._loadBids();
-          this._bidsLoaded = true;
-        }
-      });
-    });
-  }
-
-  // Fetch and render Listings
-  async _loadListings() {
-    const loadingEl = document.getElementById('profile-listings-loading');
-    const gridEl    = document.getElementById('profile-listings-grid');
-    const emptyEl   = document.getElementById('profile-listings-empty');
-
-    try {
-      const response = await getProfileListings(this.profileName, {
-        _bids:   true,
-        sort:    'created',
-        sortOrder: 'desc',
-      });
-      const listings = response.data ?? [];
-
-      loadingEl.classList.add('hidden');
-
-      if (!listings.length) {
-        emptyEl.classList.remove('hidden');
-        return;
-      }
-
-      gridEl.innerHTML = createListingCards(listings);
-      gridEl.classList.remove('hidden');
-      gridEl.style.display = 'grid';
-    } catch {
-      loadingEl.classList.add('hidden');
-      emptyEl.classList.remove('hidden');
-    }
-  }
-
-  // Fetch and render Bids.
-  async _loadBids() {
-    const loadingEl = document.getElementById('profile-bids-loading');
-    const listEl    = document.getElementById('profile-bids-list');
-    const emptyEl   = document.getElementById('profile-bids-empty');
-
-    try {
-      const response = await getProfileBids(this.profileName, { _listings: true });
-      const bids     = response.data ?? [];
-
-      loadingEl.classList.add('hidden');
-
-      if (!bids.length) {
-        emptyEl.classList.remove('hidden');
-        return;
-      }
-
-      // Sort by bid amount
-      const sorted = [...bids].sort((a, b) => b.amount - a.amount);
-
-      listEl.innerHTML = sorted.map((bid) => {
-        const listing   = bid.listing;
-        const imageUrl  = listing?.media?.[0]?.url ?? '';
-        const title     = listing?.title ?? 'Unknown listing';
-        const listingId = listing?.id ?? '';
-        const status    = listing?.endsAt
-          ? getListingStatus(listing.endsAt)
-          : { label: 'Unknown', cssClass: 'badge-error' };
-
-        return `
-          <a href="/listing/${escHtml(listingId)}" data-link
-            class="group flex items-center gap-4 p-4 card">
-
-            <!-- Thumbnail -->
-            <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">
-              ${imageUrl
-                ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(title)}"
-                       class="w-full h-full object-cover"/>`
-                : imagePlaceholderHtml()
-              }
-            </div>
-
-            <!-- Info -->
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary truncate text-sm group-hover:text-primary-600 transition-colors">${escHtml(title)}</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                Ends ${listing?.endsAt ? formatDate(listing.endsAt) : '—'}
-              </p>
-            </div>
-
-            <!-- Bid amount and status -->
-            <div class="text-right flex-shrink-0">
-              <p class="font-bold text-primary-500 text-sm">
-                ${formatCredits(bid.amount)}
-                <span class="text-xs font-normal text-text-secondary">cr</span>
-              </p>
-              <span class="${status.cssClass} text-xs mt-1 inline-block">
-                ${status.label}
-              </span>
-            </div>
-          </a>`;
-
-      }).join('');
-
-       listEl.classList.remove('hidden');
-    } catch {
-      loadingEl.classList.add('hidden');
-      emptyEl.classList.remove('hidden');
-    }
-  }
-
-  // Fetch and render Wins
-  async _loadWins() {
-    const loadingEl = document.getElementById('profile-wins-loading');
-    const gridEl    = document.getElementById('profile-wins-grid');
-    const emptyEl   = document.getElementById('profile-wins-empty');
-    try {
-      const response = await getProfileWins(this.profileName, {
-        _bids:    true,
-        sort:     'created',
-        sortOrder: 'desc',
-      });
-      const wins = response.data ?? [];
-
-      loadingEl.classList.add('hidden');
-
-      if (!wins.length) {
-        emptyEl.classList.remove('hidden');
-        return;
-      }
-
-      gridEl.innerHTML = createListingCards(wins);
-      gridEl.classList.remove('hidden');
-      gridEl.style.display = 'grid';
-    } catch {
-      loadingEl.classList.add('hidden');
-      emptyEl.classList.remove('hidden');
-    }
-  }
-
-  //  Edit Profile modal window
-  _openEditModal() {
-    const user = getUser();
-    const modal = document.getElementById('edit-profile-modal');
-    const form  = document.getElementById('edit-profile-form');
-
-    // Prefill current values
-    document.getElementById('edit-bio').value    = user?.bio    ?? '';
-    document.getElementById('edit-avatar').value = user?.avatar?.url ?? '';
-    document.getElementById('edit-banner').value = user?.banner?.url ?? '';
-
-    // Clear errors from previous attempts
-    clearFormErrors(form);
-    document.getElementById('edit-profile-error').classList.add('hidden');
-
-    modal.classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');  // блокируем скролл страницы за модалкой
-
-    // Close on backdrop click
-    document.getElementById('edit-profile-backdrop')
-      .addEventListener('click', () => this._closeEditModal(), { once: true });
-
-    // Close on X button
-    document.getElementById('edit-profile-close')
-      .addEventListener('click', () => this._closeEditModal(), { once: true });
-
-    // Submit
-    document.getElementById('edit-profile-form')
-      .addEventListener('submit', (e) => this._handleEditSubmit(e), { once: true });
-  }
-
-  _closeEditModal() {
-    document.getElementById('edit-profile-modal').classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');  // снимаем lock
-  }
-
-  /**
-   * Validate, submit and update profile
-   * On success: update header UI, sync localStorage, show toast
-   * @param {Event} e
-   */
-  async _handleEditSubmit(e) {
-    e.preventDefault();
-
-    const form        = document.getElementById('edit-profile-form');
-    const bioInput    = document.getElementById('edit-bio');
-    const avatarInput = document.getElementById('edit-avatar');
-    const bannerInput = document.getElementById('edit-banner');
-    const submitBtn   = document.getElementById('edit-profile-submit');
-    const errorEl     = document.getElementById('edit-profile-error');
-
-    // Clear previous errors
-    clearFormErrors(form);
-    errorEl.classList.add('hidden');
-
-    // Read trimmed values
-    const data = {
-      bio:       bioInput.value.trim(),
-      avatarUrl: avatarInput.value.trim(),
-      bannerUrl: bannerInput.value.trim(),
-    };
-
-    // Client-side validation
-    const { isValid, errors } = validateProfileForm(data);
-
-    if (!isValid) {
-      showValidationErrors(form, errors);
-      return;
-    }
-
-    // Build payload — always send all 3 fields so server can clear them.
-    // Empty bio = ''. Empty avatar/banner = placeholder URL (server requires
-    // a valid URL object — null and empty string both rejected).
-    const payload = {
-      bio: data.bio || '',
-      avatar: {
-        url: data.avatarUrl || PLACEHOLDER_AVATAR,
-        alt: '',
-      },
-      banner: {
-        url: data.bannerUrl || PLACEHOLDER_BANNER,
-        alt: '',
-      },
-    };
-
-    submitBtn.disabled    = true;
-    submitBtn.textContent = 'Saving…';
-
-    try {
-      const response = await updateProfile(this.profileName, payload);
-      const updated  = response.data;
-
-      // Sync localStorage
-      updateUser({
-        bio:    updated.bio,
-        avatar: updated.avatar,
-        banner: updated.banner,
-      });
-
-      // Update header
-      this._updateHeaderUI(updated);
-
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Save changes';
-
-      this._closeEditModal();
-      showSuccessToast('Profile updated.');
-    } catch (err) {
-      errorEl.classList.remove('hidden');
-      errorEl.querySelector('p').textContent =
-        err.message || 'Could not update profile. Please try again.';
-      submitBtn.disabled    = false;
-      submitBtn.textContent = 'Save changes';
-    }
-  }
-  /**
-   * Update the visible header after a successful edit.
-   * Avatar and banner are always present (server enforces a URL),
-   * so we just swap the image. Bio toggles based on whether it's empty.
-   * @param {Object} updated - profile data from PUT response
-   */
-  _updateHeaderUI(updated) {
-    // Bio
-    const bioEl = document.getElementById('profile-bio');
-    if (updated.bio?.trim()) {
-      bioEl.textContent = updated.bio;
-      bioEl.classList.remove('hidden');
-    } else {
-      bioEl.classList.add('hidden');
-    }
-
-    // Avatar — always has a URL (placeholder or user-supplied)
-    const avatarContainer = document.getElementById('profile-avatar');
-    avatarContainer.innerHTML = '';
-    if (updated.avatar?.url) {
-      const img = document.createElement('img');
-      img.src       = updated.avatar.url;
-      img.alt       = updated.avatar.alt || '';
-      img.className = 'w-full h-full object-cover';
-      img.onerror   = () => img.remove();
-      avatarContainer.appendChild(img);
-    }
-
-    // Banner — always has a URL (placeholder or user-supplied)
-    const bannerEl = document.getElementById('profile-banner');
-    bannerEl.innerHTML = '';
-    bannerEl.classList.remove(
-      'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
-    );
-    if (updated.banner?.url) {
-      const img = document.createElement('img');
-      img.src       = updated.banner.url;
-      img.alt       = updated.banner.alt || '';
-      img.className = 'w-full h-full object-cover';
-      img.onerror   = () => {
-        img.remove();
-        bannerEl.classList.add(
-          'bg-gradient-to-r', 'from-primary-500', 'to-primary-600'
-        );
-      };
-      bannerEl.appendChild(img);
-    }
-  }
-
-  _showContent() {
-    document.getElementById('profile-loading').classList.add('hidden');
-    document.getElementById('profile-content').classList.remove('hidden');
-  }
-
-  _showError() {
-    document.getElementById('profile-loading').classList.add('hidden');
-    document.getElementById('profile-error').classList.remove('hidden');
-  }
+    </div>
+  `;
 }
