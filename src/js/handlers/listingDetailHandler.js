@@ -40,7 +40,6 @@ export async function initListingDetail(listingId) {
 
     startCountdown(listing.endsAt);
   } catch (err) {
-    console.error('ListingDetail: failed to load listing', err);
     showError();
   }
 }

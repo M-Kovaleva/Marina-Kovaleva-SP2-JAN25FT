@@ -1,18 +1,9 @@
-/**
- * Listings Handler
- * Handles fetching, displaying, filtering, and pagination of listings
- */
+/* Listings Handler. Handles fetching, displaying, filtering, and infinity-scroll pagination of the listings grid on the home page */
 
 import { getListings, searchListings } from '../api/apiClient.js';
 import {
-  createListingCard,
   createListingCards,
-  createSkeletonCards,
 } from '../components/ListingCard.js';
-
-// ============================================
-// STATE
-// ============================================
 
 let currentPage = 1;
 let currentSearch = '';
@@ -22,12 +13,15 @@ let totalCount = 0;
 let isLoading = false;
 let allListingsLoaded = false;
 
+// Cached DOM element references — set once in initListingsHandler
+let els = null;
+
+// RequestAnimationFrame throttle flag for the scroll handler. Ensures handleScroll runs at most once per animation frame (~16ms)
+let scrollTicking = false;
+
 const ITEMS_PER_PAGE = 12;
 
-// ============================================
-// DOM ELEMENTS
-// ============================================
-
+// DOM elements
 function getElements() {
   return {
     grid: document.getElementById('listings-grid'),
@@ -38,7 +32,7 @@ function getElements() {
     totalListings: document.getElementById('total-listings'),
     searchInput: document.getElementById('search-input'),
     clearSearch: document.getElementById('clear-search'),
-    searchBtn: document.getElementById('search-btn'), 
+    searchBtn: document.getElementById('search-btn'),
     searchInfo: document.getElementById('search-info'),
     resultsCount: document.getElementById('results-count'),
     searchQuery: document.getElementById('search-query'),
@@ -50,341 +44,102 @@ function getElements() {
   };
 }
 
-// ============================================
-// UI STATE MANAGEMENT
-// ============================================
-
-/**
- * Show loading state (initial load)
- */
+// UI state management
 function showLoading() {
-  const { grid, emptyState, errorState } = getElements();
-
-  // Show loading spinner in grid
-  grid.innerHTML = `
+  els.grid.innerHTML = `
     <div class="col-span-full">
       <div class="flex flex-col items-center justify-center py-12 sm:py-16">
-        <div class="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
+        <div class="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary-200 border-t-primary-500
+                    rounded-full animate-spin mb-4"></div>
         <p class="text-text-secondary text-sm sm:text-base">Loading listings...</p>
       </div>
     </div>
   `;
-
-  if (emptyState) emptyState.classList.add('hidden');
-  if (errorState) errorState.classList.add('hidden');
+  els.emptyState?.classList.add('hidden');
+  els.errorState?.classList.add('hidden');
   hideLoadMore();
 }
 
-/**
- * Show loading more indicator (for infinity scroll)
- */
 function showLoadingMore() {
-  const loadMoreContainer = document.getElementById('load-more-container');
-  if (loadMoreContainer) {
-    loadMoreContainer.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-8">
-        <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mb-2"></div>
-        <p class="text-text-secondary text-sm">Loading more...</p>
-      </div>
-    `;
-  }
+  if (!els.loadMoreContainer) return;
+  els.loadMoreContainer.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-8">
+      <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500
+                  rounded-full animate-spin mb-2"></div>
+      <p class="text-text-secondary text-sm">Loading more...</p>
+    </div>
+  `;
 }
 
-/**
- * Hide load more container
- */
 function hideLoadMore() {
-  const loadMoreContainer = document.getElementById('load-more-container');
-  if (loadMoreContainer) {
-    loadMoreContainer.innerHTML = '';
-  }
+  if (els?.loadMoreContainer) els.loadMoreContainer.innerHTML = '';
 }
 
-/**
- * Show end of listings message
- */
 function showEndOfListings() {
-  const loadMoreContainer = document.getElementById('load-more-container');
-  if (loadMoreContainer && totalCount > 0) {
-    loadMoreContainer.innerHTML = `
-      <div class="text-center py-8 text-text-secondary">
-        <p class="text-sm">You've reached the end</p>
-      </div>
-    `;
-  }
+  if (!els.loadMoreContainer || totalCount === 0) return;
+  els.loadMoreContainer.innerHTML = `
+    <div class="text-center py-8 text-text-secondary">
+      <p class="text-sm">You've reached the end</p>
+    </div>
+  `;
 }
 
-/**
- * Show error state
- * @param {string} message - Error message
- */
 function showError(message) {
-  const { grid, emptyState, errorState, errorMessage } = getElements();
-
-  grid.innerHTML = '';
-  
-  if (emptyState) emptyState.classList.add('hidden');
-  if (errorState) {
-    errorState.classList.remove('hidden');
-    if (errorMessage) {
-      errorMessage.textContent = message || 'We couldn\'t load the listings. Please try again.';
+  els.grid.innerHTML = '';
+  els.emptyState?.classList.add('hidden');
+  if (els.errorState) {
+    els.errorState.classList.remove('hidden');
+    if (els.errorMessage) {
+      els.errorMessage.textContent =
+        message || "We couldn't load the listings. Please try again.";
     }
   }
   hideLoadMore();
 }
 
-/**
- * Show empty state
- */
 function showEmpty() {
-  const { grid, emptyState, errorState } = getElements();
-
-  grid.innerHTML = '';
-  
-  if (errorState) errorState.classList.add('hidden');
-  if (emptyState) emptyState.classList.remove('hidden');
+  els.grid.innerHTML = '';
+  els.errorState?.classList.add('hidden');
+  els.emptyState?.classList.remove('hidden');
   hideLoadMore();
 }
 
-/**
- * Show listings (replace all)
- * @param {Array} listings - Array of listing objects
- */
 function showListings(listings) {
-  const { grid, emptyState, errorState } = getElements();
-
-  if (emptyState) emptyState.classList.add('hidden');
-  if (errorState) errorState.classList.add('hidden');
-
-  grid.innerHTML = createListingCards(listings);
+  els.emptyState?.classList.add('hidden');
+  els.errorState?.classList.add('hidden');
+  els.grid.innerHTML = createListingCards(listings);
 }
 
-/**
- * Append listings (for infinity scroll)
- * @param {Array} listings - Array of listing objects
- */
 function appendListings(listings) {
-  const { grid } = getElements();
-  if (!grid) return;
-  grid.insertAdjacentHTML('beforeend', createListingCards(listings));
+  if (!els.grid) return;
+  els.grid.insertAdjacentHTML('beforeend', createListingCards(listings));
 }
 
-// ============================================
-// INFINITY SCROLL
-// ============================================
-
-/**
- * Update total count display
- * @param {Object} meta - API meta object
- */
+// Count display
 function updateTotalCount(meta) {
-  const { showingCount, totalListings } = getElements();
-
   if (!meta) return;
 
   totalPages = meta.pageCount || 1;
   totalCount = meta.totalCount || 0;
 
-  const showing = document.querySelectorAll('#listings-grid > article').length;
-  
-  if (showingCount) showingCount.textContent = showing;
-  if (totalListings) totalListings.textContent = totalCount;
+  const showing = els.grid.querySelectorAll('article').length;
+  if (els.showingCount) els.showingCount.textContent = showing;
+  if (els.totalListings) els.totalListings.textContent = totalCount;
 }
 
-/**
- * Load more listings (next page)
- */
-async function loadMore() {
-  if (isLoading || allListingsLoaded) return;
-
-  currentPage++;
-  isLoading = true;
-  showLoadingMore();
-
-  try {
-    let data, meta;
-
-    if (currentSearch) {
-      const response = await searchListings(currentSearch, buildQueryParams());
-      data = response.data;
-      meta = response.meta;
-      
-      // Client-side filter for active (backup if API doesn't filter search)
-      data = filterActiveListings(data);
-    } else {
-      const response = await getListings(buildQueryParams());
-      data = response.data;
-      meta = response.meta;
-    }
-
-    if (data && data.length > 0) {
-      appendListings(data);
-      updateTotalCount(meta);
-    }
-
-    // Check if we've loaded all pages
-    if (meta?.isLastPage || data.length === 0) {
-      allListingsLoaded = true;
-      showEndOfListings();
-    } else {
-      hideLoadMore();
-    }
-  } catch (error) {
-    console.error('Failed to load more listings:', error);
-    currentPage--; // Revert page increment
-    hideLoadMore();
-  } finally {
-    isLoading = false;
-  }
-}
-
-/**
- * Initialize infinity scroll with scroll event
- */
-function initInfinityScroll() {
-  // Remove existing listener first (prevent duplicates)
-  window.removeEventListener('scroll', handleScroll);
-  // Add new listener
-  window.addEventListener('scroll', handleScroll);
-  console.log('Infinity scroll initialized (scroll event)');
-}
-
-/**
- * Cleanup infinity scroll (call when leaving page)
- */
-export function cleanupListingsHandler() {
-  window.removeEventListener('scroll', handleScroll);
-  resetInfinityScroll();
-}
-
-/**
- * Handle scroll event for infinity scroll
- */
-function handleScroll() {
-  // Stop if not on home page (grid doesn't exist)
-  const grid = document.getElementById('listings-grid');
-  if (!grid) return;
-  
-  if (isLoading || allListingsLoaded) return;
-  
-  const scrollPosition = window.innerHeight + window.scrollY;
-  const threshold = document.body.offsetHeight - 500; // Load 500px before bottom
-  
-  if (scrollPosition >= threshold) {
-    console.log('Infinity scroll: loading more...');
-    loadMore();
-  }
-}
-
-/**
- * Reset infinity scroll state
- */
-function resetInfinityScroll() {
-  currentPage = 1;
-  allListingsLoaded = false;
-  isLoading = false;
-}
-
-/**
- * Update URL with current filters
- */
-function updateURL() {
-  const params = new URLSearchParams();
-  
-  if (currentPage > 1) params.set('page', currentPage);
-  if (currentSearch) params.set('q', currentSearch);
-  if (!activeOnly) params.set('active', 'false');
-  
-  const queryString = params.toString();
-  const newURL = queryString ? `/?${queryString}` : '/';
-  
-  history.replaceState(null, '', newURL);
-}
-
-/**
- * Read filters from URL
- */
-function readURLParams() {
-  const params = new URLSearchParams(window.location.search);
-  
-  currentPage = parseInt(params.get('page')) || 1;
-  currentSearch = params.get('q') || '';
-  activeOnly = params.get('active') !== 'false';
-  
-  // Update UI to match URL params
-  const { searchInput, activeFilter } = getElements();
-  
-  if (searchInput && currentSearch) {
-    searchInput.value = currentSearch;
-    const clearSearch = document.getElementById('clear-search');
-    if (clearSearch) clearSearch.classList.remove('hidden');
-  }
-  
-  if (activeFilter) {
-    activeFilter.checked = activeOnly;
-  }
-}
-
-// ============================================
-// SEARCH
-// ============================================
-
-/**
- * Update search info UI
- * @param {string} query - Search query
- * @param {number} count - Results count
- */
 function updateSearchInfo(query, count) {
-  const { searchInfo, resultsCount, searchQuery, clearSearch } = getElements();
-
   if (query) {
-    if (searchInfo) searchInfo.classList.remove('hidden');
-    if (resultsCount) resultsCount.textContent = count;
-    if (searchQuery) searchQuery.textContent = query;
-    if (clearSearch) clearSearch.classList.remove('hidden');
+    els.searchInfo?.classList.remove('hidden');
+    if (els.resultsCount) els.resultsCount.textContent = count;
+    if (els.searchQuery) els.searchQuery.textContent = query;
+    els.clearSearch?.classList.remove('hidden');
   } else {
-    if (searchInfo) searchInfo.classList.add('hidden');
-    if (clearSearch) clearSearch.classList.add('hidden');
+    els.searchInfo?.classList.add('hidden');
+    els.clearSearch?.classList.add('hidden');
   }
 }
 
-/**
- * Handle search
- * @param {string} query - Search query
- */
-async function handleSearch(query) {
-  currentSearch = query.trim();
-  currentPage = 1;
-  updateURL();
-  await loadListings();
-}
-
-/**
- * Clear search and filters
- */
-async function clearAllFilters() {
-  const { searchInput, activeFilter } = getElements();
-
-  currentSearch = '';
-  activeOnly = true;
-  currentPage = 1;
-
-  if (searchInput) searchInput.value = '';
-  if (activeFilter) activeFilter.checked = true;
-
-  updateSearchInfo('', 0);
-  updateURL();
-  await loadListings();
-}
-
-// ============================================
-// LOAD LISTINGS
-// ============================================
-
-/**
- * Build query parameters
- * @returns {Object} Query params object
- */
+// Data fetching
 function buildQueryParams() {
   const params = {
     limit: ITEMS_PER_PAGE,
@@ -394,102 +149,175 @@ function buildQueryParams() {
     sort: 'created',
     sortOrder: 'desc',
   };
-
-  if (activeOnly) {
-    params._active = true;
-  }
-
+  if (activeOnly) params._active = true;
   return params;
 }
 
-/**
- * Filter listings by active status (client-side backup)
- * @param {Array} listings - Array of listing objects
- * @returns {Array} Filtered listings
- */
+// Client-side active filter — backup for search endpoint
 function filterActiveListings(listings) {
   if (!activeOnly) return listings;
-  
   const now = new Date();
-  return listings.filter(listing => new Date(listing.endsAt) > now);
+  return listings.filter((l) => new Date(l.endsAt) > now);
 }
 
 /**
- * Load listings from API (initial load or filter change)
+ * Single fetch call for the current page / search / filter state
+ * Shared by loadListings and loadMore to avoid duplicating the search with regular branching logic
+ *
+ * @returns {Promise<{ data: Object[], meta: Object }>}
  */
+async function fetchPage() {
+  if (currentSearch) {
+    const response = await searchListings(currentSearch, buildQueryParams());
+    return {
+      data: filterActiveListings(response.data ?? []),
+      meta: response.meta,
+    };
+  }
+  const response = await getListings(buildQueryParams());
+  return {
+    data: response.data ?? [],
+    meta: response.meta,
+  };
+}
+
+//Load or reload listings from page 1. Called on initial load and whenever filters change.
 async function loadListings() {
-  // Reset infinity scroll state
   resetInfinityScroll();
-  
   showLoading();
-  console.log('Loading listings...', { page: currentPage, search: currentSearch, activeOnly });
 
   try {
-    let data, meta;
+    const { data, meta } = await fetchPage();
 
-    if (currentSearch) {
-      // Search endpoint
-      const response = await searchListings(currentSearch, buildQueryParams());
-      data = response.data;
-      meta = response.meta;
-      
-      // Client-side filter for active (backup if API doesn't filter search)
-      data = filterActiveListings(data);
-    } else {
-      // Regular listings endpoint
-      const response = await getListings(buildQueryParams());
-      data = response.data;
-      meta = response.meta;
-    }
+    updateSearchInfo(currentSearch, meta?.totalCount ?? data.length);
 
-    console.log('Listings loaded:', { count: data?.length, meta });
-
-    // Update search info
-    updateSearchInfo(currentSearch, meta?.totalCount || data.length);
-
-    // Check for empty results
-    if (!data || data.length === 0) {
+    if (!data.length) {
       showEmpty();
       return;
     }
 
-    // Show listings
     showListings(data);
     updateTotalCount(meta);
 
-    // Check if all loaded on first page
     if (meta?.isLastPage) {
       allListingsLoaded = true;
-      console.log('All listings loaded on first page');
-      if (meta.totalCount > ITEMS_PER_PAGE) {
-        showEndOfListings();
-      }
+      if (meta.totalCount > ITEMS_PER_PAGE) showEndOfListings();
     }
-  } catch (error) {
-    console.error('Failed to load listings:', error);
-    showError(error.message);
+  } catch (err) {
+    showError(err.message);
   }
 }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
+//Load and append the next page (called by infinity scroll)
+async function loadMore() {
+  if (isLoading || allListingsLoaded) return;
 
-/**
- * Initialize event listeners
- */
+  currentPage++;
+  isLoading = true;
+  showLoadingMore();
+
+  try {
+    const { data, meta } = await fetchPage();
+
+    if (data.length) {
+      appendListings(data);
+      updateTotalCount(meta);
+    }
+
+    if (meta?.isLastPage || data.length === 0) {
+      allListingsLoaded = true;
+      showEndOfListings();
+    } else {
+      hideLoadMore();
+    }
+  } catch (err) {
+    currentPage--; //revert so retry fetches the same page
+    hideLoadMore();
+  } finally {
+    isLoading = false;
+  }
+}
+
+// Infinity scroll
+function initInfinityScroll() {
+  window.removeEventListener('scroll', handleScroll);
+  window.addEventListener('scroll', handleScroll, { passive: true });
+}
+
+// Scroll handler throttled via requestAnimationFrame
+function handleScroll() {
+  if (scrollTicking) return;
+  scrollTicking = true;
+
+  requestAnimationFrame(() => {
+    scrollTicking = false;
+
+    if (isLoading || allListingsLoaded || !els?.grid) return;
+
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.body.offsetHeight - 500;
+    if (scrollPosition >= threshold) loadMore();
+  });
+}
+
+function resetInfinityScroll() {
+  currentPage = 1;
+  allListingsLoaded = false;
+  isLoading = false;
+}
+
+// URL persistence
+function updateURL() {
+  const params = new URLSearchParams();
+  if (currentPage > 1) params.set('page', currentPage);
+  if (currentSearch) params.set('q', currentSearch);
+  if (!activeOnly) params.set('active', 'false');
+
+  const qs = params.toString();
+  history.replaceState(null, '', qs ? `/?${qs}` : '/');
+}
+
+function readURLParams() {
+  const params = new URLSearchParams(window.location.search);
+
+  currentPage = parseInt(params.get('page')) || 1;
+  currentSearch = params.get('q') || '';
+  activeOnly = params.get('active') !== 'false';
+
+  if (els.searchInput && currentSearch) {
+    els.searchInput.value = currentSearch;
+    els.clearSearch?.classList.remove('hidden');
+  }
+  if (els.activeFilter) els.activeFilter.checked = activeOnly;
+}
+
+// Search
+async function handleSearch(query) {
+  currentSearch = query.trim();
+  currentPage = 1;
+  updateURL();
+  await loadListings();
+}
+
+export async function clearAllFilters() {
+  currentSearch = '';
+  activeOnly = true;
+  currentPage = 1;
+
+  if (els.searchInput) els.searchInput.value = '';
+  if (els.activeFilter) els.activeFilter.checked = true;
+
+  updateSearchInfo('', 0);
+  updateURL();
+  await loadListings();
+}
+
+// Event listeners
 function initEventListeners() {
-  const {
-    searchInput,
-    clearSearch,
-    clearFilters,
-    activeFilter,
-    retryBtn,
-    resetFilters,
-  } = getElements();
+  const { searchInput, clearSearch, clearFilters, activeFilter, retryBtn, resetFilters } = els;
 
-  // Search on Enter (desktop) or click on search button (touchscreens)
   if (searchInput) {
+    // Trigger search on Enter
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -497,84 +325,68 @@ function initEventListeners() {
       }
     });
 
-    // Show/hide clear button
+    // Show/hide clear button while typing
     searchInput.addEventListener('input', () => {
-      if (clearSearch) {
-        clearSearch.classList.toggle('hidden', !searchInput.value);
-      }
+      clearSearch?.classList.toggle('hidden', !searchInput.value);
     });
   }
 
-  // Search button — clickable for touchscreens
-  const { searchBtn } = getElements();
-  if (searchBtn) {
-    searchBtn.addEventListener('click', () => {
-      handleSearch(searchInput?.value || '');
-    });
-  }
+  // Search icon button (useful on touch screens)
+  els.searchBtn?.addEventListener('click', () => {
+    handleSearch(searchInput?.value || '');
+  });
 
-  // Clear search button
-  if (clearSearch) {
-    clearSearch.addEventListener('click', () => {
-      if (searchInput) searchInput.value = '';
-      clearSearch.classList.add('hidden');
-      handleSearch('');
-    });
-  }
+  // Clear search × button
+  clearSearch?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    clearSearch.classList.add('hidden');
+    handleSearch('');
+  });
 
-  // Clear all filters
-  if (clearFilters) {
-    clearFilters.addEventListener('click', clearAllFilters);
-  }
+  // "Clear all filters" link in search-info bar
+  clearFilters?.addEventListener('click', clearAllFilters);
 
-  // Reset filters (in empty state)
-  if (resetFilters) {
-    resetFilters.addEventListener('click', clearAllFilters);
-  }
+  // "Clear all filters" button in empty state
+  resetFilters?.addEventListener('click', clearAllFilters);
 
-  // Active only filter
-  if (activeFilter) {
-    activeFilter.addEventListener('change', async () => {
-      activeOnly = activeFilter.checked;
-      currentPage = 1;
-      updateURL();
-      await loadListings();
-    });
-  }
+  // Active-only toggle
+  activeFilter?.addEventListener('change', async () => {
+    activeOnly = activeFilter.checked;
+    currentPage = 1;
+    updateURL();
+    await loadListings();
+  });
 
-  // Load More button (fallback for infinity scroll)
-  const loadMoreBtn = document.getElementById('load-more-btn');
-  if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', loadMore);
-  }
+  // Fallback "Load more" button (in case scroll isn't available)
+  document.getElementById('load-more-btn')?.addEventListener('click', loadMore);
 
-  // Retry button
-  if (retryBtn) {
-    retryBtn.addEventListener('click', loadListings);
-  }
+  // Retry button in error state
+  retryBtn?.addEventListener('click', loadListings);
 }
 
-// ============================================
-// INIT
-// ============================================
-
-/**
- * Initialize listings handler
- * Call this in HomeView.init()
- */
+// Init / Cleanup
 export async function initListingsHandler() {
-  // Read filters from URL first
+  els = getElements(); // cache once — avoids repeated getElementById lookups
   readURLParams();
-  
-  // Initialize event listeners
   initEventListeners();
-  
-  // Load listings
   await loadListings();
-  
-  // Initialize infinity scroll
   initInfinityScroll();
 }
 
-// Export for external use
-export { loadListings, clearAllFilters };
+//Clean up when leaving the home page.
+export function cleanupListingsHandler() {
+  window.removeEventListener('scroll', handleScroll);
+
+  // Full reset — not just infinity-scroll vars
+  currentPage = 1;
+  currentSearch = '';
+  activeOnly = true;
+  totalPages = 1;
+  totalCount = 0;
+  isLoading = false;
+  allListingsLoaded = false;
+  scrollTicking = false;
+  els = null;
+}
+
+export { loadListings };
