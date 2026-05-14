@@ -14,20 +14,20 @@
 <body class="min-h-screen flex flex-col bg-surface font-sans text-text-primary">
   
   <!-- Navigation -->
-  <nav class="sticky top-0 z-50 bg-white border-b border-border">
+  <nav class="sticky top-0 z-50 bg-white border-b border-border" aria-label="Main navigation">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       
       <!-- Logo -->
       <a href="/" data-link class="text-xl font-bold text-primary-500 hover:text-primary-600 transition-colors">
         BidNoroff
       </a>
-      <!-- Desktop navigation (hidden on mobile, flex on desktop) -->
+      <!-- Desktop navigation -->
       <div class="hidden md:flex items-center gap-6">
         <a href="/" data-link class="nav-link">Explore</a>
         <a href="/profile" data-link class="nav-link hidden" id="profile-link">Profile</a>
         <a href="/login" data-link class="nav-link" id="auth-link">Login</a>
         
-        <!-- Credits badge (shown when user logged in) -->
+        <!-- Credits Badge (shown when logged in) -->
         <div id="credits-badge" class="items-center badge-credits" style="display: none;">
           <span>💰</span>
           <span id="credits-amount"></span>
@@ -36,15 +36,15 @@
         <a href="/listing/create" data-link class="btn-primary text-sm" id="new-listing-btn">+ New listing</a>
       </div>
 
-      <!-- Mobile nvigation controls -->
+      <!-- Mobile navigation controls -->
       <div class="flex md:hidden items-center gap-2">
-        <!-- Credits badge mobile (shown when user logged in) -->
+        <!-- Credits badge mobile (shown when logged in) -->
         <div id="credits-badge-mobile" class="hidden items-center badge-credits text-xs">
           <span>💰</span>
           <span id="credits-amount-mobile"></span>
         </div>
         
-        <!-- New listing button (mobile) -->
+        <!-- New Listing button (Mobile) -->
         <a href="/listing/create" data-link class="btn-primary text-sm px-3 py-2" id="new-listing-btn-mobile">
           + New
         </a>

@@ -28,7 +28,7 @@ function profileTemplate() {
     <div class="page-container">
 
       <!-- Loading state -->
-      <div id="profile-loading" class="flex flex-col items-center justify-center py-24 gap-4">
+      <div id="profile-loading" role="status" aria-label="Loading profile" class="flex flex-col items-center justify-center py-24 gap-4">
         ${spinnerHtml('w-10 h-10')}
         <p class="text-text-secondary text-sm">Loading profile...</p>
       </div>
@@ -121,21 +121,24 @@ function profileTemplate() {
 
         <!-- Tab navigation -->
         <div class="border-b border-border mb-6">
-          <nav class="flex gap-1 overflow-x-auto">
-            <button data-tab="listings" class="tab-btn tab-active">
+          <nav role="tablist" aria-label="Profile sections" class="flex gap-1 overflow-x-auto">
+            <button data-tab="listings" role="tab" aria-selected="true"
+                    aria-controls="tab-listings"  class="tab-btn tab-active">
               Listings
             </button>
-            <button data-tab="bids" class="tab-btn">
+            <button data-tab="bids" role="tab" aria-selected="false"
+                    aria-controls="tab-bids" id="tab-btn-bids" class="tab-btn">
               Bids
             </button>
-            <button data-tab="wins" class="tab-btn">
+            <button data-tab="wins" role="tab" aria-selected="false"
+                    aria-controls="tab-wins" class="tab-btn">
               Wins
             </button>
           </nav>
         </div>
 
         <!-- Listings tab -->
-        <div id="tab-listings">
+        <div id="tab-listings" role="tabpanel" aria-labelledby="tab-btn-listings" tabindex="0">
           <div id="profile-listings-loading" class="flex justify-center py-12">
             ${spinnerHtml('w-8 h-8')}
           </div>
@@ -154,7 +157,7 @@ function profileTemplate() {
         </div>
 
         <!-- Bids tab -->
-        <div id="tab-bids" class="hidden">
+        <div id="tab-bids" role="tabpanel" aria-labelledby="tab-btn-bids" tabindex="0" class="hidden">
           <div id="profile-bids-loading" class="flex justify-center py-12">
             ${spinnerHtml('w-8 h-8')}
           </div>
@@ -171,7 +174,7 @@ function profileTemplate() {
         </div>
 
         <!-- Wins tab -->
-        <div id="tab-wins" class="hidden">
+        <div id="tab-wins" role="tabpanel" aria-labelledby="tab-btn-wins" tabindex="0" class="hidden">
           <div id="profile-wins-loading" class="flex justify-center py-12">
             ${spinnerHtml('w-8 h-8')}
           </div>
@@ -190,7 +193,7 @@ function profileTemplate() {
         </div>
 
         <!-- Edit Profile modal -->
-        <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="edit-profile-title">
 
           <!-- Backdrop -->
           <div id="edit-profile-backdrop" class="fixed inset-0 bg-black/50"></div>
@@ -202,7 +205,7 @@ function profileTemplate() {
             <div class="relative bg-white rounded-xl w-full max-w-md p-6 space-y-5 my-4">
 
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>
+                <h2 id="edit-profile-title" class="text-lg font-bold text-text-primary">Edit Profile</h2>
                 <button id="edit-profile-close"
                   class="text-text-secondary hover:text-text-primary transition-colors"
                   aria-label="Close">
