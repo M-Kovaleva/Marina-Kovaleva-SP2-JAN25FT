@@ -7,7 +7,6 @@ const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 /**
  * "Time remaining" string for badges and headlines
- *
  * @param {string} endsAt - ISO date string
  * @returns {string}
  */
@@ -28,7 +27,6 @@ export function formatTimeLeft(endsAt) {
 
 /**
  * "x ago" string for past dates
- *
  * @param {string} dateStr - ISO date string
  * @returns {string}
  */

@@ -1,19 +1,10 @@
 /**
- * Listing Utilities
- *
- * Domain helpers shared across listing cards, listing detail page,
- * and profile bids list. Kept in utils/ rather than components/
- * because they contain pure logic with no DOM access.
- */
-
-/**
- * Derive the display status of a listing from its end date.
- *
+ * Listing utilities 
+ * Display status of a listing from its end date
  * Returns one of three states:
- *   ended       — auction is over
+ *   ended — auction is over
  *   ending-soon — less than 24 hours remaining
- *   active      — more than 24 hours remaining
- *
+ *   active — more than 24 hours remaining
  * @param {string} endsAt - ISO date string
  * @returns {{ type: string, label: string, cssClass: string }}
  */

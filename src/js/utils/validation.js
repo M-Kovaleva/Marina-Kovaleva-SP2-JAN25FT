@@ -1,6 +1,4 @@
-/**
- * Form Validation Utilities
- */
+/* Form validation utilities */
 
 /**
  * Validate email format (must be @stud.noroff.no)
@@ -198,7 +196,7 @@ export function clearFormErrors(form) {
 
 /**
  * Validate profile edit form
- * @param {Object} data - { bio, avatarUrl, bannerUrl }
+ * @param {Object} data - bio, avatarUrl, bannerUrl
  * @returns {{ isValid: boolean, errors: Object }}
  */
 export function validateProfileForm({ bio, avatarUrl, bannerUrl }) {
@@ -225,7 +223,6 @@ export function validateProfileForm({ bio, avatarUrl, bannerUrl }) {
 /**
  * Display field-specific errors on a form via showInputError.
  * Looks up inputs by their `name` attribute.
- *
  * @param {HTMLFormElement} form
  * @param {Object} errors - { fieldName: 'error message' }
  */

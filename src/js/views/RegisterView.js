@@ -1,6 +1,4 @@
-/**
- * Register View
- */
+/* Register view */
 
 import { initRegisterHandler } from '../auth/registerHandler.js';
 
@@ -15,7 +13,7 @@ export class RegisterView {
         <div class="auth-card">
           <h1 class="auth-title">Create account</h1>
           
-          <!-- Error Message (hidden by default) -->
+          <!-- Error message (hidden by default) -->
           <div id="register-error" class="hidden mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
             <p class="alert-error"></p>
           </div>

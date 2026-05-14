@@ -1,11 +1,4 @@
-/**
- * Profile View — user profile page.
- *
- * Thin: owns the HTML template and the lifecycle hooks only.
- * All data loading and DOM mutation lives in handlers:
- *   - profileHandler     — fetch, header, tabs, tab content
- *   - profileEditHandler — Edit Profile modal (own-profile only)
- */
+/* Profile view — user profile page */
 
 import { initProfile, cleanupProfile } from '../handlers/profileHandler.js';
 import { getUser } from '../auth/storage.js';
@@ -29,10 +22,6 @@ export class ProfileView {
     cleanupProfile();
   }
 }
-
-// ─────────────────────────────────────────────
-// Template (pure HTML, no DOM access, no state)
-// ─────────────────────────────────────────────
 
 function profileTemplate() {
   return `
@@ -89,7 +78,7 @@ function profileTemplate() {
               </p>
             </div>
 
-            <!-- Edit Profile button — owner only, toggled by handler -->
+            <!-- Edit profile button — owner only, toggled by handler -->
             <div id="edit-profile-wrap" class="hidden mb-4">
               <button id="edit-profile-btn" type="button"
                 class="btn-secondary text-sm">

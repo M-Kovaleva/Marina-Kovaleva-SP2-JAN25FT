@@ -1,6 +1,4 @@
-/**
- * 404 Not Found View
- */
+/* 404 Not found view */
 export class NotFoundView {
   constructor(params) {
     this.params = params;

@@ -1,6 +1,5 @@
-/**
- * Login View
- */
+/* Login view */
+
 import { initLoginHandler } from '../auth/loginHandler.js';
 export class LoginView {
   constructor(params) {

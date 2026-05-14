@@ -1,12 +1,4 @@
-/**
- * Home View — Listings feed with hero section.
- *
- * This view is intentionally thin: it only owns HTML templates and the
- * lifecycle hooks (render / init / destroy). All data loading and DOM
- * mutation lives in handlers:
- *   - heroHandler     — populates the hero section
- *   - listingsHandler — populates the grid, handles search/filter/scroll
- */
+/* Home view — Listings feed with hero section */
 
 import { initHero } from '../handlers/heroHandler.js';
 import {
@@ -19,10 +11,6 @@ export class HomeView {
     this.params = params;
   }
 
-  // ─────────────────────────────────────────────
-  // Lifecycle
-  // ─────────────────────────────────────────────
-
   async render() {
     return `
       ${heroTemplate()}
@@ -31,8 +19,6 @@ export class HomeView {
   }
 
   async init() {
-    // Hero and listings feed are independent — fire hero in parallel.
-    // Await the feed so the grid is ready before infinity-scroll attaches.
     initHero();
     await initListingsHandler();
   }
@@ -41,10 +27,6 @@ export class HomeView {
     cleanupListingsHandler();
   }
 }
-
-// ─────────────────────────────────────────────
-// Templates (pure HTML, no DOM access, no state)
-// ─────────────────────────────────────────────
 
 function heroTemplate() {
   return `

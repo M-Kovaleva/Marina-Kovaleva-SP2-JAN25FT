@@ -1,12 +1,4 @@
-/**
- * Listing View — single listing page.
- *
- * Thin: owns the HTML template and the lifecycle hooks only.
- * All data loading and DOM mutation lives in handlers:
- *   - listingDetailHandler — orchestrator: gallery, info, seller, summary,
- *                            countdown, bid history, owner actions
- *   - bidFormHandler       — bid form state machine + place bid
- */
+/* Listing view — single listing page. */
 
 import {
   initListingDetail,
@@ -32,10 +24,6 @@ export class ListingView {
     cleanupListingDetail();
   }
 }
-
-// ─────────────────────────────────────────────
-// Template (pure HTML, no DOM access, no state)
-// ─────────────────────────────────────────────
 
 function listingDetailTemplate() {
   return `
@@ -63,7 +51,7 @@ function listingDetailTemplate() {
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-          <!-- Left: Image Gallery -->
+          <!-- Left: image gallery -->
           <div class="space-y-3">
 
             <!-- Main image -->
@@ -84,7 +72,7 @@ function listingDetailTemplate() {
 
           </div>
 
-          <!-- Right: Details column -->
+          <!-- Right: details column -->
           <div class="space-y-5">
 
             <!-- Status badge -->
@@ -166,7 +154,7 @@ function listingDetailTemplate() {
                   </div>
                 </div>
 
-                <!-- Bid form states (mutually exclusive) -->
+                <!-- Bid form states -->
 
                 <!-- State A: Auction ended -->
                 <div id="state-ended" class="hidden text-center py-2">
@@ -195,7 +183,7 @@ function listingDetailTemplate() {
                   </p>
                 </div>
 
-                <!-- State D: Bid form -->
+                <!-- State D: bid form -->
                 <form id="bid-form" class="hidden space-y-3" novalidate>
                   <div>
                     <label for="bid-amount" class="label">Your bid (credits)</label>
@@ -226,7 +214,7 @@ function listingDetailTemplate() {
           </div>
         </div>
 
-        <!-- Bid History -->
+        <!-- Bid history -->
         <section class="mt-10 sm:mt-14">
           <h2 class="text-lg sm:text-xl font-bold text-text-primary mb-4">Bid History</h2>
           <div class="card overflow-hidden">
