@@ -13,10 +13,10 @@ function template() {
       <div id="login-required-backdrop" class="fixed inset-0 bg-black/50"></div>
 
       <!-- Centering wrapper -->
-      <div class="relative flex min-h-full items-center justify-center p-4">
+      <div class="relative flex min-h-full items-center justify-center p-4" >
 
         <!-- Card -->
-        <div class="relative bg-white rounded-xl w-full max-w-sm p-6 space-y-5 my-4">
+        <div class="relative bg-white rounded-xl w-full max-w-sm p-6 space-y-5 my-4" role="dialog" aria-modal="true" aria-labelledby="login-required-title">
 
           <!-- Close button -->
           <button id="login-required-close"
@@ -30,7 +30,7 @@ function template() {
 
           <!-- Content -->
           <div class="text-center space-y-2 pt-2">
-            <h2 class="text-xl font-bold text-text-primary">Login required</h2>
+            <h2 id="login-required-title" class="text-xl font-bold text-text-primary">Login required</h2>
             <p class="text-text-secondary text-sm">
               Sign in or create an account to continue.
             </p>

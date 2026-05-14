@@ -30,7 +30,7 @@ function listingDetailTemplate() {
     <div class="page-container">
 
       <!-- Loading state -->
-      <div id="listing-loading" class="flex flex-col items-center justify-center py-24 gap-4">
+      <div id="listing-loading" role="status" aria-label="Loading listing" class="flex flex-col items-center justify-center py-24 gap-4">
         ${spinnerHtml('w-10 h-10')}
         <p class="text-text-secondary text-sm">Loading listing...</p>
       </div>
@@ -193,6 +193,7 @@ function listingDetailTemplate() {
                       name="amount"
                       min="1"
                       class="input"
+                      aria-describedby="bid-hint bid-error"
                       required
                     />
                     <p id="bid-hint" class="hint"></p>

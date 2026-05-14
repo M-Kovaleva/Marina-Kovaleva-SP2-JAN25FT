@@ -156,7 +156,7 @@ function listingsTemplate() {
       </div>
 
       <!-- Search results header -->
-      <div id="search-info" class="hidden mb-4">
+      <div id="search-info" class="hidden mb-4" aria-live="polite" aria-atomic="true">
         <div class="flex items-center justify-between">
           <p class="text-text-secondary">
             <span id="results-count">0</span> results for "<span id="search-query" class="font-medium text-text-primary"></span>"
