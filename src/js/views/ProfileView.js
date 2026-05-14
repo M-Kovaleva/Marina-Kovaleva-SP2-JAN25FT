@@ -47,7 +47,6 @@ function profileTemplate() {
       <!-- Error / 404 state -->
       <div id="profile-error" class="page-state-centered hidden">
         <div class="text-center max-w-md">
-          <p class="text-5xl mb-4">😕</p>
           <h2 class="text-xl font-bold text-text-primary mb-2">Profile not found</h2>
           <p class="text-text-secondary mb-6">
             This profile may not exist or the link is invalid.
