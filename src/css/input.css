@@ -121,7 +121,7 @@
 
 /* === NAVIGATION === */
 .nav-link {
-  @apply text-lg  text-text-secondary hover:text-primary-500 font-medium transition-colors;
+  @apply text-lg text-text-secondary hover:text-primary-500 font-medium transition-colors;
 }
 
 .nav-link-mobile {
@@ -257,6 +257,14 @@
   .owner-actions-bar {
     display: flex;
     @apply shrink-0 gap-2;
+  }
+
+  /* Vertically centred page state — used for error and loading states
+     that need to fill the viewport height (profile-error, listing-error).
+     hidden utility overrides display:flex when the state is inactive. */
+  .page-state-centered {
+    display: flex;
+    @apply min-h-[70vh] items-center justify-center px-4 sm:min-h-[80vh];
   }
 }
 

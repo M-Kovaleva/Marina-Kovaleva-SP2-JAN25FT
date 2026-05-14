@@ -48,7 +48,7 @@ function listingDetailTemplate() {
       </div>
 
       <!-- Error / 404 state -->
-      <div id="listing-error" class="hidden min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center px-4">
+      <div id="listing-error" class="page-state-centered hidden">
         <div class="text-center max-w-md">
           <h2 class="text-xl font-bold text-text-primary mb-2">Listing not found</h2>
           <p class="text-text-secondary mb-6">
