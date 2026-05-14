@@ -148,6 +148,7 @@ function listingsTemplate() {
                 id="active-filter"
                 checked
                 class="w-4 h-4 accent-primary-500 rounded"
+                aria-label="Search listings" 
               />
               <span class="text-sm text-text-secondary">Active only</span>
             </label>

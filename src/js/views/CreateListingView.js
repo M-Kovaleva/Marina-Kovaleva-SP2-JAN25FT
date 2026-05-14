@@ -25,6 +25,7 @@ export class CreateListingView {
   }
 }
 
+
 function listingFormTemplate(isEditMode) {
   return `
     <div class="page-container max-w-2xl">
@@ -86,7 +87,7 @@ function listingFormTemplate(isEditMode) {
 
             <!-- Media URLs — rows are inserted by JS (see listingFormHandler) -->
             <div>
-              <label class="label">Images</label>
+              <p class="label" id="media-label">Images</p>
               <div id="media-container" class="space-y-3"></div>
               <button type="button" id="add-media-btn"
                 class="btn-secondary text-sm mt-3">

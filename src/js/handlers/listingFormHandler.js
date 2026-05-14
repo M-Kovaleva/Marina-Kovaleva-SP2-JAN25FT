@@ -84,6 +84,7 @@ function addRow(url = '') {
       name="media[]"
       ${url ? `value="${escHtml(url)}"` : ''}
       placeholder="https://example.com/image.jpg"
+      aria-label="Image URL"
       class="input"
     />
     <button type="button"

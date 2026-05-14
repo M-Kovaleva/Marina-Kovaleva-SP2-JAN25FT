@@ -138,7 +138,7 @@ function profileTemplate() {
         </div>
 
         <!-- Listings tab -->
-        <div id="tab-listings" role="tabpanel" aria-labelledby="tab-btn-listings" tabindex="0">
+        <div id="tab-listings" role="tabpanel" aria-label="Listings" tabindex="0">
           <div id="profile-listings-loading" class="flex justify-center py-12">
             ${spinnerHtml('w-8 h-8')}
           </div>
@@ -157,7 +157,7 @@ function profileTemplate() {
         </div>
 
         <!-- Bids tab -->
-        <div id="tab-bids" role="tabpanel" aria-labelledby="tab-btn-bids" tabindex="0" class="hidden">
+        <div id="tab-bids" role="tabpanel" aria-label="Bids" tabindex="0" class="hidden">
           <div id="profile-bids-loading" class="flex justify-center py-12">
             ${spinnerHtml('w-8 h-8')}
           </div>
@@ -174,7 +174,7 @@ function profileTemplate() {
         </div>
 
         <!-- Wins tab -->
-        <div id="tab-wins" role="tabpanel" aria-labelledby="tab-btn-wins" tabindex="0" class="hidden">
+        <div id="tab-wins" role="tabpanel" aria-label="Wins" tabindex="0" class="hidden">
           <div id="profile-wins-loading" class="flex justify-center py-12">
             ${spinnerHtml('w-8 h-8')}
           </div>
