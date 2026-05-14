@@ -9,6 +9,7 @@
 
 import { initProfile, cleanupProfile } from '../handlers/profileHandler.js';
 import { getUser } from '../auth/storage.js';
+import { spinnerHtml } from '../utils/format.js';
 
 export class ProfileView {
   constructor(params) {
@@ -39,7 +40,7 @@ function profileTemplate() {
 
       <!-- Loading state -->
       <div id="profile-loading" class="flex flex-col items-center justify-center py-24 gap-4">
-        <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+        ${spinnerHtml('w-10 h-10')}
         <p class="text-text-secondary text-sm">Loading profile...</p>
       </div>
 
@@ -146,7 +147,7 @@ function profileTemplate() {
         <!-- Listings tab -->
         <div id="tab-listings">
           <div id="profile-listings-loading" class="flex justify-center py-12">
-            <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            ${spinnerHtml('w-8 h-8')}
           </div>
 
           <div id="profile-listings-grid"
@@ -165,7 +166,7 @@ function profileTemplate() {
         <!-- Bids tab -->
         <div id="tab-bids" class="hidden">
           <div id="profile-bids-loading" class="flex justify-center py-12">
-            <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            ${spinnerHtml('w-8 h-8')}
           </div>
 
           <div id="profile-bids-list" class="hidden space-y-3"></div>
@@ -182,7 +183,7 @@ function profileTemplate() {
         <!-- Wins tab -->
         <div id="tab-wins" class="hidden">
           <div id="profile-wins-loading" class="flex justify-center py-12">
-            <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            ${spinnerHtml('w-8 h-8')}
           </div>
 
           <div id="profile-wins-grid"

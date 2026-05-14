@@ -1,6 +1,6 @@
 /* Shared formatting helpers */
 
-//Escape strings before injecting into innerHTML (XSS protection)
+/** Escape strings before injecting into innerHTML (XSS protection). */
 export function escHtml(str) {
   if (!str) return '';
   return String(str)
@@ -10,7 +10,7 @@ export function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-//Format ISO date as "25 Apr 2026"
+/** Format ISO date as "25 Apr 2026". */
 export function formatDate(dateStr) {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -19,10 +19,11 @@ export function formatDate(dateStr) {
 }
 
 /**
- * Returns HTML for an image placeholder shown when a listing has no media
- * Used in listing cards, listing detail page, and profile bids list
+ * Returns HTML for an image placeholder shown when a listing has no media.
+ * Used in listing cards, listing detail page, and profile bids list.
+ * Stays consistent across the app.
  *
- * @returns {string}
+ * @returns {string} HTML markup
  */
 export function imagePlaceholderHtml() {
   return `
@@ -36,7 +37,26 @@ export function imagePlaceholderHtml() {
 }
 
 /**
- * Format a credit amount for display
+ * Returns HTML for a circular loading spinner.
+ *
+ * The base classes (border style, rounded-full, animate-spin) are always
+ * applied. Pass Tailwind size and spacing classes via extraClasses:
+ *
+ *   spinnerHtml('w-10 h-10')            — page-level loading
+ *   spinnerHtml('w-8 h-8')              — section / tab loading
+ *   spinnerHtml('w-12 h-12 mb-4')       — grid loading with margin
+ *
+ * @param {string} [extraClasses=''] - Tailwind size / spacing classes
+ * @returns {string} HTML markup
+ */
+export function spinnerHtml(extraClasses = '') {
+  return `<div class="border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin ${extraClasses}"></div>`;
+}
+
+/**
+ * Currently shows the raw number without thousand separators
+ * (e.g. 1000, not 1,000). Centralised so the format can be changed
+ * project-wide by editing one place.
  *
  * @param {number|null|undefined} amount
  * @returns {string}

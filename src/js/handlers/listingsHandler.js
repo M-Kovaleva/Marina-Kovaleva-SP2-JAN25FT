@@ -15,6 +15,7 @@ import { getListings, searchListings } from '../api/apiClient.js';
 import {
   createListingCards,
 } from '../components/ListingCard.js';
+import { spinnerHtml } from '../utils/format.js';
 
 // ─────────────────────────────────────────────
 // State
@@ -74,8 +75,7 @@ function showLoading() {
   els.grid.innerHTML = `
     <div class="col-span-full">
       <div class="flex flex-col items-center justify-center py-12 sm:py-16">
-        <div class="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary-200 border-t-primary-500
-                    rounded-full animate-spin mb-4"></div>
+        ${spinnerHtml('w-12 h-12 sm:w-16 sm:h-16 mb-4')}
         <p class="text-text-secondary text-sm sm:text-base">Loading listings...</p>
       </div>
     </div>
@@ -89,8 +89,7 @@ function showLoadingMore() {
   if (!els.loadMoreContainer) return;
   els.loadMoreContainer.innerHTML = `
     <div class="flex flex-col items-center justify-center py-8">
-      <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-500
-                  rounded-full animate-spin mb-2"></div>
+      ${spinnerHtml('w-8 h-8 mb-2')}
       <p class="text-text-secondary text-sm">Loading more...</p>
     </div>
   `;

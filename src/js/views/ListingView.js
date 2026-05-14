@@ -12,6 +12,7 @@ import {
   initListingDetail,
   cleanupListingDetail,
 } from '../handlers/listingDetailHandler.js';
+import { spinnerHtml } from '../utils/format.js';
 
 export class ListingView {
   constructor(params) {
@@ -42,7 +43,7 @@ function listingDetailTemplate() {
 
       <!-- Loading state -->
       <div id="listing-loading" class="flex flex-col items-center justify-center py-24 gap-4">
-        <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+        ${spinnerHtml('w-10 h-10')}
         <p class="text-text-secondary text-sm">Loading listing...</p>
       </div>
 
