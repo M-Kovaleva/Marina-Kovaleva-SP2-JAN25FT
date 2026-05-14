@@ -209,7 +209,7 @@ function profileTemplate() {
           <div class="relative flex min-h-full items-center justify-center p-4">
 
             <!-- Modal card -->
-            <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-5 my-4">
+            <div class="relative bg-white rounded-xl w-full max-w-md p-6 space-y-5 my-4">
 
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-bold text-text-primary">Edit Profile</h2>

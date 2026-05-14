@@ -16,7 +16,7 @@ function template() {
       <div class="relative flex min-h-full items-center justify-center p-4">
 
         <!-- Card -->
-        <div class="relative bg-white rounded-2xl w-full max-w-sm p-6 space-y-5 my-4">
+        <div class="relative bg-white rounded-xl w-full max-w-sm p-6 space-y-5 my-4">
 
           <!-- Close button -->
           <button id="login-required-close"

@@ -121,7 +121,7 @@
 
 /* === NAVIGATION === */
 .nav-link {
-  @apply text-text-secondary hover:text-primary-500 font-medium transition-colors;
+  @apply text-lg  text-text-secondary hover:text-primary-500 font-medium transition-colors;
 }
 
 .nav-link-mobile {
@@ -171,7 +171,7 @@
 }
 
 .auth-card {
-  @apply w-full max-w-md bg-white border border-border rounded-2xl p-6 sm:p-8;
+  @apply w-full max-w-md bg-white border border-border rounded-xl p-6 sm:p-8;
 }
 
 .auth-title {
