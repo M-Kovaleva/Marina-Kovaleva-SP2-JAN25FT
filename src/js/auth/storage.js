@@ -1,5 +1,4 @@
-/* Auth storage utilities - handles token and user data in localStorage
- */
+/* Auth storage utilities - handles token and user data in localStorage */
 
 // Storage keys
 const TOKEN_KEY = 'token';
@@ -65,8 +64,6 @@ export function updateUser(updates) {
 
 /**
  * Save auth data after login
- * Strips accessToken from user object so it's not duplicated
- * (token lives in TOKEN_KEY, user in USER_KEY)
  *
  * @param {string} token - access token
  * @param {Object} user  - user object from login/register response
@@ -78,9 +75,7 @@ export function saveAuth(token, user) {
   setUser(cleanUser);
 }
 
-/**
- * Clear all auth data - logout
- */
+//Clear all auth data - logout
 export function clearAuth() {
   removeToken();
   removeUser();

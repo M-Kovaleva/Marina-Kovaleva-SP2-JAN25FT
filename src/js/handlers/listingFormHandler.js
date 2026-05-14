@@ -1,22 +1,4 @@
-/**
- * Listing Form Handler
- *
- * Handles both "Create listing" and "Edit listing" modes.
- * Mode is determined by the presence of a listingId.
- *
- * Responsibilities:
- *   - Cancel button navigation
- *   - Media section: Add/Remove rows with 8-image limit
- *   - Edit mode: prefill form from existing listing data
- *   - Create mode: set datetime-local minimum to now
- *   - Form submit: validate → build payload → POST or PUT → redirect
- *
- * The only structural HTML difference between modes (readonly vs editable
- * end-date field) is handled in the template — this handler assumes the
- * correct variant is already in the DOM.
- *
- * Must be called after CreateListingView's HTML is in the DOM.
- */
+/*  Listing form handler */
 
 import { createListing, getListing, updateListing } from '../api/apiClient.js';
 import { navigateTo } from '../router/router.js';
@@ -29,20 +11,11 @@ import {
 } from '../utils/validation.js';
 import { showBlockError, hideBlockError } from '../utils/formState.js';
 
-// ─────────────────────────────────────────────
-// Module state
-// ─────────────────────────────────────────────
-
 let listingId = null;
 let isEditMode = false;
 
-// ─────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────
-
 /**
- * Entry point. Wire all event handlers and optionally prefill the form.
- *
+ * Entry point. Wire all event handlers and optionally prefill the form
  * @param {string|null} id       - listing ID (null in create mode)
  * @param {boolean}     editMode - true when editing an existing listing
  */
@@ -51,7 +24,7 @@ export async function initListingForm(id, editMode) {
   isEditMode = editMode;
 
   initCancelButton();
-  initMediaSection(); // wires Add button; container is empty in the template
+  initMediaSection(); //wires Add button, container is empty in the template
 
   if (isEditMode) {
     // Prefill adds the media rows (with real URLs)
@@ -66,16 +39,13 @@ export async function initListingForm(id, editMode) {
   initFormSubmit();
 }
 
-/** Reset module state when leaving the page. */
+// Reset module state when leaving the page
 export function cleanupListingForm() {
   listingId = null;
   isEditMode = false;
 }
 
-// ─────────────────────────────────────────────
 // Cancel button
-// ─────────────────────────────────────────────
-
 function initCancelButton() {
   document.getElementById('cancel-btn')?.addEventListener('click', () => {
     if (isEditMode && listingId) {
@@ -88,14 +58,7 @@ function initCancelButton() {
   });
 }
 
-// ─────────────────────────────────────────────
 // Media section
-// ─────────────────────────────────────────────
-
-/**
- * Wire the "Add image" button. Does NOT create the initial row —
- * that is done by callers (create mode: addRow(), edit mode: prefillForm).
- */
 function initMediaSection() {
   document.getElementById('add-media-btn')?.addEventListener('click', () => {
     const addBtn = document.getElementById('add-media-btn');
@@ -107,12 +70,8 @@ function initMediaSection() {
 }
 
 /**
- * Single source of truth for a media URL row.
- * Used in three situations: initial empty row (create mode),
- * prefilled rows (edit mode), and dynamically added rows.
- *
- * The Remove button is wired internally — callers don't need to do it.
- *
+ * Single source of truth for a media URL row. Used in three situations: initial empty row (create mode),prefilled rows (edit mode), and dynamically added rows.
+ * The Remove button is wired internally — callers don't need to do it
  * @param {string} [url=''] - pre-populate the URL input
  */
 function addRow(url = '') {
@@ -141,7 +100,7 @@ function addRow(url = '') {
     });
 }
 
-/** Disable "Add image" when the 8-image limit is reached. */
+// Disable "Add image" when the 8-image limit is reached
 function updateAddBtnState() {
   const container = document.getElementById('media-container');
   const addBtn = document.getElementById('add-media-btn');
@@ -150,10 +109,7 @@ function updateAddBtnState() {
   addBtn.disabled = count >= 8;
 }
 
-// ─────────────────────────────────────────────
 // Prefill (edit mode)
-// ─────────────────────────────────────────────
-
 async function prefillForm() {
   try {
     const response = await getListing(listingId, false, false);
@@ -179,8 +135,7 @@ async function prefillForm() {
       }
     }
 
-    // Populate media rows — always show at least one row so the user
-    // has somewhere to add an image even if the listing had none
+    // Populate media rows — always show at least one row so the user has somewhere to add an image even if the listing had none
     if (listing.media?.length) {
       listing.media.forEach((item) => addRow(item.url));
     } else {
@@ -192,11 +147,8 @@ async function prefillForm() {
   }
 }
 
-// ─────────────────────────────────────────────
 // Date minimum (create mode)
-// ─────────────────────────────────────────────
-
-/** Prevent selecting dates in the past. */
+//Prevent selecting dates in the past
 function setDateMinimum() {
   const endsAtInput = document.getElementById('endsAt');
   if (!endsAtInput) return;
@@ -208,10 +160,7 @@ function setDateMinimum() {
     `T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
-// ─────────────────────────────────────────────
 // Form submit
-// ─────────────────────────────────────────────
-
 function initFormSubmit() {
   document
     .getElementById('listing-form')
@@ -238,8 +187,7 @@ async function handleSubmit(e) {
 
   const { isValid, errors } = validateListingForm(data);
   if (!isValid) {
-    // Field-level errors go inline under their inputs.
-    // Media error goes to the top-level block (multiple inputs share it).
+    // Field-level errors go inline under their inputs. Media error goes to the top-level block (multiple inputs share it)
     const fieldErrors = { ...errors };
     delete fieldErrors.media;
     showValidationErrors(form, fieldErrors);
@@ -274,9 +222,7 @@ async function handleSubmit(e) {
 }
 
 /**
- * Collect all media URL inputs into the format the API expects.
- * Empty inputs are filtered out.
- *
+ * Collect all media URL inputs into the format the API expects. Empty inputs are filtered out.
  * @returns {{ url: string, alt: string }[]}
  */
 function collectMedia() {
@@ -287,11 +233,8 @@ function collectMedia() {
 }
 
 /**
- * Build the API payload from validated data.
- *
- * Edit mode always sends media (even an empty array) so the server
- * can clear removed images. Create mode omits media if there are none.
- *
+ * Build the API payload from validated data. Edit mode always sends media (even an empty array) so the server 
+ * can clear removed images. Create mode omits media if there are none
  * @param {{ title, description, endsAt, media }} data
  * @returns {Object}
  */
@@ -313,10 +256,7 @@ function buildPayload(data) {
   return payload;
 }
 
-// ─────────────────────────────────────────────
 // Loading / error UI helpers
-// ─────────────────────────────────────────────
-
 function setLoading(loading) {
   const btn = document.getElementById('submit-btn');
   const inputs = document.querySelectorAll(

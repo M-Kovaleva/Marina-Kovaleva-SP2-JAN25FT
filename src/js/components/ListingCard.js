@@ -1,10 +1,8 @@
+/* Listing card component */
+
 import { imagePlaceholderHtml } from '../utils/format.js';
 import { formatTimeLeft } from '../utils/time.js';
 import { getListingStatus } from '../utils/listing.js';
-/**
- * Listing Card Component
- * Reusable card for displaying listing previews
- */
 
 /**
  * Get the current highest bid from bids array
@@ -17,11 +15,7 @@ function getCurrentBid(bids) {
   return Math.max(...bids.map((bid) => bid.amount));
 }
 
-/**
- * Get listing status based on end date.
- * Defined in utils/listing.js — re-exported here for backwards compatibility
- * with any code that imports it from this module.
- */
+//Get listing status based on end date.
 export { getListingStatus } from '../utils/listing.js';
 
 /**

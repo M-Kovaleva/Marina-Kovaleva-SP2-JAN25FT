@@ -1,26 +1,14 @@
-/**
- * Navigation Component
- * Handles auth state display in the navbar.
- */
+/* Navigation component - handles auth state display in the navbar */
 
 import { isLoggedIn, getUser, clearAuth } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
 
-/**
- * Initialize navigation.
- * Call once on app start — wires mobile menu and sets the initial auth state.
- */
+//Initialize navigation - call once on app start
 export function initNav() {
   updateNavAuth();
-  // Note: initLogoutHandler() is NOT called here separately.
-  // updateNavAuth() calls it in the logged-in branch, which is the only
-  // time there is a logout button to wire up.
 }
 
-/**
- * Sync navbar UI with the current auth state.
- * Safe to call multiple times (e.g. after placing a bid to refresh credits).
- */
+// Sync navbar UI with the current auth state, safe to call multiple times (after placing a bid to refresh credits)
 export function updateNavAuth() {
   const user     = getUser();
   const loggedIn = isLoggedIn();
@@ -44,8 +32,7 @@ export function updateNavAuth() {
   ].filter(Boolean);
 
   if (loggedIn && user) {
-    // ── Logged-in state ──────────────────────────────
-
+    // Logged-in state 
     profileLink?.classList.remove('hidden');
 
     if (authLink) {
@@ -76,18 +63,12 @@ export function updateNavAuth() {
 
     createBtns.forEach((btn) => { btn.href = '/listing/create'; });
 
-    // Wire logout handlers now that the elements have their logout IDs.
-    // initLogoutHandler uses removeEventListener + addEventListener so
-    // calling it multiple times (on each updateNavAuth) never duplicates
-    // the handler — there is always exactly one click listener.
     initLogoutHandler();
   } else {
-    // ── Logged-out state ─────────────────────────────
+    // Logged-out state
 
     profileLink?.classList.add('hidden');
 
-    // The element may currently have id="logout-link" (user just logged out)
-    // or id="auth-link" (fresh page load). Handle both.
     const link = authLink ?? document.getElementById('logout-link');
     if (link) {
       link.textContent = 'Login';
@@ -115,9 +96,7 @@ export function updateNavAuth() {
   }
 }
 
-/**
- * Update only the credits display (called after bid placed / profile sync).
- */
+// Update only the credits display (called after bid placed / profile sync)
 export function updateCredits(credits) {
   const creditsAmount       = document.getElementById('credits-amount');
   const creditsAmountMobile = document.getElementById('credits-amount-mobile');
@@ -125,19 +104,7 @@ export function updateCredits(credits) {
   if (creditsAmountMobile) creditsAmountMobile.textContent = credits;
 }
 
-// ─────────────────────────────────────────────
 // Logout
-// ─────────────────────────────────────────────
-
-/**
- * Attach the logout click handler.
- *
- * Uses removeEventListener before addEventListener so this function is
- * idempotent — calling it N times results in exactly one handler on each
- * element. This prevents the double-handler bug that would occur if
- * updateNavAuth() (which calls this) is invoked multiple times while
- * the user is logged in.
- */
 function initLogoutHandler() {
   const logoutLink       = document.getElementById('logout-link');
   const logoutLinkMobile = document.getElementById('logout-link-mobile');

@@ -1,26 +1,11 @@
-/**
- * Hero Handler
- *
- * Loads and renders the "hottest" active listing in the home page hero.
- * "Hottest" = active auction with the most bids.
- * Falls back to a static welcome card when no qualifying listing exists.
- *
- * Must be called AFTER HomeView's HTML is in the DOM — relies on
- * #hero-loading, #hero-listing, #hero-fallback, etc.
- */
+/* Hero handler */
 
 import { getListings } from '../api/apiClient.js';
 import { formatCredits } from '../utils/format.js';
 import { formatTimeLeft } from '../utils/time.js';
 
-// Pull a generous batch — the API doesn't sort by bid count server-side,
-// so we filter+sort client-side.
 const HERO_FETCH_LIMIT = 100;
 
-/**
- * Entry point. Loads data, picks the hottest listing, renders it.
- * Safe to call once — does nothing if the hero DOM is absent.
- */
 export async function initHero() {
   const loadingEl = document.getElementById('hero-loading');
   const listingEl = document.getElementById('hero-listing');
@@ -45,14 +30,8 @@ export async function initHero() {
   }
 }
 
-// ─────────────────────────────────────────────
-// Data
-// ─────────────────────────────────────────────
-
 /**
- * Fetch a batch of active listings and pick the one with the most bids.
- * Returns undefined if no listing has any bids.
- *
+ * Fetch an active listings and pick the one with the most bids, returns undefined if no listing has any bids.
  * @returns {Promise<Object|undefined>}
  */
 async function fetchHottestListing() {
@@ -68,12 +47,9 @@ async function fetchHottestListing() {
     .sort((a, b) => (b._count?.bids ?? 0) - (a._count?.bids ?? 0))[0];
 }
 
-// ─────────────────────────────────────────────
-// Rendering
-// ─────────────────────────────────────────────
-
+//  Rendering
 /**
- * Populate hero DOM nodes from a listing object.
+ * Populate hero DOM nodes from a listing object
  * @param {Object} listing
  */
 function renderHero(listing) {
@@ -129,7 +105,7 @@ function renderImage(listing) {
   img.alt = listing.media[0].alt || listing.title || '';
 }
 
-/** Reveal the hero listing container. */
+// Show  the hero listing container
 function showHeroListing(el) {
   el.classList.remove('hidden');
 }

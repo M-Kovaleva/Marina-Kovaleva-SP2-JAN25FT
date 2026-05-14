@@ -1,12 +1,8 @@
-/** 
- * User Sync
- * 
- * The /auth/login and /auth/register responses don't include `credits`
- * To get the full picture (credits, _count) we need a separate call to /auction/profiles/:name. 
- * This helper does that and merges the result into local storage so the navbar and any view reading from storage have a single source of truth.
- *
- * Call it after successful login, successful register (auto-login), on ProfileView load if it's the user's own profile, after a successful bid (credits change server-side)
- */
+/* User Sync: the /auth/login and /auth/register responses don't include `credits`.
+To get the credits, _count  need a separate call to /auction/profiles/:name.
+This helper does that and merges the result into local storage so the navbar and any view reading from storage have a single source of truth.
+Call it after successful login, successful register (auto-login), on ProfileView load if it's the user's own profile, after a successful bid (credits change server-side)
+*/
 
 import { getProfile } from '../api/apiClient.js';
 import { updateUser } from './storage.js';
@@ -15,7 +11,7 @@ import { updateUser } from './storage.js';
  * Fetch the authenticated user's profile and merge into local storage
  * @param {string} name - profile name (username)
  * @returns {Promise<Object>} - the fetched profile object
- * @throws Re-throws API errors. Callers should decide how to handle
+ * @throws Re-throws API errors
  */
 export async function syncUserFromProfile(name) {
   const response = await getProfile(name);

@@ -1,7 +1,4 @@
-/**
- * Register Handler
- * Handles register form submission
- */
+/* Register handler */
 
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
@@ -12,10 +9,7 @@ import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { navigateTo } from '../router/router.js';
 
-/**
- * Initialize register form handler
- * Call this in RegisterView.init()
- */
+//Initialize register form handler - call this in RegisterView.init()
 export function initRegisterHandler() {
   const form = document.getElementById('register-form');
   const errorContainer = document.getElementById('register-error');
@@ -44,28 +38,27 @@ export function initRegisterHandler() {
     setFormLoading(form, true, { busy: 'Creating account...', idle: 'Create account' });
 
     try {
-      // 1. Create the account
+      // Create the account
       await register(data);
 
-      // 2. Auto-login to get access token
+      // Auto-login to get access token
       const loginResponse = await login({
         email: data.email,
         password: data.password,
       });
       saveAuth(loginResponse.data.accessToken, loginResponse.data);
 
-      // 3. Sync full profile (login response lacks credits — Noroff API quirk)
+      // Sync full profile 
       try {
         await syncUserFromProfile(loginResponse.data.name);
       } catch (syncErr) {
-        // Non-fatal: account created, user logged in, credits sync later.
         console.warn('Profile sync failed after register:', syncErr.message);
       }
 
-      // 4. Update navbar with fresh data
+      // Update navbar with fresh data
       updateNavAuth();
 
-      // 5. Show success and redirect
+      // Show success and redirect
       showSuccessToast('Account created.');
       setTimeout(() => navigateTo('/'), 1500);
     } catch (error) {

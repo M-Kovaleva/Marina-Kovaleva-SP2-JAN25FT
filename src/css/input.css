@@ -1,18 +1,11 @@
-/* ============================================
-   Google Fonts Import (2 fonts: body + heading)
-   ============================================ */
+/* Google fonts import */
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap");
 
-/* ============================================
-   Tailwind v4 Import
-   ============================================ */
+/* Tailwind v4 Import */
 @import "tailwindcss";
 
-/* ============================================
-   Theme Configuration
-   ============================================ */
 @theme {
-  /* === COLORS (Stripe-inspired) === */
+  /* Colors */
   --color-primary-50: #f5f3ff;
   --color-primary-100: #ede9fe;
   --color-primary-200: #ddd6fe;
@@ -24,15 +17,15 @@
   --color-primary-800: #3730a3;
   --color-primary-900: #312e81;
 
-  /* === SURFACE COLORS === */
+  /* Surface colors */
   --color-surface: #f6f9fc;
   --color-border: #e3e8ef;
 
-  /* === TEXT COLORS === */
+  /* Text colors */
   --color-text-primary: #1a1f36;
   --color-text-secondary: #697386;
 
-  /* === STATUS COLORS === */
+  /* Status colors */
   --color-success: #34d399;
   --color-success-text: #14532d;
   --color-error-text: #b91c1c;
@@ -40,27 +33,25 @@
   --color-error: #ef4444;
   --color-warning: #f59e0b;
 
-  /* === FONTS (2 fonts) === */
+  /* Typography */
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-heading: "Playfair Display", Georgia, serif;
 
-  /* === CUSTOM SPACING === */
+  /* Spacing */
   --spacing-section: 6rem;
   --spacing-card: 1.5rem;
   --spacing-tight: 0.125rem;
 
-  /* === CUSTOM BORDER RADIUS === */
+  /* Border radius */
   --radius-card: 1rem;
   --radius-button: 0.5rem;
   --radius-input: 0.5rem;
   --radius-full: 9999px;
 }
 
-/* ============================================
-   Reusable Components
-   ============================================ */
+/* Reusable Components */
 
-/* === BASE BUTTON STYLES === */
+/* Base button styles */
 .btn,
 .btn-primary,
 .btn-secondary,
@@ -85,7 +76,7 @@
   @apply px-3 py-2 bg-error text-white rounded-lg hover:bg-red-600 focus-visible:ring-error;
 }
 
-/* === FORM INPUTS === */
+/* Form inputs */
 .input,
 .input-error {
   @apply w-full px-4 py-3 bg-white border-2 border-border rounded-lg text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:outline-none focus:border-primary-500;
@@ -119,7 +110,7 @@
   @apply p-6;
 }
 
-/* === NAVIGATION === */
+/* Navigation */
 .nav-link {
   @apply text-lg text-text-secondary hover:text-primary-500 font-medium transition-colors;
 }
@@ -128,7 +119,7 @@
   @apply text-lg font-medium text-text-primary hover:text-primary-500 transition-colors;
 }
 
-/* === BADGES === */
+/* Badges */
 .badge,
 .badge-success,
 .badge-error,
@@ -152,7 +143,7 @@
   @apply inline-flex items-center text-xs font-semibold rounded-full bg-primary-50 text-primary-600 px-3 py-1.5 gap-1.5;
 }
 
-/* === PAGE LAYOUT === */
+/* Page layout */
 .page-container {
   @apply max-w-6xl mx-auto px-4 py-8;
 }
@@ -165,7 +156,7 @@
   @apply text-text-secondary mb-8;
 }
 
-/* === AUTH CARD === */
+/* Auth card */
 .auth-container {
   @apply min-h-[80vh] flex items-center justify-center px-4 py-8;
 }
@@ -182,58 +173,29 @@
   @apply text-text-secondary text-center mb-8;
 }
 
-/* === MOBILE MENU BUTTON === */
+/* Mobile menu button */
 .btn-menu {
   @apply p-2 rounded-lg text-text-primary hover:bg-gray-100 transition-colors;
 }
 
-/* Base tab — applies to all tabs (inactive look) */
+/* Tabs */
 .tab-btn {
   @apply pb-3 px-4 text-sm sm:text-base font-medium
          whitespace-nowrap border-b-2 border-transparent
          text-text-secondary transition-colors cursor-pointer;
 }
 
-/* Hover — only for INACTIVE tabs */
+/* Tabs hover */
 .tab-btn:not(.tab-active):hover {
   @apply text-text-primary;
 }
 
-/* Active tab — overrides base look, has NO hover effect */
+/* Active tab */
 .tab-active {
   @apply text-primary-500 border-primary-500;
 }
-/* ============================================
-   Touch device fixes
-   
-   On touch devices (no hover capability), Tailwind's hover:
-   utilities trigger on tap and stay active until you tap
-   somewhere else — making cards "stick" in their lifted state.
-   
-   We strip transform hovers (the visible artifact) but keep
-   color hovers, which are subtle and harmless on mobile.
-   ============================================ */
-@media (hover: none) {
-  .card:hover,
-  article:hover,
-  .btn:hover,
-  .btn-primary:hover,
-  .btn-secondary:hover,
-  .btn-ghost:hover,
-  .btn-danger:hover {
-    transform: none !important;
-  }
 
-}
-/* ============================================
-   Grid & Flex Layout Components
-
-   Defined in @layer components so Tailwind's
-   hidden utility (display: none) always wins
-   when applied alongside these classes.
-   No style.display overrides needed in JS —
-   classList.remove('hidden') is sufficient.
-   ============================================ */
+/* Grid and flex layout components */
 @layer components {
   /* Standard listing cards grid — home feed and profile tabs */
   .listing-cards-grid {
@@ -253,26 +215,20 @@
     @apply grid-cols-1 gap-6 items-center md:grid-cols-2 md:gap-10;
   }
 
-  /* Owner action buttons bar on listing detail page */
+  /* Owner action buttons on listing detail page */
   .owner-actions-bar {
     display: flex;
     @apply shrink-0 gap-2;
   }
 
-  /* Vertically centred page state — used for error and loading states
-     that need to fill the viewport height (profile-error, listing-error).
-     hidden utility overrides display:flex when the state is inactive. */
+  /* Vertically centred page state — used for error and loading states */
   .page-state-centered {
     display: flex;
     @apply min-h-[70vh] items-center justify-center px-4 sm:min-h-[80vh];
   }
 }
 
-/* ============================================
-   Toast Notifications
-   Floating notifications appearing top-right.
-   Auto-dismiss after 2.5s.
-   ============================================ */
+/* Toast */
 .toast {
   @apply fixed bottom-6 left-1/2 z-50
          -translate-x-1/2
@@ -285,4 +241,18 @@
 
 .toast-success {
   @apply bg-green-100 border-success text-success-text;
+}
+
+/* Touch devices: ono hover capability */
+@media (hover: none) {
+  .card:hover,
+  article:hover,
+  .btn:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-ghost:hover,
+  .btn-danger:hover {
+    transform: none !important;
+  }
+
 }

@@ -1,15 +1,4 @@
-/**
- * Listing Detail Handler
- *
- * Orchestrator for the single listing page:
- *   - fetches the listing
- *   - renders gallery, basic info, description, seller card,
- *     bid summary, bid history, owner actions
- *   - runs the live countdown until auction end
- *   - delegates the bid form (5-state machine) to bidFormHandler
- *
- * Must be called after ListingView's HTML is in the DOM.
- */
+/* Listing detail handler */
 
 import { getListing, deleteListing } from '../api/apiClient.js';
 import { getUser } from '../auth/storage.js';
@@ -30,18 +19,10 @@ import {
   cleanupBidForm,
 } from './bidFormHandler.js';
 
-// ─────────────────────────────────────────────
-// Module state
-// ─────────────────────────────────────────────
-
 let countdownInterval = null;
 
-// ─────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────
-
 /**
- * Entry point. Fetch listing, render everything, start the countdown.
+ * Fetch listing, render everything, start the countdown
  * @param {string} listingId
  */
 export async function initListingDetail(listingId) {
@@ -74,10 +55,7 @@ export async function initListingDetail(listingId) {
   }
 }
 
-/**
- * Called by the router (via ListingView.destroy) when leaving the page.
- * Stops the countdown and resets bidForm module state.
- */
+// Called by the router via ListingView.destroy when leaving the page, stops the countdown and resets bidForm module state
 export function cleanupListingDetail() {
   resetState();
   cleanupBidForm();
@@ -90,9 +68,7 @@ function resetState() {
   }
 }
 
-// ─────────────────────────────────────────────
 // Page-level loading / error states
-// ─────────────────────────────────────────────
 
 function showContent() {
   document.getElementById('listing-loading').classList.add('hidden');
@@ -104,10 +80,7 @@ function showError() {
   document.getElementById('listing-error').classList.remove('hidden');
 }
 
-// ─────────────────────────────────────────────
 // Basic info: title + status badge
-// ─────────────────────────────────────────────
-
 function renderBasicInfo(listing) {
   document.getElementById('listing-title').textContent = listing.title;
 
@@ -117,18 +90,7 @@ function renderBasicInfo(listing) {
   badge.className = status.cssClass;
 }
 
-// ─────────────────────────────────────────────
 // Gallery (main image + thumbnails)
-// ─────────────────────────────────────────────
-
-/**
- * Cases:
- *   0 images → placeholder SVG in main slot, no thumbnails
- *   1 image  → main image only, no thumbnails
- *   2+ images → main image + scrollable thumbnail row
- *               clicking a thumbnail swaps main image (fade transition)
- *               active thumbnail has primary border
- */
 function renderGallery(media) {
   const mainImg = document.getElementById('gallery-main');
   const thumbsWrap = document.getElementById('gallery-thumbnails');
@@ -193,10 +155,7 @@ function renderGallery(media) {
   });
 }
 
-// ─────────────────────────────────────────────
 // Description and seller card
-// ─────────────────────────────────────────────
-
 function renderDescription(description) {
   const block = document.getElementById('listing-description-block');
   const el = document.getElementById('listing-description');
@@ -223,10 +182,7 @@ function renderSellerCard(seller, created) {
     formatDate(created);
 }
 
-// ─────────────────────────────────────────────
-// Bid summary (current bid + count)
-// ─────────────────────────────────────────────
-
+// Bid summary - current bid + count
 function renderBidSummary(listing) {
   const bids = listing.bids ?? [];
   const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
@@ -237,19 +193,12 @@ function renderBidSummary(listing) {
     `${bids.length} ${bids.length === 1 ? 'bid' : 'bids'}`;
 }
 
-// ─────────────────────────────────────────────
-// Live countdown
-// ─────────────────────────────────────────────
-
-/**
- * Tick once per second. Format depends on remaining time:
- *   >= 1 day  → "2d 5h 23m 14s" (green)
- *   <  1 day  → "05:23:14" (amber)
- *   == 0      → "Auction ended" (red), and:
- *               · status badge → ended
- *               · bid form     → state-ended
- *               · owner actions → hidden (listing becomes immutable)
- */
+/* Live countdown.
+Tick once per second. Format depends on remaining time:
+>= 1 day - 2d 5h 23m 14s (green)
+<  1 day - 05:23:14 (orange)
+0 -"Auction ended" (red), and: status badge - ended, bid form - state-ended, owner actions - hidden
+*/
 function startCountdown(endsAt) {
   const countdownEl = document.getElementById('countdown');
   const endsDateEl = document.getElementById('listing-ends-date');
@@ -310,10 +259,7 @@ function startCountdown(endsAt) {
   countdownInterval = setInterval(tick, 1000);
 }
 
-// ─────────────────────────────────────────────
 // Bid history
-// ─────────────────────────────────────────────
-
 function renderBidHistory(bids) {
   const container = document.getElementById('bid-history');
   const currentUser = getUser();
@@ -378,19 +324,7 @@ function renderBidHistory(bids) {
     .join('');
 }
 
-// ─────────────────────────────────────────────
-// Owner actions (Edit / Delete)
-// ─────────────────────────────────────────────
-
-/**
- * Show Edit/Delete buttons only when:
- *   - current user is the listing's seller, AND
- *   - the auction has not ended yet
- *
- * Once an auction ends, the listing becomes immutable in the UI.
- * The API likely rejects changes too, but hiding the buttons gives
- * clearer UX than letting the user click and see an error.
- */
+// Owner actions: Edit / Delete
 function renderOwnerActions(listing) {
   const currentUser = getUser();
   const isOwner =
@@ -409,9 +343,7 @@ function renderOwnerActions(listing) {
     .addEventListener('click', () => handleDelete(listing.id));
 }
 
-/**
- * Called by the countdown when auction ends live on the page.
- */
+//Called by the countdown when auction ends live on the page
 function hideOwnerActions() {
   const actions = document.getElementById('owner-actions');
   if (actions) {
