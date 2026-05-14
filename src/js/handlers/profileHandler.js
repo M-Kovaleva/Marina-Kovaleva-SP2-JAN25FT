@@ -137,7 +137,7 @@ function applyBannerEl(bannerEl, banner) {
   bannerEl.innerHTML = '';
 
   if (!banner?.url?.trim()) {
-    bannerEl.classList.add('bg-gradient-to-r', 'from-primary-500', 'to-primary-600');
+    bannerEl.classList.add('bg-linear-to-r', 'from-primary-500', 'to-primary-600');
     return;
   }
 
@@ -146,10 +146,10 @@ function applyBannerEl(bannerEl, banner) {
   img.className = 'w-full h-full object-cover';
   img.onerror = () => {
     img.remove();
-    bannerEl.classList.add('bg-gradient-to-r', 'from-primary-500', 'to-primary-600');
+    bannerEl.classList.add('bg-linear-to-r', 'from-primary-500', 'to-primary-600');
   };
 
-  bannerEl.classList.remove('bg-gradient-to-r', 'from-primary-500', 'to-primary-600');
+  bannerEl.classList.remove('bg-linear-to-r', 'from-primary-500', 'to-primary-600');
   bannerEl.appendChild(img);
   img.src = banner.url; // set src last so onerror is wired before load starts
 }
@@ -206,7 +206,6 @@ function renderEditButton() {
   if (!wrap || !btn) return;
 
   wrap.classList.remove('hidden');
-  wrap.style.display = '';
   btn.addEventListener('click', openEditModal);
 }
 
@@ -293,7 +292,6 @@ async function loadListings() {
 
     gridEl.innerHTML = createListingCards(listings);
     gridEl.classList.remove('hidden');
-    gridEl.style.display = 'grid';
   } catch {
     loadingEl.classList.add('hidden');
     emptyEl.classList.remove('hidden');
@@ -343,7 +341,7 @@ function bidRow(bid) {
       class="group flex items-center gap-4 p-4 card">
 
       <!-- Thumbnail -->
-      <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+      <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface shrink-0">
         ${
           imageUrl
             ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(title)}"
@@ -361,7 +359,7 @@ function bidRow(bid) {
       </div>
 
       <!-- Bid amount and status -->
-      <div class="text-right flex-shrink-0">
+      <div class="text-right shrink-0">
         <p class="font-bold text-primary-500 text-sm">
           ${formatCredits(bid.amount)}
           <span class="text-xs font-normal text-text-secondary">cr</span>
@@ -399,7 +397,6 @@ async function loadWins() {
 
     gridEl.innerHTML = createListingCards(wins);
     gridEl.classList.remove('hidden');
-    gridEl.style.display = 'grid';
   } catch {
     loadingEl.classList.add('hidden');
     emptyEl.classList.remove('hidden');

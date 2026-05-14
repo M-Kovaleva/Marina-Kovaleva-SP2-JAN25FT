@@ -77,7 +77,7 @@ function listingDetailTemplate() {
             <!-- Thumbnails — hidden when 0 or 1 image -->
             <div
               id="gallery-thumbnails"
-              class="hidden grid-cols-5 gap-2">
+              class="gallery-thumbnails-grid hidden">
             </div>
 
           </div>
@@ -93,11 +93,11 @@ function listingDetailTemplate() {
             <!-- Title + owner actions -->
             <div class="flex items-start justify-between gap-3 min-w-0">
               <h1 id="listing-title"
-                class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight break-words min-w-0">
+                class="text-2xl sm:text-3xl font-bold text-text-primary leading-tight wrap-break-word min-w-0">
               </h1>
 
               <!-- Owner-only actions, toggled by listingDetailHandler -->
-              <div id="owner-actions" class="hidden flex-shrink-0 flex gap-2">
+              <div id="owner-actions" class="owner-actions-bar hidden">
                 <a id="edit-listing-btn" href="#" data-link
                   class="btn-secondary text-sm">
                   Edit
@@ -115,14 +115,14 @@ function listingDetailTemplate() {
                 Description
               </h2>
               <p id="listing-description"
-                class="text-text-primary leading-relaxed whitespace-pre-line break-words">
+                class="text-text-primary leading-relaxed whitespace-pre-line wrap-break-word">
               </p>
             </div>
 
             <!-- Seller card -->
             <div class="flex items-center gap-3 py-4 bg-surface rounded-xl">
               <div id="seller-avatar"
-                class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-200">
+                class="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-gray-200">
               </div>
               <div class="min-w-0">
                 <p class="text-xs text-text-secondary mb-0.5">Seller</p>
@@ -130,7 +130,7 @@ function listingDetailTemplate() {
                   class="font-semibold text-text-primary hover:text-primary-500 transition-colors truncate block">
                 </a>
               </div>
-              <div class="ml-auto text-right flex-shrink-0">
+              <div class="ml-auto text-right shrink-0">
                 <p class="text-xs text-text-secondary mb-0.5">Listed on</p>
                 <p id="listing-created-date" class="text-xs font-medium text-text-primary"></p>
               </div>

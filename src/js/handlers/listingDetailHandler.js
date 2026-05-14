@@ -156,7 +156,6 @@ function renderGallery(media) {
   if (media.length < 2) return;
 
   thumbsWrap.classList.remove('hidden');
-  thumbsWrap.style.display = 'grid';
 
   thumbsWrap.innerHTML = media
     .map(
@@ -349,7 +348,7 @@ function renderBidHistory(bids) {
                     ${isHighest ? 'bg-primary-50' : ''}
                     ${isOwn && !isHighest ? 'bg-warning/5' : ''}">
 
-          <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gray-200">
+          <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-gray-200">
             ${avatarHtml}
           </div>
 
@@ -369,7 +368,7 @@ function renderBidHistory(bids) {
             </p>
           </div>
 
-          <p class="font-bold text-sm flex-shrink-0
+          <p class="font-bold text-sm shrink-0
                     ${isHighest ? 'text-primary-600' : 'text-text-primary'}">
             ${formatCredits(bid.amount)}
             <span class="font-normal text-text-secondary text-xs">credits</span>
@@ -402,7 +401,6 @@ function renderOwnerActions(listing) {
 
   const actions = document.getElementById('owner-actions');
   actions.classList.remove('hidden');
-  actions.style.display = 'flex';
 
   document.getElementById('edit-listing-btn').href =
     `/listing/${listing.id}/edit`;
@@ -413,14 +411,11 @@ function renderOwnerActions(listing) {
 
 /**
  * Called by the countdown when auction ends live on the page.
- * Must clear the inline style.display set by renderOwnerActions,
- * otherwise it overrides the Tailwind .hidden class.
  */
 function hideOwnerActions() {
   const actions = document.getElementById('owner-actions');
   if (actions) {
     actions.classList.add('hidden');
-    actions.style.display = '';
   }
 }
 

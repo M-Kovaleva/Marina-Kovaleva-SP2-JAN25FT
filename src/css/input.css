@@ -35,6 +35,8 @@
   /* === STATUS COLORS === */
   --color-success: #34d399;
   --color-success-text: #14532d;
+  --color-error-text: #b91c1c;
+  --color-warning-text: #78350f;
   --color-error: #ef4444;
   --color-warning: #f59e0b;
 
@@ -102,7 +104,7 @@
 }
 
 .alert-error {
-  @apply text-error text-sm font-medium break-words;
+  @apply text-error text-sm font-medium wrap-break-word;
 }
 
 .field-error {
@@ -130,25 +132,24 @@
 .badge,
 .badge-success,
 .badge-error,
-.badge-warning,
-.badge-credits {
+.badge-warning {
   @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full;
 }
 
 .badge-success {
-  @apply bg-success/90 text-green-900;
+  @apply bg-success/90 text-success-text;
 }
 
 .badge-error {
-  @apply bg-error/50 text-red-700;
+  @apply bg-error/50 text-error-text;
 }
 
 .badge-warning {
-  @apply bg-warning/90 text-amber-900;
+  @apply bg-warning/90 text-warning-text;
 }
 
 .badge-credits {
-  @apply bg-primary-50 text-primary-600 px-3 py-1.5 gap-1.5;
+  @apply inline-flex items-center text-xs font-semibold rounded-full bg-primary-50 text-primary-600 px-3 py-1.5 gap-1.5;
 }
 
 /* === PAGE LAYOUT === */
@@ -225,22 +226,55 @@
 
 }
 /* ============================================
+   Grid & Flex Layout Components
+
+   Defined in @layer components so Tailwind's
+   hidden utility (display: none) always wins
+   when applied alongside these classes.
+   No style.display overrides needed in JS —
+   classList.remove('hidden') is sufficient.
+   ============================================ */
+@layer components {
+  /* Standard listing cards grid — home feed and profile tabs */
+  .listing-cards-grid {
+    display: grid;
+    @apply grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3;
+  }
+
+  /* Gallery thumbnail strip on listing detail page */
+  .gallery-thumbnails-grid {
+    display: grid;
+    @apply grid-cols-5 gap-2;
+  }
+
+  /* Hero listing section on home page */
+  .hero-listing-grid {
+    display: grid;
+    @apply grid-cols-1 gap-6 items-center md:grid-cols-2 md:gap-10;
+  }
+
+  /* Owner action buttons bar on listing detail page */
+  .owner-actions-bar {
+    display: flex;
+    @apply shrink-0 gap-2;
+  }
+}
+
+/* ============================================
    Toast Notifications
    Floating notifications appearing top-right.
    Auto-dismiss after 2.5s.
    ============================================ */
 .toast {
   @apply fixed bottom-6 left-1/2 z-50
+         -translate-x-1/2
+         max-w-[calc(100vw-2rem)]
          px-5 py-3 rounded-xl shadow-lg
          text-sm font-medium text-center
          border-2
          transition-opacity duration-500;
-  /* Horizontal centering; constrain width on narrow viewports */
-  transform: translateX(-50%);
-  max-width: calc(100vw - 2rem);
 }
+
 .toast-success {
-  background-color: #bbf7d0;  /* Tailwind green-100 — light, opaque */
-  border-color: var(--color-success);
-  color: var(--color-success-text);
+  @apply bg-green-100 border-success text-success-text;
 }

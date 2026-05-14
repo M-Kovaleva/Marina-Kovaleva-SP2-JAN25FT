@@ -62,7 +62,7 @@ function profileTemplate() {
 
           <!-- Banner -->
           <div id="profile-banner"
-            class="h-24 sm:h-32 lg:h-40 bg-gradient-to-r from-primary-500 to-primary-600 overflow-hidden">
+            class="h-24 sm:h-32 lg:h-40 bg-linear-to-r from-primary-500 to-primary-600 overflow-hidden">
           </div>
 
           <!-- Avatar and info -->
@@ -151,7 +151,7 @@ function profileTemplate() {
           </div>
 
           <div id="profile-listings-grid"
-            class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            class="listing-cards-grid hidden">
           </div>
 
           <div id="profile-listings-empty" class="hidden text-center py-16">
@@ -187,7 +187,7 @@ function profileTemplate() {
           </div>
 
           <div id="profile-wins-grid"
-            class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            class="listing-cards-grid hidden">
           </div>
 
           <div id="profile-wins-empty" class="hidden text-center py-16">

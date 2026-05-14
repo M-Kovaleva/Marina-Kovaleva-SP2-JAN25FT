@@ -69,10 +69,10 @@ export function createListingCard(listing) {
   const shortDescription = truncateText(description);
 
   return `
-    <article class="card shadow-sm group cursor-pointer hover:-translate-y-1 transition-transform duration-200 ${isEnded ? 'opacity-70 grayscale-[30%]' : ''}">
+    <article class="card shadow-sm group cursor-pointer hover:-translate-y-1 transition-transform duration-200 ${isEnded ? 'opacity-70 grayscale-30' : ''}">
       <a href="/listing/${id}" data-link class="block">
         <!-- Image Container -->
-        <div class="relative aspect-[4/3] overflow-hidden rounded-t-xl bg-gray-200">
+        <div class="relative aspect-4/3 overflow-hidden rounded-t-xl bg-gray-200">
           ${imageUrl ? `
             <img
               src="${imageUrl}"
@@ -102,7 +102,7 @@ export function createListingCard(listing) {
           </h3>
           
           <!-- Description (always reserved to keep card heights consistent) -->
-          <p class="text-text-secondary text-sm line-clamp-1 mb-3 min-h-[20px]">
+          <p class="text-text-secondary text-sm line-clamp-1 mb-3 min-h-5">
             ${shortDescription || ''}
           </p>
           
@@ -144,7 +144,7 @@ export function createSkeletonCard() {
   return `
     <article class="card shadow-sm animate-pulse">
       <!-- Image Skeleton -->
-      <div class="aspect-[4/3] rounded-t-xl bg-gray-200"></div>
+      <div class="aspect-4/3 rounded-t-xl bg-gray-200"></div>
       
       <!-- Content Skeleton -->
       <div class="p-4">

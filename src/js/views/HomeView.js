@@ -1,12 +1,27 @@
-/* Home View — Listings feed with hero section */
+/**
+ * Home View — Listings feed with hero section.
+ *
+ * This view is intentionally thin: it only owns HTML templates and the
+ * lifecycle hooks (render / init / destroy). All data loading and DOM
+ * mutation lives in handlers:
+ *   - heroHandler     — populates the hero section
+ *   - listingsHandler — populates the grid, handles search/filter/scroll
+ */
 
 import { initHero } from '../handlers/heroHandler.js';
-import { initListingsHandler, cleanupListingsHandler } from '../handlers/listingsHandler.js';
+import {
+  initListingsHandler,
+  cleanupListingsHandler,
+} from '../handlers/listingsHandler.js';
 
 export class HomeView {
   constructor(params) {
     this.params = params;
   }
+
+  // ─────────────────────────────────────────────
+  // Lifecycle
+  // ─────────────────────────────────────────────
 
   async render() {
     return `
@@ -16,7 +31,7 @@ export class HomeView {
   }
 
   async init() {
-    // Hero and listings feed are independent 
+    // Hero and listings feed are independent — fire hero in parallel.
     // Await the feed so the grid is ready before infinity-scroll attaches.
     initHero();
     await initListingsHandler();
@@ -27,12 +42,16 @@ export class HomeView {
   }
 }
 
+// ─────────────────────────────────────────────
+// Templates (pure HTML, no DOM access, no state)
+// ─────────────────────────────────────────────
+
 function heroTemplate() {
   return `
-    <section id="hero" class="bg-gradient-to-br from-primary-500 to-primary-700 text-white py-12 sm:py-16 lg:py-20">
+    <section id="hero" class="bg-linear-to-br from-primary-500 to-primary-700 text-white py-12 sm:py-16 lg:py-20">
       <div class="max-w-6xl mx-auto px-4">
 
-        <!-- Loading state -->
+        <!-- Loading skeleton -->
         <div id="hero-loading" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
           <div class="space-y-4 order-2 md:order-1">
             <div class="h-4 w-24 bg-white/20 rounded"></div>
@@ -40,12 +59,12 @@ function heroTemplate() {
             <div class="h-4 w-full bg-white/15 rounded"></div>
             <div class="h-4 w-2/3 bg-white/15 rounded"></div>
           </div>
-          <div class="aspect-[4/3] bg-white/10 rounded-2xl order-1 md:order-2"></div>
+          <div class="aspect-4/3 bg-white/10 rounded-2xl order-1 md:order-2"></div>
         </div>
 
         <!-- Hot listing — populated by heroHandler -->
         <div id="hero-listing"
-          class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
+          class="hero-listing-grid hidden">
 
           <!-- Text column -->
           <div class="order-2 md:order-1">
@@ -85,7 +104,7 @@ function heroTemplate() {
 
           <!-- Image column -->
           <a id="hero-image-link" href="#" data-link
-            class="aspect-[4/3] rounded-2xl overflow-hidden bg-white/10 order-1 md:order-2
+            class="aspect-4/3 rounded-2xl overflow-hidden bg-white/10 order-1 md:order-2
                    shadow-2xl">
             <img id="hero-image" src="" alt=""
               class="w-full h-full object-cover" />
@@ -113,7 +132,7 @@ function listingsTemplate() {
   return `
     <div class="page-container" id="listings">
 
-      <!-- Search + Filter -->
+      <!-- Search & Filter Bar -->
       <div class="py-4 mb-6 sm:mb-8 -mt-6 relative z-10">
         <div class="flex flex-col lg:flex-row gap-4">
 
@@ -167,7 +186,7 @@ function listingsTemplate() {
       </div>
 
       <!-- Listings grid -->
-      <div id="listings-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div id="listings-grid" class="listing-cards-grid">
       </div>
 
       <!-- Empty state -->
@@ -192,7 +211,7 @@ function listingsTemplate() {
         </div>
       </div>
 
-      <!-- Infinity-scroll -->
+      <!-- Infinity-scroll sentinel -->
       <div id="load-more-container" class="mt-4"></div>
 
       <!-- Showing-count footer -->
