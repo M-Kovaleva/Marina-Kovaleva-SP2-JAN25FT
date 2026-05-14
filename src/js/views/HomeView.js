@@ -142,7 +142,7 @@ function listingsTemplate() {
 
           <!-- Active-only filter -->
           <div class="flex items-center gap-3">
-            <label class="flex items-center gap-2 cursor-pointer py-2 whitespace-nowrap">
+            <label for="active-filter" class="flex items-center gap-2 cursor-pointer py-2 whitespace-nowrap">
               <input
                 type="checkbox"
                 id="active-filter"
