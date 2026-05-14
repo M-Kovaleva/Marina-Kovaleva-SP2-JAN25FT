@@ -24,7 +24,7 @@ let onUpdateCallback = null;
  * @param {string} name - profile name (target of PUT request)
  * @param {Object} [options]
  * @param {Function} [options.onUpdate] - called with updated profile
- *   data after successful save, used to refresh page header UI
+ * data after successful save, used to refresh page header UI
  */
 export function initProfileEdit(name, { onUpdate } = {}) {
   profileName = name;
@@ -99,7 +99,7 @@ async function handleSubmit(e) {
   // Always send all 3 fields so server can clear them
   const payload = {
     bio: data.bio || '',
-    avatar: { url: data.avatarUrl || PLACEHOLDER_AVATAR, alt: '' },
+    avatar: { url: data.avatarUrl || PLACEHOLDER_AVATAR, alt: profileName },
     banner: { url: data.bannerUrl || PLACEHOLDER_BANNER, alt: '' },
   };
 

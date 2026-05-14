@@ -129,7 +129,7 @@ function renderBanner(banner) {
 function renderAvatar(avatar) {
   renderAvatarInto(document.getElementById('profile-avatar'), {
     url: avatar?.url,
-    alt: avatar?.alt || '',
+    alt: avatar?.alt || profileName,
   });
 }
 
@@ -369,7 +369,7 @@ function updateHeaderAfterEdit(updated) {
   // Avatar
   renderAvatarInto(document.getElementById('profile-avatar'), {
     url: updated.avatar?.url,
-    alt: updated.avatar?.alt || '',
+    alt: updated.avatar?.alt || profileName,
   });
 
   // Banner
