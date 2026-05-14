@@ -128,23 +128,34 @@ function renderHeader(profile) {
   renderEditButton();
 }
 
-function renderBanner(banner) {
-  const bannerEl = document.getElementById('profile-banner');
-  if (!banner?.url?.trim()) return;
+/**
+ * Apply a banner image to a banner container element.
+ * Removes gradient classes when image loads; restores them on error or
+ * when no URL is provided so the gradient always shows as fallback.
+ */
+function applyBannerEl(bannerEl, banner) {
+  bannerEl.innerHTML = '';
+
+  if (!banner?.url?.trim()) {
+    bannerEl.classList.add('bg-gradient-to-r', 'from-primary-500', 'to-primary-600');
+    return;
+  }
 
   const img = document.createElement('img');
-  img.src = banner.url;
   img.alt = banner.alt || '';
   img.className = 'w-full h-full object-cover';
-  img.onerror = () => img.remove(); // broken URL → fall back to placeholder
+  img.onerror = () => {
+    img.remove();
+    bannerEl.classList.add('bg-gradient-to-r', 'from-primary-500', 'to-primary-600');
+  };
 
-  bannerEl.innerHTML = '';
-  bannerEl.classList.remove(
-    'bg-gradient-to-r',
-    'from-primary-500',
-    'to-primary-600'
-  );
+  bannerEl.classList.remove('bg-gradient-to-r', 'from-primary-500', 'to-primary-600');
   bannerEl.appendChild(img);
+  img.src = banner.url; // set src last so onerror is wired before load starts
+}
+
+function renderBanner(banner) {
+  applyBannerEl(document.getElementById('profile-banner'), banner);
 }
 
 function renderAvatar(avatar) {
@@ -421,26 +432,5 @@ function updateHeaderAfterEdit(updated) {
   });
 
   // Banner
-  const bannerEl = document.getElementById('profile-banner');
-  bannerEl.innerHTML = '';
-  bannerEl.classList.remove(
-    'bg-gradient-to-r',
-    'from-primary-500',
-    'to-primary-600'
-  );
-  if (updated.banner?.url) {
-    const img = document.createElement('img');
-    img.src = updated.banner.url;
-    img.alt = updated.banner.alt || '';
-    img.className = 'w-full h-full object-cover';
-    img.onerror = () => {
-      img.remove();
-      bannerEl.classList.add(
-        'bg-gradient-to-r',
-        'from-primary-500',
-        'to-primary-600'
-      );
-    };
-    bannerEl.appendChild(img);
-  }
+  applyBannerEl(document.getElementById('profile-banner'), updated.banner);
 }
