@@ -45,13 +45,14 @@ function profileTemplate() {
       </div>
 
       <!-- Error / 404 state -->
-      <div id="profile-error" class="hidden text-center py-24">
-        <p class="text-5xl mb-4">😕</p>
-        <h2 class="text-xl font-bold text-text-primary mb-2">Profile not found</h2>
-        <p class="text-text-secondary mb-6">
-          This profile may not exist or the link is invalid.
-        </p>
-        <a href="/" data-link class="btn-primary">Go home</a>
+      <div id="profile-error" class="hidden min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center px-4">
+        <div class="text-center max-w-md">
+          <h2 class="text-xl font-bold text-text-primary mb-2">Profile not found</h2>
+          <p class="text-text-secondary mb-6">
+            This profile may not exist or the link is invalid.
+          </p>
+          <a href="/" data-link class="btn-primary">Go home</a>
+        </div>
       </div>
 
       <!-- Main content -->

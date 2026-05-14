@@ -48,12 +48,14 @@ function listingDetailTemplate() {
       </div>
 
       <!-- Error / 404 state -->
-      <div id="listing-error" class="hidden text-center py-24">
-        <h2 class="text-xl font-bold text-text-primary mb-2">Listing not found</h2>
-        <p class="text-text-secondary mb-6">
-          This listing may have been removed or the link is invalid.
-        </p>
-        <a href="/" data-link class="btn-primary">Explore listings</a>
+      <div id="listing-error" class="hidden min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center px-4">
+        <div class="text-center max-w-md">
+          <h2 class="text-xl font-bold text-text-primary mb-2">Listing not found</h2>
+          <p class="text-text-secondary mb-6">
+            This listing may have been removed or the link is invalid.
+          </p>
+          <a href="/" data-link class="btn-primary">Explore listings</a>
+        </div>
       </div>
 
       <!-- Main content -->

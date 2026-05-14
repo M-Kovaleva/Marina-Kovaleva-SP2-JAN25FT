@@ -8,7 +8,7 @@ export class NotFoundView {
 
   async render() {
     return `
-      <div class="min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center px-4">
+      <div class="min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center px-4 py-8">
         <div class="text-center max-w-md">
           <!-- 404 Number -->
           <h1 class="text-6xl sm:text-8xl font-bold text-primary-500 mb-4">404</h1>
