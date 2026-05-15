@@ -1,5 +1,8 @@
 /* Floating success toast */
 
+const TOAST_DISPLAY_MS = 2500;
+const TOAST_FADE_MS = 500;
+
 export function showSuccessToast(message) {
   const toast = document.createElement('div');
   toast.className = 'toast toast-success';
@@ -10,6 +13,6 @@ export function showSuccessToast(message) {
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 500);
-  }, 2500);
+    setTimeout(() => toast.remove(), TOAST_FADE_MS);
+  }, TOAST_DISPLAY_MS);
 }

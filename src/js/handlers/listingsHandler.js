@@ -18,6 +18,7 @@ let els = null;
 let scrollTicking = false;
 
 const ITEMS_PER_PAGE = 12;
+const SCROLL_THRESHOLD_PX = 500;
 
 // DOM elements
 function getElements() {
@@ -257,7 +258,7 @@ function handleScroll() {
     if (isLoading || allListingsLoaded || !els?.grid) return;
 
     const scrollPosition = window.innerHeight + window.scrollY;
-    const threshold = document.body.offsetHeight - 500;
+    const threshold = document.body.offsetHeight - SCROLL_THRESHOLD_PX;
     if (scrollPosition >= threshold) loadMore();
   });
 }

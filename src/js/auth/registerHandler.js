@@ -3,15 +3,13 @@
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
 import { syncUserFromProfile } from './userSync.js';
-import {
-  validateRegisterForm,
-  clearFormErrors,
-  showValidationErrors,
-} from '../utils/validation.js';
+import { validateRegisterForm, clearFormErrors, showValidationErrors } from '../utils/validation.js';
 import { showFormError, hideFormError, setFormLoading } from '../utils/formState.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { navigateTo } from '../router/router.js';
+
+const REDIRECT_DELAY_MS = 1500;
 
 //Initialize register form handler - call this in RegisterView.init()
 export function initRegisterHandler() {
@@ -64,7 +62,7 @@ export function initRegisterHandler() {
 
       // Show success and redirect
       showSuccessToast('Account created.');
-      setTimeout(() => navigateTo('/'), 1500);
+      setTimeout(() => navigateTo('/'), REDIRECT_DELAY_MS);
     } catch (error) {
       showFormError(errorContainer, error.message);
       setFormLoading(form, false, { busy: 'Creating account...', idle: 'Create account' });
