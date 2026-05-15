@@ -9,13 +9,7 @@ import { formatCredits } from '../utils/format.js';
 import { clearFormErrors, showInputError } from '../utils/validation.js';
 import { showBlockError, hideBlockError } from '../utils/formState.js';
 
-const STATE_IDS = [
-  'state-ended',
-  'state-guest',
-  'state-own',
-  'state-winning',
-  'bid-form',
-];
+const STATE_IDS = ['state-ended', 'state-guest', 'state-own', 'state-winning', 'bid-form'];
 
 let listingId = null;
 let submitAttached = false;
@@ -64,9 +58,7 @@ function renderState(listing) {
 }
 
 function showState(id) {
-  STATE_IDS.forEach((s) =>
-    document.getElementById(s)?.classList.add('hidden')
-  );
+  STATE_IDS.forEach((s) => document.getElementById(s)?.classList.add('hidden'));
   document.getElementById(id)?.classList.remove('hidden');
 }
 
@@ -77,10 +69,7 @@ function isUserWinning(bids) {
   const me = getUser()?.name;
   if (!me) return false;
 
-  const highest = bids.reduce(
-    (max, b) => (b.amount > max.amount ? b : max),
-    bids[0]
-  );
+  const highest = bids.reduce((max, b) => (b.amount > max.amount ? b : max), bids[0]);
   return highest.bidder?.name === me;
 }
 
@@ -123,17 +112,11 @@ async function handleSubmit(e) {
 
   // Field-level validation — inline under input
   if (!Number.isInteger(amount) || amount < minBid) {
-    showInputError(
-      input,
-      `Bid must be a whole number, at least ${minBid} credits.`
-    );
+    showInputError(input, `Bid must be a whole number, at least ${minBid} credits.`);
     return;
   }
   if (amount > userCredits) {
-    showInputError(
-      input,
-      `You only have ${formatCredits(userCredits)} credits available.`
-    );
+    showInputError(input, `You only have ${formatCredits(userCredits)} credits available.`);
     return;
   }
 

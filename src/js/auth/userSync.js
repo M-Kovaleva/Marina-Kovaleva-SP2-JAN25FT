@@ -15,13 +15,13 @@ import { updateUser } from './storage.js';
  */
 export async function syncUserFromProfile(name) {
   const response = await getProfile(name);
-  const profile  = response.data;
+  const profile = response.data;
 
   updateUser({
     credits: profile.credits,
-    bio:     profile.bio,
-    avatar:  profile.avatar,
-    banner:  profile.banner,
+    bio: profile.bio,
+    avatar: profile.avatar,
+    banner: profile.banner,
   });
 
   return profile;

@@ -3,11 +3,7 @@
 import { updateProfile } from '../api/apiClient.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { showSuccessToast } from '../utils/toast.js';
-import {
-  validateProfileForm,
-  showValidationErrors,
-  clearFormErrors,
-} from '../utils/validation.js';
+import { validateProfileForm, showValidationErrors, clearFormErrors } from '../utils/validation.js';
 import { showBlockError, hideBlockError, setFormLoading } from '../utils/formState.js';
 
 // Same placeholder image for both avatar and banner — server rejects
@@ -30,17 +26,11 @@ export function initProfileEdit(name, { onUpdate } = {}) {
   profileName = name;
   onUpdateCallback = onUpdate ?? null;
 
-  document
-    .getElementById('edit-profile-backdrop')
-    ?.addEventListener('click', closeEditModal);
+  document.getElementById('edit-profile-backdrop')?.addEventListener('click', closeEditModal);
 
-  document
-    .getElementById('edit-profile-close')
-    ?.addEventListener('click', closeEditModal);
+  document.getElementById('edit-profile-close')?.addEventListener('click', closeEditModal);
 
-  document
-    .getElementById('edit-profile-form')
-    ?.addEventListener('submit', handleSubmit);
+  document.getElementById('edit-profile-form')?.addEventListener('submit', handleSubmit);
 }
 
 //Open the modal, prefill inputs from current user data, clear any stale errors

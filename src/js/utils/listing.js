@@ -1,5 +1,5 @@
 /**
- * Listing utilities 
+ * Listing utilities
  * Display status of a listing from its end date
  * Returns one of three states:
  *   ended — auction is over

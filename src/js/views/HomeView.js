@@ -1,10 +1,7 @@
 /* Home view — Listings feed with hero section */
 
 import { initHero } from '../handlers/heroHandler.js';
-import {
-  initListingsHandler,
-  cleanupListingsHandler,
-} from '../handlers/listingsHandler.js';
+import { initListingsHandler, cleanupListingsHandler } from '../handlers/listingsHandler.js';
 
 export class HomeView {
   constructor(params) {

@@ -4,11 +4,7 @@ import { createListing, getListing, updateListing } from '../api/apiClient.js';
 import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
 import { escHtml } from '../utils/format.js';
-import {
-  validateListingForm,
-  showValidationErrors,
-  clearFormErrors,
-} from '../utils/validation.js';
+import { validateListingForm, showValidationErrors, clearFormErrors } from '../utils/validation.js';
 import { showBlockError, hideBlockError } from '../utils/formState.js';
 
 let listingId = null;
@@ -93,12 +89,10 @@ function addRow(url = '') {
   `;
   container.appendChild(row);
 
-  row
-    .querySelector('[aria-label="Remove image"]')
-    .addEventListener('click', () => {
-      row.remove();
-      updateAddBtnState();
-    });
+  row.querySelector('[aria-label="Remove image"]').addEventListener('click', () => {
+    row.remove();
+    updateAddBtnState();
+  });
 }
 
 // Disable "Add image" when the 8-image limit is reached
@@ -123,16 +117,13 @@ async function prefillForm() {
     if (listing.endsAt) {
       const readonlyEl = document.getElementById('endsAt-readonly');
       if (readonlyEl) {
-        readonlyEl.textContent = new Date(listing.endsAt).toLocaleString(
-          'en-GB',
-          {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          }
-        );
+        readonlyEl.textContent = new Date(listing.endsAt).toLocaleString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
       }
     }
 
@@ -163,9 +154,7 @@ function setDateMinimum() {
 
 // Form submit
 function initFormSubmit() {
-  document
-    .getElementById('listing-form')
-    ?.addEventListener('submit', handleSubmit);
+  document.getElementById('listing-form')?.addEventListener('submit', handleSubmit);
 }
 
 async function handleSubmit(e) {
@@ -215,8 +204,7 @@ async function handleSubmit(e) {
   } catch (err) {
     showBlockError(
       'listing-error',
-      err.message ||
-        (isEditMode ? 'Could not update listing.' : 'Could not create listing.')
+      err.message || (isEditMode ? 'Could not update listing.' : 'Could not create listing.')
     );
     setLoading(false);
   }
@@ -234,7 +222,7 @@ function collectMedia() {
 }
 
 /**
- * Build the API payload from validated data. Edit mode always sends media (even an empty array) so the server 
+ * Build the API payload from validated data. Edit mode always sends media (even an empty array) so the server
  * can clear removed images. Create mode omits media if there are none
  * @param {{ title, description, endsAt, media }} data
  * @returns {Object}
@@ -260,9 +248,7 @@ function buildPayload(data) {
 // Loading / error UI helpers
 function setLoading(loading) {
   const btn = document.getElementById('submit-btn');
-  const inputs = document.querySelectorAll(
-    '#listing-form input, #listing-form textarea'
-  );
+  const inputs = document.querySelectorAll('#listing-form input, #listing-form textarea');
 
   btn.disabled = loading;
   btn.textContent = loading

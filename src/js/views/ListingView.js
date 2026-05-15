@@ -1,9 +1,6 @@
 /* Listing view — single listing page. */
 
-import {
-  initListingDetail,
-  cleanupListingDetail,
-} from '../handlers/listingDetailHandler.js';
+import { initListingDetail, cleanupListingDetail } from '../handlers/listingDetailHandler.js';
 import { spinnerHtml } from '../utils/format.js';
 
 export class ListingView {

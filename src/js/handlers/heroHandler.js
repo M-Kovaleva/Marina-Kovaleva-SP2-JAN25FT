@@ -57,8 +57,7 @@ function renderHero(listing) {
   document.getElementById('hero-image-link').href = href;
   document.getElementById('hero-cta').href = href;
 
-  document.getElementById('hero-title').textContent =
-    listing.title || 'Untitled listing';
+  document.getElementById('hero-title').textContent = listing.title || 'Untitled listing';
 
   renderDescription(listing.description);
   renderBidSummary(listing);
@@ -86,8 +85,7 @@ function renderBidSummary(listing) {
 }
 
 function renderEnds(endsAt) {
-  document.getElementById('hero-ends').textContent =
-    `Ends in ${formatTimeLeft(endsAt)}`;
+  document.getElementById('hero-ends').textContent = `Ends in ${formatTimeLeft(endsAt)}`;
 }
 
 function renderImage(listing) {

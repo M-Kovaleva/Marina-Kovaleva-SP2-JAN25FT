@@ -11,17 +11,8 @@ import { getListingStatus } from '../utils/listing.js';
 import { renderAvatarInto } from '../utils/avatar.js';
 import { getUser, updateUser } from '../auth/storage.js';
 import { updateNavAuth } from '../components/Nav.js';
-import {
-  escHtml,
-  formatDate,
-  imagePlaceholderHtml,
-  formatCredits,
-} from '../utils/format.js';
-import {
-  initProfileEdit,
-  openEditModal,
-  cleanupProfileEdit,
-} from './profileEditHandler.js';
+import { escHtml, formatDate, imagePlaceholderHtml, formatCredits } from '../utils/format.js';
+import { initProfileEdit, openEditModal, cleanupProfileEdit } from './profileEditHandler.js';
 
 let profileName = null;
 let isOwner = false;
@@ -145,18 +136,14 @@ function renderNameAndBio(name, bio) {
 
 //Listings count is public, credits and wins are for owner-only
 function renderStats(profile) {
-  document.getElementById('profile-listings-count').textContent =
-    profile._count?.listings ?? 0;
+  document.getElementById('profile-listings-count').textContent = profile._count?.listings ?? 0;
 
   if (!isOwner) return;
 
   document.getElementById('stat-credits').classList.remove('hidden');
-  document.getElementById('profile-credits').textContent = formatCredits(
-    profile.credits
-  );
+  document.getElementById('profile-credits').textContent = formatCredits(profile.credits);
   document.getElementById('stat-wins').classList.remove('hidden');
-  document.getElementById('profile-wins-count').textContent =
-    profile._count?.wins ?? 0;
+  document.getElementById('profile-wins-count').textContent = profile._count?.wins ?? 0;
 
   // Server-authoritative credits -> storage -> navbar
   updateUser({ credits: profile.credits });
@@ -178,22 +165,12 @@ function renderEditButton() {
 function initTabs() {
   // Hide Bids/Wins tabs for non-owners
   if (!isOwner) {
-    document
-      .querySelector('[data-tab="bids"]')
-      ?.closest('button')
-      ?.classList.add('hidden');
-    document
-      .querySelector('[data-tab="wins"]')
-      ?.closest('button')
-      ?.classList.add('hidden');
+    document.querySelector('[data-tab="bids"]')?.closest('button')?.classList.add('hidden');
+    document.querySelector('[data-tab="wins"]')?.closest('button')?.classList.add('hidden');
 
     // Listings empty-state copy: non-owner can't "create their first listing"
-    document
-      .getElementById('profile-listings-empty-body')
-      ?.classList.add('hidden');
-    document
-      .getElementById('profile-listings-empty-cta-wrap')
-      ?.classList.add('hidden');
+    document.getElementById('profile-listings-empty-body')?.classList.add('hidden');
+    document.getElementById('profile-listings-empty-cta-wrap')?.classList.add('hidden');
   }
 
   const tabs = document.querySelectorAll('.tab-btn');
@@ -212,9 +189,7 @@ function switchTab(activeBtn, allTabs) {
 
   // Show/hide panels
   ['listings', 'bids', 'wins'].forEach((panel) => {
-    document
-      .getElementById(`tab-${panel}`)
-      ?.classList.toggle('hidden', panel !== target);
+    document.getElementById(`tab-${panel}`)?.classList.toggle('hidden', panel !== target);
   });
 
   if (target === 'wins' && !winsLoaded) {

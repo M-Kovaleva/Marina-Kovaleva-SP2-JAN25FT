@@ -3,8 +3,7 @@
 import { getToken } from '../auth/storage.js';
 
 // Constants (from Vite env variables)
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'https://v2.api.noroff.dev';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://v2.api.noroff.dev';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 // Endpoint paths
@@ -67,8 +66,7 @@ async function apiFetch(endpoint, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      const message =
-        data.errors?.[0]?.message || data.message || 'Something went wrong';
+      const message = data.errors?.[0]?.message || data.message || 'Something went wrong';
       throw new Error(message);
     }
 
@@ -225,9 +223,7 @@ export async function getProfiles(params = {}) {
  */
 export async function getProfile(name, params = {}) {
   const query = new URLSearchParams(params).toString();
-  const endpoint = query
-    ? `${PROFILES}/${name}?${query}`
-    : `${PROFILES}/${name}`;
+  const endpoint = query ? `${PROFILES}/${name}?${query}` : `${PROFILES}/${name}`;
   return apiFetch(endpoint, { includeAuth: true });
 }
 
@@ -253,9 +249,7 @@ export async function updateProfile(name, profileData) {
  */
 export async function getProfileListings(name, params = {}) {
   const query = new URLSearchParams(params).toString();
-  const endpoint = query
-    ? `${PROFILES}/${name}/listings?${query}`
-    : `${PROFILES}/${name}/listings`;
+  const endpoint = query ? `${PROFILES}/${name}/listings?${query}` : `${PROFILES}/${name}/listings`;
   return apiFetch(endpoint, { includeAuth: true });
 }
 
@@ -267,9 +261,7 @@ export async function getProfileListings(name, params = {}) {
  */
 export async function getProfileBids(name, params = {}) {
   const query = new URLSearchParams(params).toString();
-  const endpoint = query
-    ? `${PROFILES}/${name}/bids?${query}`
-    : `${PROFILES}/${name}/bids`;
+  const endpoint = query ? `${PROFILES}/${name}/bids?${query}` : `${PROFILES}/${name}/bids`;
   return apiFetch(endpoint, { includeAuth: true });
 }
 
@@ -281,9 +273,7 @@ export async function getProfileBids(name, params = {}) {
  */
 export async function getProfileWins(name, params = {}) {
   const query = new URLSearchParams(params).toString();
-  const endpoint = query
-    ? `${PROFILES}/${name}/wins?${query}`
-    : `${PROFILES}/${name}/wins`;
+  const endpoint = query ? `${PROFILES}/${name}/wins?${query}` : `${PROFILES}/${name}/wins`;
   return apiFetch(endpoint, { includeAuth: true });
 }
 

@@ -11,23 +11,18 @@ import { isLoggedIn, getUser } from '../auth/storage.js';
 
 // Routes
 const routes = [
-  { path: '/',                 view: HomeView,          title: 'Explore Listings' },
-  { path: '/login',            view: LoginView,         title: 'Login' },
-  { path: '/register',         view: RegisterView,      title: 'Register' },
-  { path: '/listing/create',   view: CreateListingView, title: 'Create Listing' },
-  { path: '/listing/:id',      view: ListingView,       title: 'Listing' },
+  { path: '/', view: HomeView, title: 'Explore Listings' },
+  { path: '/login', view: LoginView, title: 'Login' },
+  { path: '/register', view: RegisterView, title: 'Register' },
+  { path: '/listing/create', view: CreateListingView, title: 'Create Listing' },
+  { path: '/listing/:id', view: ListingView, title: 'Listing' },
   { path: '/listing/:id/edit', view: CreateListingView, title: 'Edit Listing' },
-  { path: '/profile',          view: ProfileView,       title: 'My Profile' },
-  { path: '/profile/:name',    view: ProfileView,       title: 'Profile' },
+  { path: '/profile', view: ProfileView, title: 'My Profile' },
+  { path: '/profile/:name', view: ProfileView, title: 'Profile' },
 ];
 
 // Routes that require authentication
-const PROTECTED = [
-  '/profile',
-  '/profile/:name',
-  '/listing/create',
-  '/listing/:id/edit',
-];
+const PROTECTED = ['/profile', '/profile/:name', '/listing/create', '/listing/:id/edit'];
 
 /**
  * The currently active view instance.
@@ -38,16 +33,12 @@ const PROTECTED = [
 let currentView = null;
 
 function pathToRegex(path) {
-  return new RegExp(
-    '^' + path.replace(/\//g, '\\/').replace(/:\w+/g, '([^/]+)') + '$'
-  );
+  return new RegExp('^' + path.replace(/\//g, '\\/').replace(/:\w+/g, '([^/]+)') + '$');
 }
 
 function getParams(match) {
   const values = match.result.slice(1);
-  const keys = Array.from(match.route.path.matchAll(/:(\w+)/g)).map(
-    (r) => r[1]
-  );
+  const keys = Array.from(match.route.path.matchAll(/:(\w+)/g)).map((r) => r[1]);
   return Object.fromEntries(keys.map((key, i) => [key, values[i]]));
 }
 

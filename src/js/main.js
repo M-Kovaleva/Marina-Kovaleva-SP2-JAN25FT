@@ -10,11 +10,7 @@ import {
 } from './components/LoginRequiredModal.js';
 
 //Paths that require authentication. Match by substring so /listing/create, /profile/anyone, etc. all match
-const PROTECTED_PATTERNS = [
-  '/profile/',
-  '/listing/create',
-  '/edit',
-];
+const PROTECTED_PATTERNS = ['/profile/', '/listing/create', '/edit'];
 
 function requiresAuth(href) {
   try {
@@ -26,7 +22,6 @@ function requiresAuth(href) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-
   initNav();
   initMobileMenu();
   mountLoginRequiredModal();

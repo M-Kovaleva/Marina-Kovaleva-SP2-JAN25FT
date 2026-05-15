@@ -3,7 +3,11 @@
 import { register, login } from '../api/apiClient.js';
 import { saveAuth } from './storage.js';
 import { syncUserFromProfile } from './userSync.js';
-import { validateRegisterForm, clearFormErrors, showValidationErrors } from '../utils/validation.js';
+import {
+  validateRegisterForm,
+  clearFormErrors,
+  showValidationErrors,
+} from '../utils/validation.js';
 import { showFormError, hideFormError, setFormLoading } from '../utils/formState.js';
 import { updateNavAuth } from '../components/Nav.js';
 import { showSuccessToast } from '../utils/toast.js';
@@ -48,7 +52,7 @@ export function initRegisterHandler() {
       });
       saveAuth(loginResponse.data.accessToken, loginResponse.data);
 
-      // Sync full profile 
+      // Sync full profile
       try {
         await syncUserFromProfile(loginResponse.data.name);
       } catch (syncErr) {

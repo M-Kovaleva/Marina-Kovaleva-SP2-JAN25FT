@@ -60,26 +60,24 @@ export function mountLoginRequiredModal() {
   document.body.appendChild(modalEl);
 
   // Backdrop click closes the modal
-  document.getElementById('login-required-backdrop')
+  document
+    .getElementById('login-required-backdrop')
     .addEventListener('click', hideLoginRequiredModal);
 
   // X button closes the modal
-  document.getElementById('login-required-close')
-    .addEventListener('click', hideLoginRequiredModal);
+  document.getElementById('login-required-close').addEventListener('click', hideLoginRequiredModal);
 
   // Sign in -> navigate to /login
-  document.getElementById('login-required-signin')
-    .addEventListener('click', () => {
-      hideLoginRequiredModal();
-      navigateTo('/login');
-    });
+  document.getElementById('login-required-signin').addEventListener('click', () => {
+    hideLoginRequiredModal();
+    navigateTo('/login');
+  });
 
   // Register -> navigate to /register
-  document.getElementById('login-required-register')
-    .addEventListener('click', () => {
-      hideLoginRequiredModal();
-      navigateTo('/register');
-    });
+  document.getElementById('login-required-register').addEventListener('click', () => {
+    hideLoginRequiredModal();
+    navigateTo('/register');
+  });
 }
 
 export function showLoginRequiredModal() {

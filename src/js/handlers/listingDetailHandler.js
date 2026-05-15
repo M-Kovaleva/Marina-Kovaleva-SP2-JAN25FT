@@ -4,20 +4,11 @@ import { getListing, deleteListing } from '../api/apiClient.js';
 import { getUser } from '../auth/storage.js';
 import { navigateTo } from '../router/router.js';
 import { showSuccessToast } from '../utils/toast.js';
-import {
-  escHtml,
-  formatDate,
-  formatCredits,
-  imagePlaceholderHtml,
-} from '../utils/format.js';
+import { escHtml, formatDate, formatCredits, imagePlaceholderHtml } from '../utils/format.js';
 import { timeAgo } from '../utils/time.js';
 import { getListingStatus } from '../utils/listing.js';
 import { renderAvatarInto } from '../utils/avatar.js';
-import {
-  initBidForm,
-  setBidFormEnded,
-  cleanupBidForm,
-} from './bidFormHandler.js';
+import { initBidForm, setBidFormEnded, cleanupBidForm } from './bidFormHandler.js';
 
 let countdownInterval = null;
 
@@ -178,8 +169,7 @@ function renderSellerCard(seller, created) {
   profileLink.textContent = `@${seller.name}`;
   profileLink.href = `/profile/${seller.name}`;
 
-  document.getElementById('listing-created-date').textContent =
-    formatDate(created);
+  document.getElementById('listing-created-date').textContent = formatDate(created);
 }
 
 // Bid summary - current bid + count
@@ -187,8 +177,7 @@ function renderBidSummary(listing) {
   const bids = listing.bids ?? [];
   const highest = bids.length ? Math.max(...bids.map((b) => b.amount)) : 0;
 
-  document.getElementById('listing-current-bid').textContent =
-    `${formatCredits(highest)} credits`;
+  document.getElementById('listing-current-bid').textContent = `${formatCredits(highest)} credits`;
   document.getElementById('listing-bid-count').textContent =
     `${bids.length} ${bids.length === 1 ? 'bid' : 'bids'}`;
 }
@@ -218,8 +207,7 @@ function startCountdown(endsAt) {
 
     if (diff <= 0) {
       countdownEl.textContent = 'Auction ended';
-      countdownEl.className =
-        'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
+      countdownEl.className = 'text-xl sm:text-2xl font-semibold tabular-nums text-red-700';
 
       const status = getListingStatus(endsAt);
       statusBadge.textContent = status.label;
@@ -243,16 +231,14 @@ function startCountdown(endsAt) {
         `${String(hours).padStart(2, '0')}:` +
         `${String(minutes).padStart(2, '0')}:` +
         `${String(seconds).padStart(2, '0')}`;
-      countdownEl.className =
-        'text-xl sm:text-2xl font-semibold tabular-nums text-amber-700';
+      countdownEl.className = 'text-xl sm:text-2xl font-semibold tabular-nums text-amber-700';
       return;
     }
 
     countdownEl.textContent =
       `${days}d ${hours}h ${String(minutes).padStart(2, '0')}m ` +
       `${String(seconds).padStart(2, '0')}s`;
-    countdownEl.className =
-      'text-xl sm:text-2xl font-semibold tabular-nums text-green-700';
+    countdownEl.className = 'text-xl sm:text-2xl font-semibold tabular-nums text-green-700';
   };
 
   tick();
@@ -277,8 +263,7 @@ function renderBidHistory(bids) {
   container.innerHTML = sorted
     .map((bid, i) => {
       const isHighest = i === 0;
-      const isOwn =
-        currentUser?.name && bid.bidder?.name === currentUser.name;
+      const isOwn = currentUser?.name && bid.bidder?.name === currentUser.name;
 
       const avatarHtml = bid.bidder?.avatar?.url
         ? `<img
@@ -327,8 +312,7 @@ function renderBidHistory(bids) {
 // Owner actions: Edit / Delete
 function renderOwnerActions(listing) {
   const currentUser = getUser();
-  const isOwner =
-    currentUser?.name && listing.seller?.name === currentUser.name;
+  const isOwner = currentUser?.name && listing.seller?.name === currentUser.name;
   const isActive = new Date(listing.endsAt) > new Date();
 
   if (!isOwner || !isActive) return;
@@ -336,8 +320,7 @@ function renderOwnerActions(listing) {
   const actions = document.getElementById('owner-actions');
   actions.classList.remove('hidden');
 
-  document.getElementById('edit-listing-btn').href =
-    `/listing/${listing.id}/edit`;
+  document.getElementById('edit-listing-btn').href = `/listing/${listing.id}/edit`;
   document
     .getElementById('delete-listing-btn')
     .addEventListener('click', () => handleDelete(listing.id));
@@ -352,9 +335,7 @@ function hideOwnerActions() {
 }
 
 async function handleDelete(listingId) {
-  const confirmed = window.confirm(
-    'Delete this listing? This cannot be undone.'
-  );
+  const confirmed = window.confirm('Delete this listing? This cannot be undone.');
   if (!confirmed) return;
 
   const btn = document.getElementById('delete-listing-btn');

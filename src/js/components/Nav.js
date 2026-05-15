@@ -10,20 +10,20 @@ export function initNav() {
 
 // Sync navbar UI with the current auth state, safe to call multiple times (after placing a bid to refresh credits)
 export function updateNavAuth() {
-  const user     = getUser();
+  const user = getUser();
   const loggedIn = isLoggedIn();
 
   // Desktop elements
-  const authLink      = document.getElementById('auth-link');
-  const creditsBadge  = document.getElementById('credits-badge');
+  const authLink = document.getElementById('auth-link');
+  const creditsBadge = document.getElementById('credits-badge');
   const creditsAmount = document.getElementById('credits-amount');
-  const profileLink   = document.getElementById('profile-link');
+  const profileLink = document.getElementById('profile-link');
 
   // Mobile elements
-  const authLinkMobile      = document.getElementById('auth-link-mobile');
-  const creditsBadgeMobile  = document.getElementById('credits-badge-mobile');
+  const authLinkMobile = document.getElementById('auth-link-mobile');
+  const creditsBadgeMobile = document.getElementById('credits-badge-mobile');
   const creditsAmountMobile = document.getElementById('credits-amount-mobile');
-  const profileLinkMobile   = document.getElementById('profile-link-mobile');
+  const profileLinkMobile = document.getElementById('profile-link-mobile');
 
   // "New Listing" buttons — stable IDs, same href in both states
   const createBtns = [
@@ -32,7 +32,7 @@ export function updateNavAuth() {
   ].filter(Boolean);
 
   if (loggedIn && user) {
-    // Logged-in state 
+    // Logged-in state
     profileLink?.classList.remove('hidden');
 
     if (authLink) {
@@ -44,7 +44,7 @@ export function updateNavAuth() {
 
     if (creditsBadge && creditsAmount) {
       creditsBadge.style.display = 'flex';
-      creditsAmount.textContent  = user.credits ?? 0;
+      creditsAmount.textContent = user.credits ?? 0;
     }
 
     profileLinkMobile?.classList.remove('hidden');
@@ -58,10 +58,12 @@ export function updateNavAuth() {
 
     if (creditsBadgeMobile && creditsAmountMobile) {
       creditsBadgeMobile.style.display = 'flex';
-      creditsAmountMobile.textContent  = user.credits ?? 0;
+      creditsAmountMobile.textContent = user.credits ?? 0;
     }
 
-    createBtns.forEach((btn) => { btn.href = '/listing/create'; });
+    createBtns.forEach((btn) => {
+      btn.href = '/listing/create';
+    });
 
     initLogoutHandler();
   } else {
@@ -81,8 +83,7 @@ export function updateNavAuth() {
 
     profileLinkMobile?.classList.add('hidden');
 
-    const linkMobile =
-      authLinkMobile ?? document.getElementById('logout-link-mobile');
+    const linkMobile = authLinkMobile ?? document.getElementById('logout-link-mobile');
     if (linkMobile) {
       linkMobile.textContent = 'Login';
       linkMobile.href = '/login';
@@ -92,21 +93,23 @@ export function updateNavAuth() {
 
     if (creditsBadgeMobile) creditsBadgeMobile.style.display = 'none';
 
-    createBtns.forEach((btn) => { btn.href = '/listing/create'; });
+    createBtns.forEach((btn) => {
+      btn.href = '/listing/create';
+    });
   }
 }
 
 // Update only the credits display (called after bid placed / profile sync)
 export function updateCredits(credits) {
-  const creditsAmount       = document.getElementById('credits-amount');
+  const creditsAmount = document.getElementById('credits-amount');
   const creditsAmountMobile = document.getElementById('credits-amount-mobile');
-  if (creditsAmount)       creditsAmount.textContent       = credits;
+  if (creditsAmount) creditsAmount.textContent = credits;
   if (creditsAmountMobile) creditsAmountMobile.textContent = credits;
 }
 
 // Logout
 function initLogoutHandler() {
-  const logoutLink       = document.getElementById('logout-link');
+  const logoutLink = document.getElementById('logout-link');
   const logoutLinkMobile = document.getElementById('logout-link-mobile');
 
   if (logoutLink) {

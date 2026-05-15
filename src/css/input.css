@@ -1,8 +1,8 @@
 /* Google fonts import */
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap');
 
 /* Tailwind v4 Import */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Colors */
@@ -34,8 +34,8 @@
   --color-warning: #f59e0b;
 
   /* Typography */
-  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-heading: "Playfair Display", Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-heading: 'Playfair Display', Georgia, serif;
 
   /* Spacing */
   --spacing-section: 6rem;
@@ -57,29 +57,29 @@
 .btn-secondary,
 .btn-ghost,
 .btn-danger {
-  @apply inline-flex items-center justify-center gap-2 text-sm font-semibold transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .btn-primary {
-  @apply px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus-visible:ring-primary-500;
+  @apply bg-primary-500 hover:bg-primary-600 focus-visible:ring-primary-500 rounded-lg px-3 py-2 text-white;
 }
 
 .btn-secondary {
-  @apply px-3 py-2 bg-white text-text-primary border-2 border-border rounded-lg hover:border-primary-500 hover:text-primary-500;
+  @apply text-text-primary border-border hover:border-primary-500 hover:text-primary-500 rounded-lg border-2 bg-white px-3 py-2;
 }
 
 .btn-ghost {
-  @apply px-3 py-2 text-text-secondary hover:text-primary-500 hover:bg-primary-50 rounded-lg;
+  @apply text-text-secondary hover:text-primary-500 hover:bg-primary-50 rounded-lg px-3 py-2;
 }
 
 .btn-danger {
-  @apply px-3 py-2 bg-error text-white rounded-lg hover:bg-red-600 focus-visible:ring-error;
+  @apply bg-error focus-visible:ring-error rounded-lg px-3 py-2 text-white hover:bg-red-600;
 }
 
 /* Form inputs */
 .input,
 .input-error {
-  @apply w-full px-4 py-3 bg-white border-2 border-border rounded-lg text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:outline-none focus:border-primary-500;
+  @apply border-border text-text-primary placeholder:text-text-secondary/50 focus:border-primary-500 w-full rounded-lg border-2 bg-white px-4 py-3 transition-all duration-200 focus:outline-none;
 }
 
 .input-error {
@@ -87,11 +87,11 @@
 }
 
 .label {
-  @apply block text-sm font-semibold text-text-primary mb-1.5;
+  @apply text-text-primary mb-1.5 block text-sm font-semibold;
 }
 
 .hint {
-  @apply text-xs text-text-secondary mt-1;
+  @apply text-text-secondary mt-1 text-xs;
 }
 
 .alert-error {
@@ -99,11 +99,11 @@
 }
 
 .field-error {
-  @apply text-error text-xs mt-1;
+  @apply text-error mt-1 text-xs;
 }
 /* === CARDS === */
 .card {
-  @apply bg-white border border-border rounded-xl;
+  @apply border-border rounded-xl border bg-white;
 }
 
 .card-body {
@@ -112,11 +112,11 @@
 
 /* Navigation */
 .nav-link {
-  @apply text-lg text-text-secondary hover:text-primary-500 font-medium transition-colors;
+  @apply text-text-secondary hover:text-primary-500 text-lg font-medium transition-colors;
 }
 
 .nav-link-mobile {
-  @apply text-lg font-medium text-text-primary hover:text-primary-500 transition-colors;
+  @apply text-text-primary hover:text-primary-500 text-lg font-medium transition-colors;
 }
 
 /* Badges */
@@ -124,7 +124,7 @@
 .badge-success,
 .badge-error,
 .badge-warning {
-  @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full;
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
 }
 
 .badge-success {
@@ -140,16 +140,16 @@
 }
 
 .badge-credits {
-  @apply inline-flex items-center text-xs font-semibold rounded-full bg-primary-50 text-primary-600 px-3 py-1.5 gap-1.5;
+  @apply bg-primary-50 text-primary-600 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold;
 }
 
 /* Page layout */
 .page-container {
-  @apply max-w-6xl mx-auto px-4 py-8;
+  @apply mx-auto max-w-6xl px-4 py-8;
 }
 
 .page-title {
-  @apply text-2xl sm:text-3xl font-bold text-text-primary mb-2;
+  @apply text-text-primary mb-2 text-2xl font-bold sm:text-3xl;
 }
 
 .page-subtitle {
@@ -158,31 +158,29 @@
 
 /* Auth card */
 .auth-container {
-  @apply min-h-[80vh] flex items-center justify-center px-4 py-8;
+  @apply flex min-h-[80vh] items-center justify-center px-4 py-8;
 }
 
 .auth-card {
-  @apply w-full max-w-md bg-white border border-border rounded-xl p-6 sm:p-8;
+  @apply border-border w-full max-w-md rounded-xl border bg-white p-6 sm:p-8;
 }
 
 .auth-title {
-  @apply text-xl sm:text-2xl font-bold text-text-primary text-center mb-2;
+  @apply text-text-primary mb-2 text-center text-xl font-bold sm:text-2xl;
 }
 
 .auth-subtitle {
-  @apply text-text-secondary text-center mb-8;
+  @apply text-text-secondary mb-8 text-center;
 }
 
 /* Mobile menu button */
 .btn-menu {
-  @apply p-2 rounded-lg text-text-primary hover:bg-gray-100 transition-colors;
+  @apply text-text-primary rounded-lg p-2 transition-colors hover:bg-gray-100;
 }
 
 /* Tabs */
 .tab-btn {
-  @apply pb-3 px-4 text-sm sm:text-base font-medium
-         whitespace-nowrap border-b-2 border-transparent
-         text-text-secondary transition-colors cursor-pointer;
+  @apply text-text-secondary cursor-pointer border-b-2 border-transparent px-4 pb-3 text-sm font-medium whitespace-nowrap transition-colors sm:text-base;
 }
 
 /* Tabs hover */
@@ -212,7 +210,7 @@
   /* Hero listing section on home page */
   .hero-listing-grid {
     display: grid;
-    @apply grid-cols-1 gap-6 items-center md:grid-cols-2 md:gap-10;
+    @apply grid-cols-1 items-center gap-6 md:grid-cols-2 md:gap-10;
   }
 
   /* Owner action buttons on listing detail page */
@@ -230,17 +228,11 @@
 
 /* Toast */
 .toast {
-  @apply fixed bottom-6 left-1/2 z-50
-         -translate-x-1/2
-         max-w-[calc(100vw-2rem)]
-         px-5 py-3 rounded-xl shadow-lg
-         text-sm font-medium text-center
-         border-2
-         transition-opacity duration-500;
+  @apply fixed bottom-6 left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border-2 px-5 py-3 text-center text-sm font-medium shadow-lg transition-opacity duration-500;
 }
 
 .toast-success {
-  @apply bg-green-100 border-success text-success-text;
+  @apply border-success text-success-text bg-green-100;
 }
 
 /* Touch devices: ono hover capability */
@@ -254,5 +246,4 @@
   .btn-danger:hover {
     transform: none !important;
   }
-
 }

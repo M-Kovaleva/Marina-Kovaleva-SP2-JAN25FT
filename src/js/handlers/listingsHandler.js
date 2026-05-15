@@ -1,9 +1,7 @@
 /* Listings handler */
 
 import { getListings, searchListings } from '../api/apiClient.js';
-import {
-  createListingCards,
-} from '../components/ListingCard.js';
+import { createListingCards } from '../components/ListingCard.js';
 import { spinnerHtml } from '../utils/format.js';
 
 let currentPage = 1;
@@ -88,8 +86,7 @@ function showError(message) {
   if (els.errorState) {
     els.errorState.classList.remove('hidden');
     if (els.errorMessage) {
-      els.errorMessage.textContent =
-        message || "We couldn't load the listings. Please try again.";
+      els.errorMessage.textContent = message || "We couldn't load the listings. Please try again.";
     }
   }
   hideLoadMore();
@@ -249,7 +246,7 @@ function initInfinityScroll() {
   window.addEventListener('scroll', handleScroll, { passive: true });
 }
 
-//  Scroll handler 
+//  Scroll handler
 function handleScroll() {
   if (scrollTicking) return;
   scrollTicking = true;

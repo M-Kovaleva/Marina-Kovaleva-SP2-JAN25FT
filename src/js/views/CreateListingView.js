@@ -1,9 +1,6 @@
 /* Create / Edit listing view */
 
-import {
-  initListingForm,
-  cleanupListingForm,
-} from '../handlers/listingFormHandler.js';
+import { initListingForm, cleanupListingForm } from '../handlers/listingFormHandler.js';
 
 export class CreateListingView {
   constructor(params) {
@@ -24,7 +21,6 @@ export class CreateListingView {
     cleanupListingForm();
   }
 }
-
 
 function listingFormTemplate(isEditMode) {
   return `

@@ -67,7 +67,9 @@ export function createListingCard(listing) {
       <a href="/listing/${id}" data-link class="block">
         <!-- Image Container -->
         <div class="relative aspect-4/3 overflow-hidden rounded-t-xl bg-gray-200">
-          ${imageUrl ? `
+          ${
+            imageUrl
+              ? `
             <img
               src="${imageUrl}"
               alt="${imageAlt}"
@@ -75,7 +77,9 @@ export function createListingCard(listing) {
               loading="lazy"
               onerror="this.style.display='none'"
             />
-          ` : imagePlaceholderHtml()}
+          `
+              : imagePlaceholderHtml()
+          }
           
           <!-- Status Badge -->
           <span class="absolute top-2 right-2 ${status.cssClass}">
