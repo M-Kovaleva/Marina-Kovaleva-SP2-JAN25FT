@@ -207,7 +207,7 @@ function profileTemplate() {
               <div class="flex items-center justify-between">
                 <h2 id="edit-profile-title" class="text-lg font-bold text-text-primary">Edit Profile</h2>
                 <button id="edit-profile-close"
-                  class="text-text-secondary hover:text-text-primary transition-colors"
+                  class="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
                   aria-label="Close">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

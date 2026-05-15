@@ -20,7 +20,7 @@ function template() {
 
           <!-- Close button -->
           <button id="login-required-close"
-            class="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors"
+            class="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors  cursor-pointer"
             aria-label="Close">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
