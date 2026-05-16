@@ -61,7 +61,7 @@ A single-page auction web application where Noroff students can list items, plac
 - Bid history and current bid amount are not updated in real-time while the page is open; the user must refresh to see new bids from other users
 - Visual differences between Safari and Chrome/Firefox - known compatibility issue between Tailwind v4 and Safari
 - The browser Back button from the Edit Profile modal navigates to the previous page in history rather than closing the modal — this is standard SPA behaviour, but may be unexpected for some users
-- 
+  
 ---
 
 ## Future Improvements
@@ -69,6 +69,7 @@ A single-page auction web application where Noroff students can list items, plac
 - Bid History Pagination - add pagination or infinite scroll to bid history on popular listings with many bids
 - Implement image lazy loading across all listing cards to improve initial page load time
 - Investigate compatibility with Tailwind v4 with Safari
+- Dark theme
 
 ---
 
