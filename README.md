@@ -14,7 +14,7 @@ A single-page auction web application where Noroff students can list items, plac
 
 - **Live Site:** [marina-kovaleva-sp-2-jan-25-ft.vercel.app](https://marina-kovaleva-sp-2-jan-25-ft.vercel.app/)
 - **Repository:** [github.com/M-Kovaleva/Marina-Kovaleva-SP2-JAN25FT](https://github.com/M-Kovaleva/Marina-Kovaleva-SP2-JAN25FT)
-- **Figma:** *([figma.com/design/egDQFbEKpnZmI5OqO7PONM/Marina-Kovaleva-SP2-JAN25FT?node-id=7-125&t=oDsdiXNGvIbP3VXp-1](https://www.figma.com/design/egDQFbEKpnZmI5OqO7PONM/Marina-Kovaleva-SP2-JAN25FT?node-id=7-125&t=oDsdiXNGvIbP3VXp-1))*
+- **Figma:** *[Figma style and design](https://www.figma.com/design/egDQFbEKpnZmI5OqO7PONM/Marina-Kovaleva-SP2-JAN25FT?node-id=7-125&t=oDsdiXNGvIbP3VXp-1)*
 - **Kanban Board:** [GitHub Projects](https://github.com/users/M-Kovaleva/projects/16)
 
 ---
